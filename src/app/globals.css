@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+  --menu-background: #f2f5ff;
+  --footer-background: #51508b;
+  --hover: #d5d4ff;
+  --accent: #8197e5;
 }
 
 @theme inline {
@@ -12,15 +16,32 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
-}
+} */
+
 
 body {
+  font-family: Arial, Helvetica, sans-serif;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  padding-top: env(safe-area-inset-top);
+  min-height: 100vh;
+  /* This ensures the content starts below the status bar */
+  min-height: -webkit-fill-available;
+  overflow-x: hidden;
+}
+
+
+.privacy-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--accent);
+  z-index: 2;
 }
