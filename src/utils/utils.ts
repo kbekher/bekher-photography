@@ -4,3 +4,4 @@ export const computeDimensions = (aspectRatio: string, baseWidth: number) => {
   const height = (baseWidth * heightRatio) / widthRatio;
   return { width, height };
 };
+

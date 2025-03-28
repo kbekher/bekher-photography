@@ -8,7 +8,7 @@ const GalleriesPage = () => {
   // const isPresent = useIsPresent();
 
   return (
-    <div className="w-full h-screen mx-[60px]">
+    <div className="w-full h-full mx-5 md:mx-[60px] pb-[140px]">
       <h1>This is Galleries Page</h1>
       <ul className="grid grid-cols-12 gap-5">
         {Object.keys(galleriesData).map((gallery) => (

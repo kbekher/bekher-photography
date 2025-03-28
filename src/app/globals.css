@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 
 :root {
   --background: #0a0a0a;
@@ -7,6 +11,9 @@
   --footer-background: #51508b;
   --hover: #d5d4ff;
   --accent: #8197e5;
+
+  --font-size: 16px;
+  --font-size-scale: 1.5; 
 }
 
 @theme inline {
@@ -44,4 +51,20 @@ body {
   bottom: 0;
   background-color: var(--accent);
   z-index: 2;
+}
+
+.custom-text {
+  font-size: calc((100vw - 60px) / 12); /* make text full screen */
+  font-weight: 700;
+  letter-spacing: -3px;
+  line-height: 1em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .custom-text {
+    font-size: calc((100vw - 120px) / 10); 
+  }
 }

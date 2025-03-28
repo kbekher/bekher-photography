@@ -21,22 +21,20 @@ const MotionImage = ({ galleryName, imgIndex }: Props) => {
   const imageSrc = `https://d14lj85n4pdzvr.cloudfront.net/galleries/${galleryName}/${galleryName}-${imgIndex + 1}.jpg`;
 
   return (
-    <div className="overflow-hidden">
+    <div className="overflow-hidden w-full h-full">
       <motion.div
         ref={ref}
-        initial={{ scale: 1.8, opacity: 0 }}
-        animate={isInView ? { scale: 1, opacity: 1 } : {}}
-        transition={{ duration: 1.1, ease: 'easeOut' }}
-        className="max-w-[800px] mx-auto relative"
-        style={{ aspectRatio: gallery.photos[imgIndex].aspectRatio }}
+        initial={{ scale: 1.2 }}
+        animate={isInView ? { scale: 1 } : {}}
+        transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+        className="w-full h-full mx-auto relative overflow-hidden"
       >
         <Image
           src={imageSrc}
           alt={`Picture of ${gallery.name}`}
           width={800}
           height={600}
-          className="object-cover absolute top-0"
-          style={{ aspectRatio: gallery.photos[imgIndex].aspectRatio }}
+          className="w-full h-auto object-cover object-center"
           draggable="false"
         />
       </motion.div>
@@ -45,3 +43,32 @@ const MotionImage = ({ galleryName, imgIndex }: Props) => {
 };
 
 export default MotionImage;
+
+
+
+
+// Version with keeping imhg ratio
+//   return (
+//     <div className="overflow-hidden">
+//       <motion.div
+//         ref={ref}
+//         initial={{ scale: 1.2, opacity: 1 }}
+//         animate={isInView ? { scale: 1, opacity: 1 } : {}}
+//         transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }} 
+//         className="max-w-[800px] mx-auto relative"
+//         style={{ aspectRatio: gallery.photos[imgIndex].aspectRatio }}
+//       >
+//         <Image
+//           src={imageSrc}
+//           alt={`Picture of ${gallery.name}`}
+//           width={800}
+//           height={600}
+//           className="object-cover absolute top-0"
+//           style={{ aspectRatio: gallery.photos[imgIndex].aspectRatio }}
+//           draggable="false"
+//         />
+//       </motion.div>
+//     </div>
+//   );
+
+
