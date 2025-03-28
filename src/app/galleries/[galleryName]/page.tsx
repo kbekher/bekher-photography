@@ -1,8 +1,9 @@
 // /app/galleries/[galleryName]/page.tsx
 
+import MotionImage from "@/components/MotionImage";
 import { galleriesData } from "@/data";
-import { computeDimensions } from "@/utils/utils";
-import Image from "next/image";
+// import { computeDimensions } from "@/utils/utils";
+// import Image from "next/image";
 
 interface Props {
   params: {
@@ -28,32 +29,35 @@ const GalleryPage = async ({ params }: Props) => {
       </div>
 
       {/* Images */}
-      <div className="">
+      <div className="overflow-hidden">
         {gallery.photos.map((photo, index) => {
-          const { width, height } = computeDimensions(photo.aspectRatio, 700); // Calculate dynamic width and height
+          // const { width, height } = computeDimensions(photo.aspectRatio, 700); // Calculate dynamic width and height
 
           return (
-            <div
-              key={index}
-              className="max-w-[800px] mx-auto "
-              style={{
-                aspectRatio: photo.aspectRatio,
-                // backgroundColor: "#d5d4ff", // You can add actual images here
-                position: "relative",
-              }}
-            >
-              {/* Display your image or placeholder here */}
-              <Image
-                src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${galleryName}/${galleryName}-${index + 1}.jpg`}
-                alt={`Picture of ${galleryName}`}
-                width={width}
-                height={height}
-                // sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
-                draggable='false'
-                className='object-cover absolute top-0'
-                style={{ aspectRatio: photo.aspectRatio }}
-              />
-            </div>
+            <MotionImage galleryName={galleryName} imgIndex={index} key={index} />
+            // <div
+            //   key={index}
+            //   className="max-w-[800px] mx-auto "
+            //   style={{
+            //     aspectRatio: photo.aspectRatio,
+            //     // backgroundColor: "#d5d4ff", // You can add actual images here
+            //     position: "relative",
+            //   }}
+            // >
+
+
+            //   {/* Display your image or placeholder here */}
+            //   <Image
+            //     src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${galleryName}/${galleryName}-${index + 1}.jpg`}
+            //     alt={`Picture of ${galleryName}`}
+            //     width={width}
+            //     height={height}
+            //     // sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
+            //     draggable='false'
+            //     className='object-cover absolute top-0'
+            //     style={{ aspectRatio: photo.aspectRatio }}
+            //   />
+            // </div>
           )
         })}
       </div>
