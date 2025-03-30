@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Kristina Bekher",
-  description: "Digital Gallery of a Film Photographer",
+  description: "Digital Gallery of Film Photography",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
