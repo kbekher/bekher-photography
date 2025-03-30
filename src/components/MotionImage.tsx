@@ -16,7 +16,6 @@ const MotionImage = ({ galleryName, imgIndex }: Props) => {
   const isInView = useInView(ref, { once: true });
 
   const gallery = galleriesData[galleryName as keyof typeof galleriesData];
-  console.log(gallery)
 
   const imageSrc = `https://d14lj85n4pdzvr.cloudfront.net/galleries/${galleryName}/${galleryName}-${imgIndex + 1}.jpg`;
 

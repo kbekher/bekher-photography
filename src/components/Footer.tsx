@@ -8,7 +8,7 @@ import { useMediaQuery } from 'react-responsive';
 
 const Footer = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true });
+  const isInView = useInView(ref);
   const isMobile = useMediaQuery({ maxWidth: 768 });
 
   return (

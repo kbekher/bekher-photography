@@ -1,17 +1,16 @@
 // /app/galleries/[galleryName]/page.tsx
-
+'use client'
+import * as React from 'react'
 import { galleriesData } from "@/data";
 import { computeDimensions } from "@/utils/utils";
 import Image from "next/image";
+import { useParams } from 'next/navigation';
 
-interface Props {
-  params: {
-    galleryName: string;
-  };
-}
 
-const GalleryPage = async ({ params }: Props) => {
-  const { galleryName } = await params;
+const GalleryPage = () => {
+  const params = useParams();
+  const { galleryName } = params as { galleryName: string }; 
+
   const gallery = galleriesData[galleryName as keyof typeof galleriesData];
 
   if (!gallery) {
