@@ -64,17 +64,6 @@ body {
   overflow: hidden;
 }
 
-.privacy-screen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--accent);
-  z-index: 2;
-}
-
-
 @media (max-width: 768px) {
   .custom-text {
     font-size: calc((100vw - 120px) / 10); 
