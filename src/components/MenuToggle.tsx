@@ -6,32 +6,33 @@ interface Props {
   isOpen: boolean;
 }
 
+// Variants for text color and opacity
+const textVariants = {
+  open: {
+    color: "#000000",
+    opacity: 1,
+    transition: { duration: 0.3 },
+  },
+  closed: {
+    color: "#ffffff",
+    opacity: 1,
+    transition: { duration: 0.3 },
+  },
+};
+
 export const MenuToggle = ({ toggle, isOpen }: Props) => (
-  <button onClick={toggle} className="absolute px-5 md:px-[60px] py-[50px] right-0">
-    {/* <AnimatePresence mode="wait"> */}
-      {isOpen ? (
-        <motion.span
-          key="close"
-          initial={{ y: -20 }}
-          animate={{ y: 0 }}
-          exit={{ y: 20 }}
-          transition={{ duration: 0.3 }}
-          className="text-black"
-        >
-          CLOSE
-        </motion.span>
-      ) : (
-        <motion.span
-          key="menu"
-          initial={{ y: 20 }}
-          animate={{ y: 0 }}
-          exit={{ y: -20 }}
-          transition={{ duration: 0.3 }}
-          className="text-white"
-        >
-          MENU
-        </motion.span>
-      )}
-    {/* </AnimatePresence> */}
-  </button>
+  <div className="absolute p-5 right-0">
+    <motion.button
+      onClick={toggle}
+      className="bg-transparent border-none cursor-pointer"
+    >
+      <motion.span
+        variants={textVariants}
+        initial={false}
+        animate={isOpen ? "open" : "closed"}
+      >
+        {isOpen ? "CLOSE" : "MENU"}
+      </motion.span>
+    </motion.button>
+  </div>
 );

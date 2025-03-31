@@ -24,6 +24,15 @@ module.exports = {
       // translate: {
       //   '-1/2': '-50%',
       // },
+      transitionProperty: {
+        'smooth': 'color, background-color, border-color, opacity, transform',
+      },
+      transitionTimingFunction: {
+        'smooth': 'ease-in-out',
+      },
+      transitionDuration: {
+        'smooth': '300ms',
+      },
     },
   },
   plugins: [],

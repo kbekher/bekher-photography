@@ -9,7 +9,8 @@
   --foreground: #ffffff;
   --menu-background: #f2f5ff;
   --footer-background: #51508b;
-  --hover: #d5d4ff;
+  /* --hover: #d5d4ff; */
+  --hover:  #808080;
   --accent: #8197e5;
 
   --font-size: 16px;

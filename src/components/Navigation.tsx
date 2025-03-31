@@ -1,11 +1,44 @@
 import * as React from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import ContactLinks from "./ContactLinks";
+
+const containerVariants = {
+  open: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      duration: 0.1,
+      staggerChildren: 0.07,
+    },
+
+  },
+  closed: {
+    y: -300,
+    opacity: 0,
+    transition: { duration: 0.3 },
+  }
+};
+
+const titleVariants = {
+  open: {
+    // height: "max-content",
+    opacity: 1,
+    transition: { duration: 0.3 },
+  },
+  closed: {
+    // height: 0,
+    opacity: 0,
+    transition: {
+      duration: 0.1,
+    },
+  }
+};
 
 const listVariants = {
   open: {
-    height: 300,
-    transition: { staggerChildren: 0.07, delayChildren: 0.2 },
+    height: "max-content",
+    transition: { staggerChildren: 0.07, delayChildren: 0.3 },
   },
   closed: {
     height: 0,
@@ -30,36 +63,69 @@ const itemVariants = {
   }
 };
 
+
+const contactVariants = {
+  open: {
+    opacity: 1,
+    transition: { delay: 0.8, duration: 0.3 },
+  },
+  closed: {
+    opacity: 0,
+    transition: { duration: 0.2 },
+  },
+};
+
 interface Props {
   toggle: () => void;
   isOpen: boolean;
 }
 
-// TODO: could be a better way to add menu - overlay or so 
-
 export const Navigation = ({ toggle, isOpen }: Props) => {
+  const links = [
+    { name: "Home", href: "/" },
+    { name: "Galleries", href: "/galleries" },
+    { name: "About", href: "/about" },
+  ];
+
   return (
-    <motion.ul
-      variants={listVariants}
-      className={`absolute p-5 top-0 w-full text-[60px] uppercase ${isOpen ? "pointer-events-all": "pointer-events-none"}`}
+    <motion.div
+      variants={containerVariants}
+      initial={false}
+      animate={isOpen ? "open" : "closed"}
+      className="absolute p-5 top-0 w-full h-max flex justify-between gap-5 bg-white text-black"
     >
-      {["home", "galleries", "about"].map((item) => (
-        <motion.li
-          variants={itemVariants}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex items-center text-black list-none"
-          key={item}
+      <motion.div
+        className="hidden md:block w-[50%]"
+        variants={titleVariants}
+      >
+        <span className="font-bold block">Kristina Bekher</span>
+      </motion.div>
+
+      <div className="flex flex-col justify-between w-full md:w-[50%]">
+        <motion.ul
+          variants={listVariants}
+          className='flex flex-col gap-0 text-[60px] uppercase leading-none'
         >
-          <Link 
-            href={item === "home" ? "/" : `/${item}`} 
-            className="w-max"
-            onClick={toggle}
-          >
-            {item}
-          </Link>
-        </motion.li>
-      ))}
-    </motion.ul>
+          {links.map(({ name, href }) => (
+            <motion.li
+              key={name}
+              variants={itemVariants}
+              // whileHover={{ color: "#808080" }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center w-max list-none transition-smooth hover:text-[var(--hover)]"
+            >
+              <Link href={href} onClick={toggle}>
+                {name}
+              </Link>
+            </motion.li>
+          ))}
+        </motion.ul>
+
+        <motion.div variants={contactVariants} className="pt-[40px]">
+          <ContactLinks />
+        </motion.div>
+      </div>
+
+    </motion.div>
   );
 }
