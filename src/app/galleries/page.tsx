@@ -1,11 +1,8 @@
-// "use client";
-
-// import { motion, useIsPresent } from "framer-motion";
 import { galleriesData } from "@/data";
 import Link from "next/link";
+import TransitionLayer from "@/components/TransitionLayer";
 
 const GalleriesPage = () => {
-  // const isPresent = useIsPresent();
 
   return (
     <div className="w-full h-full mx-5 md:mx-[60px] pb-[140px]">
@@ -19,15 +16,9 @@ const GalleriesPage = () => {
           </li>
         ))}
       </ul>
-      
-      {/* 
-      <motion.div
-        initial={{ scaleX: 1 }}
-        animate={{ scaleX: 0, transition: { duration: 0.8, ease: "circOut" } }}
-        exit={{ scaleX: 1, transition: { duration: 0.8, ease: "circIn" } }}
-        style={{ originX: isPresent ? 0 : 1 }}
-        className="privacy-screen"
-      /> */}
+
+      {/* Transition Layer */}
+      <TransitionLayer />
     </div>
   )
 }

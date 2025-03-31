@@ -1,15 +1,16 @@
-// /app/galleries/[galleryName]/page.tsx
-'use client'
+'use client';
+
 import * as React from 'react'
-import { galleriesData } from "@/data";
-import { computeDimensions } from "@/utils/utils";
 import Image from "next/image";
 import { useParams } from 'next/navigation';
 
+import { galleriesData } from "@/data";
+import { computeDimensions } from "@/utils/utils";
+import TransitionLayer from '@/components/TransitionLayer';
 
 const GalleryPage = () => {
   const params = useParams();
-  const { galleryName } = params as { galleryName: string }; 
+  const { galleryName } = params as { galleryName: string };
 
   const gallery = galleriesData[galleryName as keyof typeof galleriesData];
 
@@ -58,6 +59,9 @@ const GalleryPage = () => {
           )
         })}
       </div>
+
+      {/* Transition Layer */}
+      <TransitionLayer />
     </div>
   );
 };

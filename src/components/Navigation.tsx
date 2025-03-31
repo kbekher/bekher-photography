@@ -1,6 +1,6 @@
 import * as React from "react";
 import { motion } from "framer-motion";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import ContactLinks from "./ContactLinks";
 
 const containerVariants = {
@@ -81,11 +81,21 @@ interface Props {
 }
 
 export const Navigation = ({ toggle, isOpen }: Props) => {
+  const router = useRouter();
+
   const links = [
     { name: "Home", href: "/" },
     { name: "Galleries", href: "/galleries" },
     { name: "About", href: "/about" },
   ];
+
+  // Function to handle link click
+  const handleLinkClick = (href: string) => {
+    toggle(); // Close menu first
+    setTimeout(() => {
+      router.push(href); // Navigate after animation
+    }, 300); // Match this delay with the closing animation duration
+  };
 
   return (
     <motion.div
@@ -110,13 +120,15 @@ export const Navigation = ({ toggle, isOpen }: Props) => {
             <motion.li
               key={name}
               variants={itemVariants}
-              // whileHover={{ color: "#808080" }}
               whileTap={{ scale: 0.95 }}
               className="flex items-center w-max list-none transition-smooth hover:text-[var(--hover)]"
             >
-              <Link href={href} onClick={toggle}>
+              <button
+                onClick={() => handleLinkClick(href)}
+                className="focus:outline-none cursor-pointer uppercase"
+              >
                 {name}
-              </Link>
+              </button>
             </motion.li>
           ))}
         </motion.ul>

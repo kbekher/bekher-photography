@@ -1,7 +1,7 @@
 import Link from "next/link";
-
 import { galleriesData } from "@/data"
 import MotionImage from "@/components/MotionImage";
+import TransitionLayer from "@/components/TransitionLayer";
 
 const Home = () => {
 
@@ -68,6 +68,9 @@ const Home = () => {
         </div>
 
       </div>
+
+      {/* Transition Layer */}
+      <TransitionLayer />
     </div>
   );
 }
