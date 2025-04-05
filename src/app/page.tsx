@@ -5,7 +5,7 @@ import TransitionLink from "@/components/TransitionLink";
 const Home = () => {
 
   return (
-    <div className="w-auto min-h-full h-auto mx-5 md:mx-[60px] pb-[140px]">
+    <div className="w-auto min-h-full h-auto mx-5 md:mx-[60px] pb-[140px] pt-[64px]">
 
       <div className="flex flex-col md:grid grid-cols-12 gap-x-5 gap-y-10">
 

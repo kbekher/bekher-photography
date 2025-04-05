@@ -18,7 +18,7 @@ const GalleryPage = () => {
   }
 
   return (
-    <div className="w-full h-full mx-5 md:mx-[60px] pb-[140px]">
+    <section>
 
       {/* Info */}
       <div>
@@ -57,7 +57,7 @@ const GalleryPage = () => {
           )
         })}
       </div>
-    </div>
+    </section>
   );
 };
 

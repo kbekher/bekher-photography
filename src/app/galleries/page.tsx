@@ -4,7 +4,7 @@ import { galleriesData } from "@/data";
 const GalleriesPage = () => {
 
   return (
-    <div className="w-full h-full mx-5 md:mx-[60px] pb-[140px]">
+    <section>
       <h1>This is Galleries Page</h1>
       <ul className="grid grid-cols-12 gap-5">
         {Object.keys(galleriesData).map((gallery) => (
@@ -15,7 +15,7 @@ const GalleriesPage = () => {
           </li>
         ))}
       </ul>
-    </div>
+    </section>
   )
 }
 

@@ -21,7 +21,7 @@ const textVariants = {
 };
 
 export const MenuToggle = ({ toggle, isOpen }: Props) => (
-  <div className="absolute p-5 right-0">
+  <div className={`absolute p-5 right-0 ${isOpen ? "" : "blend"}`}>
     <motion.button
       onClick={toggle}
       className="bg-transparent border-none cursor-pointer"

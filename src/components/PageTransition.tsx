@@ -44,7 +44,7 @@ export default function PageTransition({ children }: { children: React.ReactNode
             initial={{ opacity: 0, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -40 }}
-            transition={{ duration: 0.4, ease: "easeInOut" }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
             className="relative z-10"
           >
             {children}
@@ -56,17 +56,13 @@ export default function PageTransition({ children }: { children: React.ReactNode
       <AnimatePresence>
         {showOverlay && (
           <>
-            {/* Accent layer (shows on all pages including home) */}
             <motion.div
               key={`overlay-${currentPath}`}
               initial={{ y: "100%" }}
               animate={{ y: "0%" }}
               exit={{ y: "-100%" }}
-              transition={{
-                duration: 0.4,
-                ease: "easeInOut",
-              }}
-              className="fixed inset-0 bg-[var(--accent)] z-40"
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="fixed inset-0 bg-[var(--branding)] z-40"
             />
           </>
         )}

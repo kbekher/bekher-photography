@@ -22,7 +22,7 @@ module.exports = {
       //   '-1/2': '-50%',
       // },
       transitionProperty: {
-        'smooth': 'color, background-color, border-color, opacity, transform',
+        'smooth': 'all',
       },
       transitionTimingFunction: {
         'smooth': 'ease-in-out',

@@ -2,6 +2,8 @@ import * as React from "react";
 import { motion } from "framer-motion";
 import ContactLinks from "./ContactLinks";
 import TransitionLink from "./TransitionLink";
+import { navLinks } from "@/constants/contants";
+
 
 const containerVariants = {
   open: {
@@ -81,18 +83,14 @@ interface Props {
 }
 
 export const Navigation = ({ toggle, isOpen }: Props) => {
-  const links = [
-    { name: "Home", href: "/" },
-    { name: "Galleries", href: "/galleries" },
-    { name: "About", href: "/about" },
-  ];
+
 
   return (
     <motion.div
       variants={containerVariants}
       initial={false}
       animate={isOpen ? "open" : "closed"}
-      className="absolute p-5 top-0 w-full h-max flex justify-between gap-5 bg-white text-[var(--menu-text)]"
+      className="absolute p-5 top-0 w-full h-max flex justify-between gap-5 bg-[var(--secondary)] text-[var(--branding)]"
     >
       <motion.div
         className="hidden md:block w-[50%]"
@@ -106,7 +104,7 @@ export const Navigation = ({ toggle, isOpen }: Props) => {
           variants={listVariants}
           className='flex flex-col gap-0 text-[60px] uppercase leading-none'
         >
-          {links.map(({ name, href }) => (
+          {navLinks.map(({ name, href }) => (
             <motion.li
               key={name}
               variants={itemVariants}

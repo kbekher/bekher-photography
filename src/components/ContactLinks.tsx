@@ -5,24 +5,24 @@ interface Props {
 }
 
 const CONTACTS = [
-  { name: 'LinkedIn', shortName: 'LN', href: 'https://www.linkedin.com/in/kristina-bekher' },
-  { name: 'Instagram', shortName: 'IN', href: 'https://instagram.com/ninjagexly' },
-  { name: 'Telegram', shortName: 'TG', href: 'https://t.me/ninjagexly' },
+  { name: 'LinkedIn', href: 'https://www.linkedin.com/in/kristina-bekher' },
+  { name: 'Instagram', href: 'https://instagram.com/ninjagexly' },
+  { name: 'Telegram', href: 'https://t.me/ninjagexly' },
 ];
 
 const ContactLinks = ({ isFooter = false }: Props) => {
   return (
-    <div className={`flex ${isFooter ? "flex-col" : "flex-row"} gap-5 w-[50%]`}>
-      {CONTACTS.map(({ name, shortName, href }) => (
+    <div className={`flex ${isFooter ? "flex-col" : "flex-row gap-5"} w-[50%]`}>
+      {CONTACTS.map(({ name, href }) => (
         <a
           key={name}
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className={`w-max ${!isFooter ? 'transition-smooth hover:text-[var(--accent)]' : ''}`}
+          className='w-max transition-smooth hover:text-[var(--accent)]'
           aria-label={`Visit ${name}`}
         >
-          {isFooter ? shortName : name}
+          {name}
         </a>
       ))}
     </div>

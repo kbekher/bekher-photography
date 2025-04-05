@@ -14,11 +14,11 @@ const Header = () => {
   const containerRef = useRef(null);
 
   return (
-    <header className="sticky top-0 p-5 flex justify-between z-10 font-bold">
+    <header className={`${isOpen ? "" : "blend"} fixed top-0 left-0 right-0 p-5 flex justify-between z-10 font-bold transition-smooth`}>
       <div>
         <TransitionLink 
           href="/"
-          className="duration-[0.3] transition-all hover:text-[var(--accent)] "
+          className="transition-smooth hover:text-[var(--accent)]"
         >
           {pathname === '/' ? '[Logo] Kristina Bekher' : 'Home'}
         </TransitionLink>
