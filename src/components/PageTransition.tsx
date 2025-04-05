@@ -58,9 +58,9 @@ export default function PageTransition({ children }: { children: React.ReactNode
           <>
             <motion.div
               key={`overlay-${currentPath}`}
-              initial={{ y: "100%" }}
-              animate={{ y: "0%" }}
-              exit={{ y: "-100%" }}
+              initial={{ y: "100%", opacity: 0 }}
+              animate={{ y: "0%", opacity: 1 }}
+              exit={{ y: "-100%",  opacity: 0.7 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
               className="fixed inset-0 bg-[var(--branding)] z-40"
             />

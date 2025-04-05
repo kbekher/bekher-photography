@@ -20,8 +20,9 @@ const textVariants = {
   },
 };
 
-export const MenuToggle = ({ toggle, isOpen }: Props) => (
-  <div className={`absolute p-5 right-0 ${isOpen ? "" : "blend"}`}>
+export const MenuToggle = ({ toggle, isOpen }: Props) => {
+  return (
+  <div className="absolute p-5 right-0">
     <motion.button
       onClick={toggle}
       className="bg-transparent border-none cursor-pointer"
@@ -40,3 +41,4 @@ export const MenuToggle = ({ toggle, isOpen }: Props) => (
     </motion.button>
   </div>
 );
+}
