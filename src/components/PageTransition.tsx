@@ -3,80 +3,74 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTransitionContext } from "./TransitionContext";
 
-export default function Preloader({ children }: { children: React.ReactNode }) {
+export default function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isHome = pathname === "/";
-  const [loading, setLoading] = useState(false);
-  const [showContent, setShowContent] = useState(false);
+  const { isTransitioning, targetPath } = useTransitionContext();
+
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [showChildren, setShowChildren] = useState(true);
+  const [currentPath, setCurrentPath] = useState(pathname);
 
   useEffect(() => {
-    setLoading(true);
-    setShowContent(false);
+    // If we're transitioning or doing a hard reload to home, show the loader
+    if (isTransitioning && targetPath && targetPath !== currentPath) {
+      setShowChildren(false);
 
-    const loaderTimer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+      const timeout = setTimeout(() => {
+        setShowOverlay(true);
 
-    const contentTimer = setTimeout(() => {
-      setShowContent(true);
-    }, 800);
+        const overlayDelay = 400;
 
-    return () => {
-      clearTimeout(loaderTimer);
-      clearTimeout(contentTimer);
-    };
-  }, [pathname]);
+        setTimeout(() => {
+          setCurrentPath(targetPath || pathname);
+          setShowOverlay(false);
+          setShowChildren(true);
+        }, overlayDelay);
+      }, 400); // let current content animate out
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isTransitioning, targetPath, currentPath, pathname]);
 
   return (
-    <div className="relative">
-      <AnimatePresence>
-        {isHome && loading && (
-          <>
-            <motion.div
-              key="loader"
-              initial={{ y: 0 }}
-              animate={{ y: 0 }}
-              exit={{ y: "-100%", transition: { duration: 0.6, ease: "easeInOut" } }}
-              className="fixed inset-0 flex items-center justify-center bg-black text-white z-50"
-            >
-              <span className="text-lg font-semibold">Kristina Bekher</span>
-            </motion.div>
-
-            {/* Accent Overlay */}
-            <motion.div
-              key="overlay"
-              initial={{ y: "100%" }}
-              animate={{ y: "0%", transition: { duration: 0.8, ease: "easeInOut" } }}
-              exit={{ y: "-100%", opacity: 0, transition: { duration: 0.8, ease: "easeInOut", delay: 0.6 } }}
-              className="fixed top-0 left-0 right-0 bottom-0 bg-[var(--accent)] z-40"
-            />
-          </>
-        )}
-
-        {!isHome && loading && (
+    <div className="relative overflow-hidden">
+      {/* Animate Page Content */}
+      <AnimatePresence mode="wait">
+        {showChildren && (
           <motion.div
-            key={pathname}
-            initial={{ y: "100%" }}
-            animate={{ y: "0%", transition: { duration: 0.8, ease: "easeInOut" } }}
-            exit={{ y: "-100%", opacity: 0, transition: { duration: 0.8, ease: "easeInOut" } }}
-            className="fixed top-0 left-0 right-0 bottom-0 bg-[var(--accent)] z-40"
-          />
-        )}
-      </AnimatePresence>
-
-        {/* Page Content - only show after animations */}
-        {showContent && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.6, ease: "easeIn" }}
-            className="opacity-0"
+            key={currentPath}
+            initial={{ opacity: 0, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -40 }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+            className="relative z-10"
           >
             {children}
           </motion.div>
         )}
-    </div >
+      </AnimatePresence>
+
+      {/* Overlay Animation */}
+      <AnimatePresence>
+        {showOverlay && (
+          <>
+            {/* Accent layer (shows on all pages including home) */}
+            <motion.div
+              key={`overlay-${currentPath}`}
+              initial={{ y: "100%" }}
+              animate={{ y: "0%" }}
+              exit={{ y: "-100%" }}
+              transition={{
+                duration: 0.4,
+                ease: "easeInOut",
+              }}
+              className="fixed inset-0 bg-[var(--accent)] z-40"
+            />
+          </>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

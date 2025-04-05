@@ -1,6 +1,5 @@
+import TransitionLink from "@/components/TransitionLink";
 import { galleriesData } from "@/data";
-import Link from "next/link";
-// import TransitionLayer from "@/components/TransitionLayer";
 
 const GalleriesPage = () => {
 
@@ -10,15 +9,12 @@ const GalleriesPage = () => {
       <ul className="grid grid-cols-12 gap-5">
         {Object.keys(galleriesData).map((gallery) => (
           <li key={gallery} className="col-span-full">
-            <Link href={`/galleries/${gallery}`}>
+            <TransitionLink href={`/galleries/${gallery}`}>
               {galleriesData[gallery as keyof typeof galleriesData].name}
-            </Link>
+            </TransitionLink>
           </li>
         ))}
       </ul>
-
-      {/* Transition Layer */}
-      {/* <TransitionLayer /> */}
     </div>
   )
 }

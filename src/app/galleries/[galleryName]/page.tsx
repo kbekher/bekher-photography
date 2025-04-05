@@ -6,7 +6,6 @@ import { useParams } from 'next/navigation';
 
 import { galleriesData } from "@/data";
 import { computeDimensions } from "@/utils/utils";
-// import TransitionLayer from '@/components/TransitionLayer';
 
 const GalleryPage = () => {
   const params = useParams();
@@ -43,7 +42,6 @@ const GalleryPage = () => {
               }}
             >
 
-
               {/* Display your image or placeholder here */}
               <Image
                 src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${galleryName}/${galleryName}-${index + 1}.jpg`}
@@ -59,9 +57,6 @@ const GalleryPage = () => {
           )
         })}
       </div>
-
-      {/* Transition Layer */}
-      {/* <TransitionLayer /> */}
     </div>
   );
 };

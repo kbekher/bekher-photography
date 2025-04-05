@@ -1,7 +1,7 @@
 import * as React from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
 import ContactLinks from "./ContactLinks";
+import TransitionLink from "./TransitionLink";
 
 const containerVariants = {
   open: {
@@ -81,28 +81,18 @@ interface Props {
 }
 
 export const Navigation = ({ toggle, isOpen }: Props) => {
-  const router = useRouter();
-
   const links = [
     { name: "Home", href: "/" },
     { name: "Galleries", href: "/galleries" },
     { name: "About", href: "/about" },
   ];
 
-  // Function to handle link click
-  const handleLinkClick = (href: string) => {
-    toggle(); // Close menu first
-    setTimeout(() => {
-      router.push(href); // Navigate after animation
-    }, 300); // Match this delay with the closing animation duration
-  };
-
   return (
     <motion.div
       variants={containerVariants}
       initial={false}
       animate={isOpen ? "open" : "closed"}
-      className="absolute p-5 top-0 w-full h-max flex justify-between gap-5 bg-white text-black"
+      className="absolute p-5 top-0 w-full h-max flex justify-between gap-5 bg-white text-[var(--menu-text)]"
     >
       <motion.div
         className="hidden md:block w-[50%]"
@@ -121,14 +111,19 @@ export const Navigation = ({ toggle, isOpen }: Props) => {
               key={name}
               variants={itemVariants}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center w-max list-none transition-smooth hover:text-[var(--hover)]"
+              className="flex items-center w-max list-none transition-smooth hover:text-[var(--accent)]"
             >
-              <button
-                onClick={() => handleLinkClick(href)}
-                className="focus:outline-none cursor-pointer uppercase"
+              <TransitionLink
+                href={href}
+                beforeNavigate={() =>
+                  new Promise((resolve) => {
+                    toggle(); // close menu
+                    setTimeout(resolve, 300); // wait for animation
+                  })
+                }
               >
                 {name}
-              </button>
+              </TransitionLink>
             </motion.li>
           ))}
         </motion.ul>

@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useRef } from "react";
 import { motion, useCycle } from "framer-motion";
 import { MenuToggle } from "./MenuToggle";
 import { Navigation } from "./Navigation";
+import TransitionLink from "./TransitionLink";
 
 
 const Header = () => {
@@ -14,7 +14,7 @@ const Header = () => {
   return (
     <header className="sticky top-0 p-5 flex justify-between z-10 font-bold">
       <div>
-        <Link href="/">[Logo] Kristina Bekher</Link>
+        <TransitionLink href="/">[Logo] Kristina Bekher</TransitionLink>
       </div>
 
         <motion.nav
@@ -27,7 +27,6 @@ const Header = () => {
           <Navigation toggle={() => toggleOpen()} isOpen={isOpen} />
           <MenuToggle toggle={() => toggleOpen()} isOpen={isOpen} />
         </motion.nav>
-
     </header>
   )
 }

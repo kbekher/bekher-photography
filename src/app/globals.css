@@ -7,11 +7,11 @@
 :root {
   --background: #0a0a0a;
   --foreground: #ffffff;
-  --menu-background: #f2f5ff;
-  --footer-background: #51508b;
-  /* --hover: #d5d4ff; */
-  --hover:  #808080;
-  --accent: #8197e5;
+  --menu-background: #CBCBCF;
+  --menu-text: #444251;
+  --footer-background: #444251;
+  --footer-text: #CBCBCF;
+  --accent: #8D89A3;
 
   --font-size: 16px;
   --font-size-scale: 1.5; 
@@ -31,6 +31,24 @@
   }
 } */
 
+/* Style the scrollbar */
+::-webkit-scrollbar {
+  width: 1px;  /* Width of the scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: black;  /* Dark track background */
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--menu-background);  /* Dynamic thumb color */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--menu-background);
+}
+
 
 body {
   font-family: Arial, Helvetica, sans-serif;
@@ -42,7 +60,6 @@ body {
   min-height: -webkit-fill-available;
   overflow-x: hidden;
 }
-
 
 .privacy-screen {
   position: fixed;

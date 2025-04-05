@@ -3,10 +3,10 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import Header from "@/components/Header";
 import PageTransition from "@/components/PageTransition";
-
-// import Footer from "@/components/Footer";
+import Footer from "@/components/Footer";
 
 import "./globals.css";
+import { TransitionProvider } from "@/components/TransitionContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,14 +27,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Header />
-        <main className="min-h-full">
-            <PageTransition>
-              {children}
-            </PageTransition>
-        </main>
-        {/* <Footer /> */}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-[100vh]`}>
+        <TransitionProvider>
+          <PageTransition>
+            <Header />
+            <main>{children}</main>
+            <Footer />
+          </PageTransition>
+        </TransitionProvider>
       </body>
     </html>
   );

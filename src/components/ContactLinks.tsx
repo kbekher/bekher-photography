@@ -19,7 +19,7 @@ const ContactLinks = ({ isFooter = false }: Props) => {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className={`w-max ${!isFooter ? 'transition-smooth hover:text-[var(--hover)]' : ''}`}
+          className={`w-max ${!isFooter ? 'transition-smooth hover:text-[var(--accent)]' : ''}`}
           aria-label={`Visit ${name}`}
         >
           {isFooter ? shortName : name}

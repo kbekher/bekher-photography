@@ -8,10 +8,9 @@ import { galleriesData } from '@/data';
 interface Props {
   galleryName: string;
   imgIndex: number;
-  isFirst?: boolean;
 }
 
-const MotionImage = ({ galleryName, imgIndex, isFirst = false }: Props) => {
+const MotionImage = ({ galleryName, imgIndex }: Props) => {
   const ref = useRef(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -29,8 +28,8 @@ const MotionImage = ({ galleryName, imgIndex, isFirst = false }: Props) => {
         ref={ref}
         initial={{ scale: 1.2, opacity: 0.5 }}
         whileInView={{ scale: 1, opacity: 1 }}
-        viewport={{ amount: isFirst ? 0 : 0.3, once: true }} 
-        transition={{ duration: 0.8, delay: isFirst ? 1 : 0, ease: 'easeOut' }}
+        viewport={{ once: true }} 
+        transition={{ duration: 0.8, ease: 'easeOut' }}
         className="w-full h-full mx-auto relative overflow-hidden"
       >
         {/* Placeholder */}

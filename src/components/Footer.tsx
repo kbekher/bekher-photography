@@ -1,7 +1,7 @@
 "use client";
 
-import Link from 'next/link';
 import ContactLinks from './ContactLinks';
+import TransitionLink from './TransitionLink';
 
 
 const Footer = () => {
@@ -16,9 +16,9 @@ const Footer = () => {
         <div className='flex gap-20 col-span-4 md:col-span-2 row-start-2 md:row-start-1'>
 
           <div className="flex flex-col w-[50%]">
-            <Link href="/" className="w-max">Home</Link>
-            <Link href="/galleries" className="w-max">Galleries</Link>
-            <Link href="/about" className="w-max">About</Link>
+            <TransitionLink href="/" >Home</TransitionLink>
+            <TransitionLink href="/galleries" >Galleries</TransitionLink>
+            <TransitionLink href="/about" >About</TransitionLink>
           </div>
 
           <ContactLinks isFooter={true} />
