@@ -111,7 +111,7 @@ export const Navigation = ({ toggle, isOpen }: Props) => {
               key={name}
               variants={itemVariants}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center w-max list-none transition-smooth hover:text-[var(--accent)]"
+              className="flex items-center w-max list-none"
             >
               <TransitionLink
                 href={href}

@@ -7,10 +7,11 @@ interface Props {
   href: string;
   children: React.ReactNode;
   beforeNavigate?: () => Promise<void>;
+  className?: string;
 }
 
 
-export default function TransitionLink({ href, children, beforeNavigate }: Props) {
+export default function TransitionLink({ href, children, beforeNavigate, className }: Props) {
   const router = useRouter();
   const { startTransition } = useTransitionContext();
 
@@ -25,7 +26,7 @@ export default function TransitionLink({ href, children, beforeNavigate }: Props
   };
 
   return (
-    <a href={href} onClick={handleClick}>
+    <a href={href} onClick={handleClick} className={className}>
       {children}
     </a>
   );

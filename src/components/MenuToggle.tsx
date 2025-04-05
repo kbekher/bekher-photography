@@ -9,7 +9,7 @@ interface Props {
 // Variants for text color and opacity
 const textVariants = {
   open: {
-    color: "#000000",
+    color: "#444251",
     opacity: 1,
     transition: { duration: 0.3 },
   },
@@ -30,6 +30,10 @@ export const MenuToggle = ({ toggle, isOpen }: Props) => (
         variants={textVariants}
         initial={false}
         animate={isOpen ? "open" : "closed"}
+        whileHover={{
+          color: "#8d89a3",
+          transition: { duration: 0.3 },
+        }}
       >
         {isOpen ? "CLOSE" : "MENU"}
       </motion.span>
