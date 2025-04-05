@@ -20,7 +20,7 @@ export function TransitionProvider({ children }: { children: React.ReactNode }) 
 
     setTimeout(() => {
       callback(); // router.push(path)
-    }, 800);
+    }, 400);
   };
 
   return (
