@@ -61,14 +61,6 @@ body {
   overflow-x: hidden;
 }
 
-a {
-  transition-duration: 0.3s;
-}
-
-a:hover {
-  color: var(--accent);
-}
-
 
 .privacy-screen {
   position: fixed;
