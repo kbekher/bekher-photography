@@ -24,7 +24,7 @@ const titleVariants = {
   open: {
     // height: "max-content",
     opacity: 1,
-    transition: { duration: 0.3 },
+    transition: { duration: 0.8 },
   },
   closed: {
     // height: 0,

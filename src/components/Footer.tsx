@@ -1,15 +1,10 @@
 "use client";
 
 import Link from 'next/link';
-import { motion, useInView } from 'framer-motion';
-import { useRef } from 'react';
 import ContactLinks from './ContactLinks';
 
 
 const Footer = () => {
-  const ref = useRef(null);
-  const isInView = useInView(ref);
-
   return (
     <footer className="bg-[var(--footer-background)] w-full p-5 md:p-[60px] md:pb-2 text-white text-[24px] font-bold leading-[28px] overflow-hidden">
       <div className="grid gap-5 grid-cols-4 grid-rows-2 md:pt-[100px] flex-col justify-center">
@@ -30,15 +25,9 @@ const Footer = () => {
 
         </div>
 
-        <motion.div
-          ref={ref}
-          initial={{ y: 100, opacity: 0 }}
-          animate={isInView ? { y: 0, opacity: 1 } : {}}
-          transition={{ duration: 0.7, delay: 0.3, ease: 'easeOut' }}
-          className="w-auto h-full flex items-end col-span-full row-start-1 md:row-start-3"
-        >
+        <div className="w-auto h-full flex items-end col-span-full row-start-1 md:row-start-3">
           <p className="uppercase custom-text">RUN. SHOOT. DEVELOP.</p>
-        </motion.div>
+        </div>
 
       </div>
     </footer>

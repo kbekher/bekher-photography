@@ -1,6 +1,6 @@
 import { galleriesData } from "@/data";
 import Link from "next/link";
-import TransitionLayer from "@/components/TransitionLayer";
+// import TransitionLayer from "@/components/TransitionLayer";
 
 const GalleriesPage = () => {
 
@@ -18,7 +18,7 @@ const GalleriesPage = () => {
       </ul>
 
       {/* Transition Layer */}
-      <TransitionLayer />
+      {/* <TransitionLayer /> */}
     </div>
   )
 }

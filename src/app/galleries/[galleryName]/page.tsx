@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 
 import { galleriesData } from "@/data";
 import { computeDimensions } from "@/utils/utils";
-import TransitionLayer from '@/components/TransitionLayer';
+// import TransitionLayer from '@/components/TransitionLayer';
 
 const GalleryPage = () => {
   const params = useParams();
@@ -61,7 +61,7 @@ const GalleryPage = () => {
       </div>
 
       {/* Transition Layer */}
-      <TransitionLayer />
+      {/* <TransitionLayer /> */}
     </div>
   );
 };

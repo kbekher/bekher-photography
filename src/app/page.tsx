@@ -1,25 +1,25 @@
 import Link from "next/link";
 import { galleriesData } from "@/data"
 import MotionImage from "@/components/MotionImage";
-import TransitionLayer from "@/components/TransitionLayer";
+// import TransitionLayer from "@/components/TransitionLayer";
 
 const Home = () => {
 
   return (
-    <div className="w-auto h-auto mx-5 md:mx-[60px] pb-[140px]">
+    <div className="w-auto min-h-full h-auto mx-5 md:mx-[60px] pb-[140px]">
 
       <div className="flex flex-col md:grid grid-cols-12 gap-x-5 gap-y-10">
 
         <div className="h-max col-start-2 col-span-3">
           <Link href={`/galleries/travel`} >
-            <MotionImage galleryName="travel" imgIndex={0} />
+            <MotionImage galleryName="travel" imgIndex={0} isFirst={true} />
             <span className="pt-2">{galleriesData.travel.name}</span>
           </Link>
         </div>
 
         <div className="h-max col-start-8 col-span-4 md:translate-y-[-80px]">
           <Link href={`/galleries/bw`} >
-            <MotionImage galleryName="bw" imgIndex={0} />
+            <MotionImage galleryName="bw" imgIndex={0} isFirst={true}  />
             <span className="pt-2">{galleriesData.bw.name}</span>
           </Link>
         </div>
@@ -70,7 +70,7 @@ const Home = () => {
       </div>
 
       {/* Transition Layer */}
-      <TransitionLayer />
+      {/* <TransitionLayer /> */}
     </div>
   );
 }

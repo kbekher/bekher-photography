@@ -1,5 +1,5 @@
 import React from 'react'
-import TransitionLayer from '@/components/TransitionLayer';
+// import TransitionLayer from '@/components/TransitionLayer';
 
 const AboutPage = () => {
   return (
@@ -7,7 +7,7 @@ const AboutPage = () => {
       <h1>This is About Page</h1>
 
       {/* Transition Layer */}
-      <TransitionLayer />
+      {/* <TransitionLayer /> */}
     </div>
   )
 }

@@ -4,20 +4,17 @@ module.exports = {
   theme: {
     extend: {
       keyframes: {
-        // 'gradient-animation': {
-        //   '0%': { backgroundPosition: '0% 50%' },
-        //   '25%': { backgroundPosition: '50% 50%' },
-        //   '50%': { backgroundPosition: '100% 50%' },
-        //   '75%': { backgroundPosition: '50% 50%' },
-        //   '100%': { backgroundPosition: '0% 50%' },
-        // },
+        fadeOut: {
+          '0%': { opacity: 1 },
+          '100%': { opacity: 0 },
+        },
       },
       maxWidth: {
         '1680': '1680px',
       },
-      // animation: {
-      //   'gradient-animation': 'gradient-animation ease-in-out infinite',
-      // },
+      animation: {
+        'fadeOut': 'fadeOut ease-out',
+      },
       // zIndex: {
       //   '-1': '-1',
       // },
