@@ -112,6 +112,10 @@ export const Navigation = ({ toggle, isOpen }: Props) => {
               variants={itemVariants}
               whileTap={{ scale: 0.95 }}
               className="flex items-center w-max list-none"
+              whileHover={{
+                color: "#8d89a3",
+                transition: { duration: 0.3 },
+              }}
             >
               <TransitionLink
                 href={href}

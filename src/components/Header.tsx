@@ -5,16 +5,23 @@ import { motion, useCycle } from "framer-motion";
 import { MenuToggle } from "./MenuToggle";
 import { Navigation } from "./Navigation";
 import TransitionLink from "./TransitionLink";
+import { usePathname } from "next/navigation";
 
 
 const Header = () => {
+  const pathname = usePathname();
   const [isOpen, toggleOpen] = useCycle(false, true);
   const containerRef = useRef(null);
 
   return (
     <header className="sticky top-0 p-5 flex justify-between z-10 font-bold">
       <div>
-        <TransitionLink href="/">[Logo] Kristina Bekher</TransitionLink>
+        <TransitionLink 
+          href="/"
+          className="duration-[0.3] transition-all hover:text-[var(--accent)] "
+        >
+          {pathname === '/' ? '[Logo] Kristina Bekher' : 'Home'}
+        </TransitionLink>
       </div>
 
         <motion.nav

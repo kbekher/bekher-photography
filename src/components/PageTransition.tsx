@@ -28,7 +28,7 @@ export default function PageTransition({ children }: { children: React.ReactNode
           setShowOverlay(false);
           setShowChildren(true);
         }, overlayDelay);
-      }, 400); // let current content animate out
+      }, 500); // let current content animate out
 
       return () => clearTimeout(timeout);
     }
