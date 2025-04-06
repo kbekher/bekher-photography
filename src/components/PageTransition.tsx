@@ -54,7 +54,7 @@ export default function PageTransition({ children }: { children: React.ReactNode
   return (
     <div className="relative overflow-hidden">
       {/* Animate Page Content */}
-      <AnimatePresence propagate>
+      <AnimatePresence propagate initial={false}>
         {pathname === currentPath && (
           <motion.div
             key={currentPath}
