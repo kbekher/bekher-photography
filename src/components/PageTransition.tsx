@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence, usePresence } from "framer-motion";
-import { useTransitionContext } from "./TransitionContext";
+import { useTransitionContext } from "../contexts/TransitionContext";
 
 function Overlay() {
   const [isPresent, safeToRemove] = usePresence();

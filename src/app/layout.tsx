@@ -6,7 +6,7 @@ import PageTransition from "@/components/PageTransition";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-import { TransitionProvider } from "@/components/TransitionContext";
+import { TransitionProvider } from "@/contexts/TransitionContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -30,7 +30,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <TransitionProvider>
-          <Preloader /> 
+          <Preloader />
           <PageTransition>
             <Header />
             <main>{children}</main>

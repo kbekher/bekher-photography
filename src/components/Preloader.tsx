@@ -25,7 +25,7 @@ export default function Preloader() {
           transition={{ duration: 0.6 }}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black text-white"
         >
-          <div className="text-xl font-mono animate-pulse">Loading...</div>
+          <div className="text-xl animate-pulse">Loading...</div>
         </motion.div>
       )}
     </AnimatePresence>
