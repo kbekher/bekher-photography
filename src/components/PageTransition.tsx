@@ -14,11 +14,12 @@ export default function PageTransition({ children }: { children: React.ReactNode
   const [currentPath, setCurrentPath] = useState(pathname);
 
   useEffect(() => {
+    let timeout: NodeJS.Timeout;
     // If we're transitioning or doing a hard reload to home, show the loader
     if (isTransitioning && targetPath && targetPath !== currentPath) {
       setShowChildren(false);
 
-      const timeout = setTimeout(() => {
+        timeout = setTimeout(() => {
         setShowOverlay(true);
 
         const overlayDelay = 400;
@@ -30,7 +31,10 @@ export default function PageTransition({ children }: { children: React.ReactNode
         }, overlayDelay);
       }, 400); // let current content animate out
 
-      return () => clearTimeout(timeout);
+      return () => {
+        clearTimeout(timeout);
+        setShowOverlay(false);
+      };
     }
   }, [isTransitioning, targetPath, currentPath, pathname]);
 
@@ -55,16 +59,14 @@ export default function PageTransition({ children }: { children: React.ReactNode
       {/* Overlay Animation */}
       <AnimatePresence>
         {showOverlay && (
-          <>
             <motion.div
-              key={`overlay-${currentPath}`}
+              key="overlay"
               initial={{ y: "100%", opacity: 0 }}
               animate={{ y: "0%", opacity: 1 }}
-              exit={{ y: "-100%",  opacity: 0.7 }}
+              exit={{ y: "-100%", opacity: 0.8 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
               className="fixed inset-0 bg-[var(--branding)] z-40"
             />
-          </>
         )}
       </AnimatePresence>
     </div>
