@@ -19,7 +19,7 @@ const Footer = () => {
               <TransitionLink 
                 key={name}
                 href={href}
-                className='w-max transition-smooth hover:text-[var(--accent)]'
+                className='w-max custom-transition hover:text-[var(--accent)]'
               >{name}</TransitionLink>
             ))}
           </div>

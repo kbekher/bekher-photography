@@ -21,15 +21,6 @@ module.exports = {
       // translate: {
       //   '-1/2': '-50%',
       // },
-      transitionProperty: {
-        'smooth': 'all',
-      },
-      transitionTimingFunction: {
-        'smooth': 'ease-in-out',
-      },
-      transitionDuration: {
-        'smooth': '300ms',
-      },
     },
   },
   plugins: [],

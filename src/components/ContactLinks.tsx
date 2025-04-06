@@ -19,7 +19,7 @@ const ContactLinks = ({ isFooter = false }: Props) => {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className='w-max transition-smooth hover:text-[var(--accent)]'
+          className='w-max custom-transition hover:text-[var(--accent)]'
           aria-label={`Visit ${name}`}
         >
           {name}

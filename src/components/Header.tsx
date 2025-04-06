@@ -25,12 +25,9 @@ const Header = () => {
     }
   };
   return (
-    <header className={`${blendApplied ? "blend" : ""} fixed top-0 left-0 right-0 p-5 flex justify-between z-10 font-bold transition-smooth`}>
+    <header className={`${blendApplied ? "blend" : ""} fixed top-0 left-0 right-0 p-5 flex justify-between z-10 font-bold custom-transition`}>
       <div>
-        <TransitionLink
-          href="/"
-          className="transition-smooth hover:text-[var(--accent)]"
-        >
+        <TransitionLink href="/" className="custom-transition hover:text-[var(--accent)]">
           {pathname === '/' ? '[Logo] Kristina Bekher' : 'Home'}
         </TransitionLink>
       </div>

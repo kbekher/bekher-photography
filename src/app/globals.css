@@ -31,22 +31,18 @@
 
 /* Style the scrollbar */
 ::-webkit-scrollbar {
-  width: 1px;  /* Width of the scrollbar */
+  width: 1px;
 }
-
 ::-webkit-scrollbar-track {
-  background: black;  /* Dark track background */
+  background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: var(--secondary);  /* Dynamic thumb color */
+  background: var(--secondary);
   border-radius: 10px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
   background: var(--secondary);
 }
-
 
 body {
   font-family: Arial, Helvetica, sans-serif;
@@ -76,4 +72,8 @@ section {
 .custom-text {
   font-size: 8.6vw;
   letter-spacing: -3px;
+}
+
+.custom-transition {
+  transition: all 300ms ease-in-out;
 }
