@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname} from "next/navigation";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence, usePresence } from "framer-motion";
 import { useTransitionContext } from "./TransitionContext";
 
@@ -11,8 +11,8 @@ function Overlay() {
   useEffect(() => {
     if (!isPresent) {
       const timeout = setTimeout(() => {
-        safeToRemove(); 
-      }, 600);
+        safeToRemove();
+      }, 600); // exit duration plus buffer
       return () => clearTimeout(timeout);
     }
   }, [isPresent, safeToRemove]);
@@ -39,33 +39,9 @@ export default function PageTransition({ children }: { children: React.ReactNode
   useEffect(() => {
     // If we're transitioning or doing a hard reload to home, show the loader
     if (isTransitioning && targetPath && targetPath !== currentPath) {
-      // setShowChildren(false);
-
-      // timeout = setTimeout(() => {
       setShowOverlay(true);
-
-      // const overlayDelay = 400;
-
-      // setTimeout(() => {
-      //   setCurrentPath(targetPath || pathname);
-      //   setShowOverlay(false);
-      //   setShowChildren(true);
-      // }, overlayDelay);
-      // }, 400); // let current content animate out
-
-      // return () => {
-      //   clearTimeout(timeout);
-      //   setShowOverlay(false);
-      // };
     }
   }, [isTransitioning, targetPath, currentPath]);
-
-  // const handleOverlayAnimationComplete = () => {
-  //   if (overlayAnimatingIn && targetPath) {
-  //     setOverlayAnimatingIn(false);
-  //     router.push(targetPath);
-  //   }
-  // };
 
   useEffect(() => {
     // When path changes, update state
@@ -74,7 +50,6 @@ export default function PageTransition({ children }: { children: React.ReactNode
       setShowOverlay(false);
     }
   }, [pathname, currentPath]);
-
 
   return (
     <div className="relative overflow-hidden">
@@ -96,7 +71,7 @@ export default function PageTransition({ children }: { children: React.ReactNode
 
       {/* Overlay Animation */}
       <AnimatePresence>
-      {showOverlay && <Overlay />}
+        {showOverlay && <Overlay />}
       </AnimatePresence>
     </div>
   );

@@ -10,7 +10,6 @@ interface Props {
   className?: string;
 }
 
-
 export default function TransitionLink({ href, children, beforeNavigate, className }: Props) {
   const router = useRouter();
   const { startTransition } = useTransitionContext();
