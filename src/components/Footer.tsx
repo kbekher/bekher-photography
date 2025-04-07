@@ -28,7 +28,7 @@ const Footer = () => {
         </div>
 
         <div className="w-auto h-full flex items-end col-span-full row-start-1 md:row-start-3">
-          <p className="uppercase bold leading-[100%] custom-text">RUN.SHOOT.DEVELOP.</p>
+          <p className="uppercase bold leading-[100%] custom-text">RUN. SHOOT. DEVELOP.</p>
         </div>
       </div>
     </footer>
