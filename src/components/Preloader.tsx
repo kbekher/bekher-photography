@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function Preloader() {
+const Preloader = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -31,3 +31,5 @@ export default function Preloader() {
     </AnimatePresence>
   );
 }
+
+export default Preloader;

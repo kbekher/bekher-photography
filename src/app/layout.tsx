@@ -4,20 +4,13 @@ import { Montserrat } from "next/font/google";
 import Preloader from "@/components/Preloader";
 import PageTransition from "@/components/PageTransition";
 import Header from "@/components/Header";
+import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
 import { TransitionProvider } from "@/contexts/TransitionContext";
+import { MenuProvider } from "@/contexts/MenuContext";
+
 import "./globals.css";
-
-// const geistSans = Geist({
-//   variable: "--font-geist-sans",
-//   subsets: ["latin"],
-// });
-
-// const geistMono = Geist_Mono({
-//   variable: "--font-geist-mono",
-//   subsets: ["latin"],
-// });
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -38,7 +31,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <TransitionProvider>
           <Preloader />
           <PageTransition>
-            <Header />
+            <MenuProvider>
+              <Header />
+              <Navigation />
+            </MenuProvider>
             <main>{children}</main>
             <Footer />
           </PageTransition>

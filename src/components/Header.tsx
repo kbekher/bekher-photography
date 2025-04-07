@@ -1,48 +1,46 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { motion, useCycle } from "framer-motion";
-import { MenuToggle } from "./MenuToggle";
-import { Navigation } from "./Navigation";
-import TransitionLink from "./TransitionLink";
+import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
+import MenuToggle from "./MenuToggle";
+import TransitionLink from "./TransitionLink";
+import { useMenu } from "@/contexts/MenuContext";
 
+const textVariants = {
+  open: {
+    color: "#444251",
+    opacity: 1,
+    transition: { duration: 0.3 },
+  },
+  closed: {
+    color: "#ffffff",
+    opacity: 1,
+    transition: { duration: 0.3 },
+  },
+};
 
 const Header = () => {
+  const { isOpen } = useMenu();
   const pathname = usePathname();
-  const [isOpen, toggleOpen] = useCycle(false, true);
-  const [blendApplied, setBlendApplied] = useState(true); // Track blend mode state
-  const containerRef = useRef(null);
 
-  const handleEnd = () => {
-    if (!isOpen) {
-      const timer = setTimeout(() => {
-        setBlendApplied(true); // Apply blend mode when closed
-        clearTimeout(timer);
-      }, 400);
-    } else {
-      setBlendApplied(false);
-    }
-  };
   return (
-    <header className={`${blendApplied ? "blend" : ""} fixed top-0 left-0 right-0 p-5 flex justify-between z-10 font-bold custom-transition`}>
-      <div>
-        <TransitionLink href="/" className="custom-transition hover:text-[var(--accent)]">
-          {pathname === '/' ? '[Logo] Kristina Bekher' : 'Home'}
-        </TransitionLink>
-      </div>
-
-      <motion.nav
+    <header className={`fixed z-40 top-0 left-0 right-0 p-5 flex justify-between font-bold custom-transition blend`}>
+      <motion.div
+        variants={textVariants}
         initial={false}
         animate={isOpen ? "open" : "closed"}
-        custom={1000}
-        ref={containerRef}
-        className="absolute top-0 left-0 right-0"
-        onAnimationComplete={handleEnd}
+        whileHover={{
+          color: "#8d89a3",
+          transition: { duration: 0.3 },
+        }}
+        className={`${isOpen ? "hidden md:block" : ""}`}
       >
-        <Navigation toggle={() => toggleOpen()} isOpen={isOpen} />
-        <MenuToggle toggle={() => toggleOpen()} isOpen={isOpen} />
-      </motion.nav>
+        <TransitionLink href="/">
+          {pathname === "/" ? "[LOGO] Kristina Bekher" : "Home"}
+        </TransitionLink>
+      </motion.div>
+
+      <MenuToggle text="menu" />
     </header>
   )
 }

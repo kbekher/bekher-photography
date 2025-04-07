@@ -28,7 +28,7 @@ function Overlay() {
   );
 }
 
-export default function PageTransition({ children }: { children: React.ReactNode }) {
+const PageTransition = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const { isTransitioning, targetPath } = useTransitionContext();
 
@@ -76,3 +76,5 @@ export default function PageTransition({ children }: { children: React.ReactNode
     </div>
   );
 }
+
+export default PageTransition;

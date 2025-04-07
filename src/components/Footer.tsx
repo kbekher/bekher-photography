@@ -2,7 +2,7 @@
 
 import ContactLinks from './ContactLinks';
 import TransitionLink from './TransitionLink';
-import { navLinks } from "@/constants/contants";
+import { navLinks } from "@/constants/constants";
 
 const Footer = () => {
   return (
