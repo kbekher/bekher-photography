@@ -1,7 +1,8 @@
 "use client";
 
+import Link from 'next/link';
 import ContactLinks from './ContactLinks';
-import TransitionLink from './TransitionLink';
+// import Link from './Link';
 import { navLinks } from "@/constants/constants";
 
 const Footer = () => {
@@ -16,11 +17,11 @@ const Footer = () => {
         <div className='flex gap-20 col-span-4 md:col-span-2 row-start-2 md:row-start-1'>
           <div className="flex flex-col w-[50%]">
             {navLinks.map(({ name, href }) => (
-              <TransitionLink 
+              <Link 
                 key={name}
                 href={href}
                 className='w-max custom-transition hover:text-[var(--accent)]'
-              >{name}</TransitionLink>
+              >{name}</Link>
             ))}
           </div>
 

@@ -64,10 +64,6 @@ section {
   padding-top: 64px; 
 }
 
-.blend {
-  mix-blend-mode: difference;
-}
-
 .custom-text {
   font-size: 8.1vw;
   letter-spacing: -3px;

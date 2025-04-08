@@ -1,10 +1,10 @@
 "use client";
 
+import Link from "next/link";
+// import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { usePathname } from "next/navigation";
-import MenuToggle from "./MenuToggle";
-import TransitionLink from "./TransitionLink";
 import { useMenu } from "@/contexts/MenuContext";
+import MenuToggle from "./MenuToggle";
 
 const textVariants = {
   open: {
@@ -21,10 +21,10 @@ const textVariants = {
 
 const Header = () => {
   const { isOpen } = useMenu();
-  const pathname = usePathname();
+  // const pathname = usePathname();
 
   return (
-    <header className={`fixed z-40 top-0 left-0 right-0 p-5 flex justify-between font-bold custom-transition blend`}>
+    <header className={`fixed z-40 top-0 left-0 right-0 p-5 flex justify-between font-bold custom-transition mix-blend-difference`}>
       <motion.div
         variants={textVariants}
         initial={false}
@@ -35,14 +35,16 @@ const Header = () => {
         }}
         className={`${isOpen ? "hidden md:block" : ""}`}
       >
-        <TransitionLink href="/">
-          {pathname === "/" ? "[LOGO] Kristina Bekher" : "Home"}
-        </TransitionLink>
+        <Link href="/">
+          {/* {pathname === "/" ? "[LOGO] Kristina Bekher" : "Home"} */}
+          [LOGO] Kristina Bekher
+        </Link>
       </motion.div>
 
       <MenuToggle text="menu" />
     </header>
   )
 }
+
 
 export default Header;

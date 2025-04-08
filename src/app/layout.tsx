@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 
 import Preloader from "@/components/Preloader";
-import PageTransition from "@/components/PageTransition";
+import PageTransition from "@/app/PageTransitionEffect";
 import Header from "@/components/Header";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
-import { TransitionProvider } from "@/contexts/TransitionContext";
 import { MenuProvider } from "@/contexts/MenuContext";
 
 import "./globals.css";
@@ -16,7 +15,6 @@ const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
 });
-
 
 export const metadata: Metadata = {
   title: "Kristina Bekher",
@@ -27,18 +25,18 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 
   return (
     <html lang="en">
-      <body className={`${montserrat.variable} antialiased`}>
-        <TransitionProvider>
-          <Preloader />
-          <PageTransition>
-            <MenuProvider>
-              <Header />
-              <Navigation />
-            </MenuProvider>
-            <main>{children}</main>
-            <Footer />
-          </PageTransition>
-        </TransitionProvider>
+      <body className={`${montserrat.variable} antialiased scroll-smooth`}>
+        <Preloader />
+        <PageTransition>
+        
+        <MenuProvider>
+          <Header />
+          <Navigation />
+        </MenuProvider>
+          {children}
+        <Footer />
+        </PageTransition>
+
       </body>
     </html>
   );

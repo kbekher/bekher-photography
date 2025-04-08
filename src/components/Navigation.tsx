@@ -2,11 +2,11 @@
 
 import { motion } from "framer-motion";
 import ContactLinks from "./ContactLinks";
-import TransitionLink from "./TransitionLink";
 import MenuToggle from "./MenuToggle";
 import { useMenu } from "@/contexts/MenuContext";
 import { navLinks } from "@/constants/constants";
 import { textVariants } from "@/constants/animations";
+import { useRouter } from "next/navigation";
 
 const containerVariants = {
   open: {
@@ -67,6 +67,7 @@ const contactVariants = {
 
 const Navigation = () => {
   const { toggle, isOpen } = useMenu();
+  const router = useRouter();
 
   return (
     <>
@@ -93,7 +94,7 @@ const Navigation = () => {
         <div className="flex flex-col justify-between w-full md:w-[50%]">
           <motion.ul
             variants={listVariants}
-            className='flex flex-col gap-0 text-[60px] uppercase leading-none'
+            className='flex flex-col gap-0 text-[60px] leading-none'
           >
             {navLinks.map(({ name, href }) => (
               <motion.li
@@ -106,17 +107,17 @@ const Navigation = () => {
                   transition: { duration: 0.3 },
                 }}
               >
-                <TransitionLink
-                  href={href}
-                  beforeNavigate={
-                    () => new Promise((resolve) => {
-                      toggle(); // close menu
-                      setTimeout(resolve, 300); // wait for animation
-                    })
-                  }
+                <button
+                  className="uppercase cursor-pointer"
+                  onClick={() => {
+                    toggle();
+                    setTimeout(() => {
+                      router.push(href);
+                    }, 300); // wait for menu-closing animation
+                  }}
                 >
                   {name}
-                </TransitionLink>
+                </button>
               </motion.li>
             ))}
           </motion.ul>

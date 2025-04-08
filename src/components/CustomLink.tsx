@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransitionContext } from "../contexts/TransitionContext";
 
 interface Props {
   href: string;
@@ -10,9 +9,8 @@ interface Props {
   className?: string;
 }
 
-const TransitionLink = ({ href, children, beforeNavigate, className }: Props) => {
+const CustomLink = ({ href, children, beforeNavigate, className }: Props) => {
   const router = useRouter();
-  const { startTransition } = useTransitionContext();
 
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -21,7 +19,7 @@ const TransitionLink = ({ href, children, beforeNavigate, className }: Props) =>
       await beforeNavigate(); // wait for menu close
     }
 
-    startTransition(href, () => router.push(href));
+    router.push(href, {scroll: false });
   };
 
   return (
@@ -31,4 +29,6 @@ const TransitionLink = ({ href, children, beforeNavigate, className }: Props) =>
   );
 }
 
-export default TransitionLink;
+export default CustomLink
+
+// TODO: delete if not needed
