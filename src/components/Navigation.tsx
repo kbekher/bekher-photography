@@ -7,6 +7,7 @@ import { useMenu } from "@/contexts/MenuContext";
 import { navLinks } from "@/constants/constants";
 import { textVariants } from "@/constants/animations";
 import { useRouter } from "next/navigation";
+import Logo from "./Logo";
 
 const containerVariants = {
   open: {
@@ -83,30 +84,11 @@ const Navigation = () => {
         variants={containerVariants}
         initial={false}
         animate={isOpen ? "open" : "closed"}
-        className="fixed z-50 top-0 left-0 right-0 p-5 w-full h-max flex justify-between gap-5 bg-[var(--secondary)] text-[var(--branding)] font-bold"
+        className="fixed z-50 top-0 left-0 right-0 p-5 w-full h-max flex justify-between gap-5 bg-[var(--secondary)] text-[var(--branding)]"
       >
         {/* Logo */}
         <motion.div className="hidden md:block w-[50%]" variants={textVariants}>
-          <span className="font-bold mx-1.2px flex gap-2 items-center">
-
-            <motion.div
-              animate={{
-                scale: [1, 1.2, 1],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                repeatDelay: 1,
-              }}
-              style={{
-                ...box,
-                borderRadius: "50%",
-                background: "#444251",
-              }}
-            />
-
-            <span>Kristina Bekher</span>
-          </span>
+            <Logo isLink={false} color="branding" />
         </motion.div>
 
         {/* Nav */}
@@ -151,14 +133,6 @@ const Navigation = () => {
       </motion.div>
     </>
   );
-}
-
-
-const box = {
-  width: 16,
-  height: 16,
-  backgroundColor: "#444251",
-  borderRadius: 5,
 }
 
 export default Navigation;

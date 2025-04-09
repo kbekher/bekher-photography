@@ -14,16 +14,15 @@
   --font-size-scale: 1.5; 
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-montserrat: var(--font-montserrat);
-}
+/* @theme inline { */
+  /* --color-background: var(--background);
+  --color-foreground: var(--foreground); */
+/* } */
 
 /* @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground: #ffffff;
   }
 } */
 
@@ -43,15 +42,12 @@
 }
 
 body {
-  font-family: var(--font-montserrat), sans-serif;
-  letter-spacing: 0.5px;
-  background-color: var(--background);
-  color: var(--secondary);
-  padding-top: env(safe-area-inset-top);
-  min-height: 100vh;
-  /* This ensures the content starts below the status bar */
+  /* font-family: var(--font-montserrat), sans-serif; */
   min-height: -webkit-fill-available;
-  overflow-x: hidden;
+  padding-top: env(safe-area-inset-top);
+
+  overflow-x: hidden; 
+  min-height: 100vh; 
 }
 
 section {

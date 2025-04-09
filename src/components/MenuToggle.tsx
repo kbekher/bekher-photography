@@ -13,7 +13,7 @@ const MenuToggle = ({ text }: Props) => {
     <div className={`fixed p-5 top-0 right-0 z-70`}>
       <motion.button
         onClick={toggle}
-        className="bg-transparent border-none cursor-pointer font-bold uppercase"
+        className="bg-transparent border-none cursor-pointer uppercase"
       >
         <motion.span
           variants={textVariants}

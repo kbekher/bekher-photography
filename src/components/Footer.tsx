@@ -7,7 +7,7 @@ import { navLinks } from "@/constants/constants";
 
 const Footer = () => {
   return (
-    <footer className="bg-[var(--branding)] text-[var(--secondary)] w-full p-5 md:pb-2 text-[24px] font-bold leading-[28px] overflow-hidden">
+    <footer className="bg-[var(--branding)] text-[var(--secondary)] w-full p-5 md:pb-2 text-[24px] leading-[28px] overflow-hidden">
       <div className="grid gap-5 grid-cols-4 grid-rows-2 md:pt-[80px] flex-col justify-center">
 
         <div className="row-start-3 md:row-start-1 col-span-2">

@@ -1,33 +1,47 @@
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion'
-import React from 'react'
 
-const Logo = () => {
-  return (
-    <motion.div
-      animate={{
-        scale: [1, 1.2, 1],
-      }}
-      transition={{
-        duration: 2,
-        repeat: Infinity,
-        repeatDelay: 1,
-      }}
-      style={{
-        ...box,
-        borderRadius: "50%",
-        background: "#cbcbcf",
-      }}
-    />
-  )
+interface LogoProps {
+  isLink: boolean;
+  color: string;
 }
 
-export default Logo
-
-
-
-const box = {
-  width: 22,
-  height: 22,
-  backgroundColor: "#cbcbcf",
-  borderRadius: 5,
+interface LogoElementProps {
+  color: string;
 }
+const LogoElement = ({ color }: LogoElementProps) => (
+  <motion.div
+    animate={{
+      scale: [1, 1.2, 1],
+    }}
+    transition={{
+      duration: 2,
+      repeat: Infinity,
+      repeatDelay: 1,
+    }}
+    className={`w-5 h-5 rounded-full bg-[var(--${color})]`}
+  />
+)
+
+const Logo = ({ isLink, color }: LogoProps) => {
+  const pathname = usePathname();
+
+  return isLink ? (
+    <Link 
+      href="/"
+      aria-label="Go to homepage" 
+      className="flex gap-2 items-center"
+    >
+      <LogoElement color={color} />
+      <span>{pathname !== "/" ? "Home" : "Kristina Bekher"}</span>
+    </Link>
+  ) : (
+    <div className="flex gap-2 items-center select-none">
+      <LogoElement color={color} />
+      <span>Kristina Bekher</span>
+    </div>
+  );
+};
+
+export default Logo;

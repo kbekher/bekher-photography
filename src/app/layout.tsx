@@ -10,10 +10,7 @@ import { MenuProvider } from "@/contexts/MenuContext";
 
 import "./globals.css";
 
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
-  subsets: ["latin"],
-});
+const montserrat = Montserrat({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Kristina Bekher",
@@ -24,14 +21,16 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 
   return (
     <html lang="en">
-      <body className={`${montserrat.variable} antialiased scroll-smooth`}>
-        <Preloader />
-        <MenuProvider>
-          <Header />
-          <Navigation />
-        </MenuProvider>
-        {children}
-        <Footer />
+      <body className={montserrat.className}>
+        <div className=" antialiased scroll-smooth bg-[var(--background)] text-[var(--foreground)] font-bold tracking-[0.5px]">
+          <Preloader />
+          <MenuProvider>
+            <Header />
+            <Navigation />
+          </MenuProvider>
+          {children}
+          <Footer />
+        </div>
       </body>
     </html>
   );
