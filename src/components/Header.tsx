@@ -35,9 +35,28 @@ const Header = () => {
         }}
         className={`${isOpen ? "hidden md:block" : ""}`}
       >
-        <Link href="/">
-          {/* {pathname === "/" ? "[LOGO] Kristina Bekher" : "Home"} */}
-          [LOGO] Kristina Bekher
+        <Link href="/" className=" mx-1.2px flex gap-2 items-center">
+
+          {/* //TODO: make a separate component (color, link or not) */}
+
+          <motion.div
+            animate={{
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              repeatDelay: 1,
+            }}
+            style={{
+              ...box,
+              borderRadius: "50%",
+              background: "#cbcbcf",
+            }}
+          />
+
+        <span>Kristina Bekher</span>
+
         </Link>
       </motion.div>
 
@@ -46,5 +65,10 @@ const Header = () => {
   )
 }
 
-
+const box = {
+  width: 16,
+  height: 16,
+  backgroundColor: "#cbcbcf",
+  borderRadius: 5,
+}
 export default Header;

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 
 import Preloader from "@/components/Preloader";
-import PageTransition from "@/app/PageTransitionEffect";
 import Header from "@/components/Header";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -27,16 +26,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body className={`${montserrat.variable} antialiased scroll-smooth`}>
         <Preloader />
-        <PageTransition>
-        
         <MenuProvider>
           <Header />
           <Navigation />
         </MenuProvider>
-          {children}
+        {children}
         <Footer />
-        </PageTransition>
-
       </body>
     </html>
   );

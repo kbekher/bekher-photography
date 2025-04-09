@@ -87,7 +87,26 @@ const Navigation = () => {
       >
         {/* Logo */}
         <motion.div className="hidden md:block w-[50%]" variants={textVariants}>
-          <span className="font-bold block">[LOGO] Kristina Bekher</span>
+          <span className="font-bold mx-1.2px flex gap-2 items-center">
+
+            <motion.div
+              animate={{
+                scale: [1, 1.2, 1],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                repeatDelay: 1,
+              }}
+              style={{
+                ...box,
+                borderRadius: "50%",
+                background: "#444251",
+              }}
+            />
+
+            <span>Kristina Bekher</span>
+          </span>
         </motion.div>
 
         {/* Nav */}
@@ -132,6 +151,14 @@ const Navigation = () => {
       </motion.div>
     </>
   );
+}
+
+
+const box = {
+  width: 16,
+  height: 16,
+  backgroundColor: "#444251",
+  borderRadius: 5,
 }
 
 export default Navigation;

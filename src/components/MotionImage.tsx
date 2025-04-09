@@ -29,7 +29,7 @@ const MotionImage = ({ galleryName, imgIndex }: Props) => {
         initial={{ scale: 1.2, opacity: 0.5 }}
         whileInView={{ scale: 1, opacity: 1 }}
         viewport={{ once: true }} 
-        transition={{ duration: 0.8, ease: 'easeOut' }}
+        transition={{ duration: 0.8, delay: 0.8, ease: 'easeOut' }}
         className="w-full h-full mx-auto relative overflow-hidden"
       >
         {/* Placeholder */}
