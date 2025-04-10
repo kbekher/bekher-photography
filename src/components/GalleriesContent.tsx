@@ -1,6 +1,9 @@
-import { galleriesData } from '@/data'
+'use client';
+
 import Image from 'next/image';
-import Link from 'next/link'
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { galleriesData } from '@/data';
 import { computeDimensions, getBestFitRow } from '@/utils/utils';
 
 const GalleriesContent = () => {
@@ -33,10 +36,14 @@ const GalleriesContent = () => {
                     const { width, height } = computeDimensions(photo.aspectRatio, 200);
 
                     return (
-                      <div 
+                      <motion.div 
                         key={`${name}-${index}`} 
                         className={`relative col-span-${colSpan}`}
                         style={{ aspectRatio: photo.aspectRatio }}
+                        initial={{ opacity: 0, y: 40 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: index * 0.1 }}
+                        viewport={{ once: true }}
                       >
                         <Image
                           src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${slug}/${slug}-${index + 1}.jpg`}
@@ -46,7 +53,7 @@ const GalleriesContent = () => {
                           draggable="false"
                           className="object-cover w-full h-full"
                         />
-                      </div>
+                      </motion.div>
                     )
                   })}
                 </div>

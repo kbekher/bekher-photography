@@ -2,22 +2,26 @@
 
 import Link from 'next/link';
 import ContactLinks from './ContactLinks';
-// import Link from './Link';
 import { navLinks } from "@/constants/constants";
+import { usePathname } from 'next/navigation';
 
 const Footer = () => {
+  const pathname = usePathname();
+
+  if (pathname.startsWith('/galleries/')) return null;
+
   return (
     <footer className="bg-[var(--branding)] text-[var(--secondary)] w-full p-5 md:pb-2 text-[24px] leading-[28px] overflow-hidden">
       <div className="grid gap-5 grid-cols-4 grid-rows-2 md:pt-[80px] flex-col justify-center">
 
-        <div className="row-start-3 md:row-start-1 col-span-2">
+        <div className="row-start-3 md:row-start-1 col-span-full md:col-span-2">
           <p className='text-[14px] md:text-[24px]'>©2025 Kristina Bekher</p>
         </div>
 
         <div className='flex gap-20 col-span-4 md:col-span-2 row-start-2 md:row-start-1'>
           <div className="flex flex-col w-[50%]">
             {navLinks.map(({ name, href }) => (
-              <Link 
+              <Link
                 key={name}
                 href={href}
                 className='w-max custom-transition hover:text-[var(--accent)]'
