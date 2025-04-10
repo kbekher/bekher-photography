@@ -1,21 +1,62 @@
 import { galleriesData } from '@/data'
+import Image from 'next/image';
 import Link from 'next/link'
+import { computeDimensions, getBestFitRow } from '@/utils/utils';
 
 const GalleriesContent = () => {
   return (
-    <section>
-    <h1>This is Galleries Page</h1>
-    <ul className="grid grid-cols-12 gap-5">
-      {Object.keys(galleriesData).map((gallery) => (
-        <li key={gallery} className="col-span-full">
-          <Link href={`/galleries/${gallery}`}>
-            {galleriesData[gallery as keyof typeof galleriesData].name}
-          </Link>
-        </li>
-      ))}
-    </ul>
-  </section>
+    <section className='pt-[120px] md:pt-[220px]'>
+      <h1 className='custom-text text-white uppercase absolute top-0 left-1/2 -translate-x-1/2 origin-center'>
+        Galleries
+      </h1>
+
+      <ul className="flex flex-col gap-10">
+        {Object.entries(galleriesData).map(([slug, { name, photos }]) => {
+          const bestFitPhotos = getBestFitRow(photos);
+
+          return (
+            <li key={slug}>
+              <Link
+                href={`/galleries/${slug}`}
+                aria-label={`Go to ${name} gallery page`}
+                className='w-full flex flex-col'
+              >
+                {/* Title + Divider */}
+                <div className='relative py-4'>
+                  <div className="absolute top-0 left-0 right-0 h-px bg-[var(--secondary)]" />
+                  <p className='w-max'>{name}</p>
+                </div>
+
+                {/* Gallery Row */}
+                <div className='grid grid-cols-12 gap-x-5 h-max-[230px] overflow-hidden'>
+                  {bestFitPhotos.map(({ photo, index, colSpan }) => {
+                    const { width, height } = computeDimensions(photo.aspectRatio, 200);
+
+                    return (
+                      <div 
+                        key={`${name}-${index}`} 
+                        className={`relative col-span-${colSpan}`}
+                        style={{ aspectRatio: photo.aspectRatio }}
+                      >
+                        <Image
+                          src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${slug}/${slug}-${index + 1}.jpg`}
+                          alt={`Picture of ${name}`}
+                          width={width}
+                          height={height}
+                          draggable="false"
+                          className="object-cover w-full h-full"
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
   )
 }
 
-export default GalleriesContent
+export default GalleriesContent;

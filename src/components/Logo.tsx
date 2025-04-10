@@ -31,7 +31,7 @@ const Logo = ({ isLink, color }: LogoProps) => {
     <Link 
       href="/"
       aria-label="Go to homepage" 
-      className="flex gap-2 items-center"
+      className="flex gap-2 items-center text-white"
     >
       <LogoElement color={color} />
       <span>{pathname !== "/" ? "Home" : "Kristina Bekher"}</span>

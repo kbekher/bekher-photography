@@ -33,20 +33,6 @@ export const galleriesData = {
       { aspectRatio: horizontal },
     ] as PhotoMetadata[],
   },
-  nature: {
-    name: "Nature Collection",
-    description: "A beautiful collection of nature photographs.",
-    photos: [
-      { aspectRatio: vertical },
-      { aspectRatio: horizontal },
-      { aspectRatio: vertical },
-      { aspectRatio: vertical },
-      { aspectRatio: vertical },
-      { aspectRatio: horizontal },
-      { aspectRatio: vertical },
-      { aspectRatio: vertical },
-    ] as PhotoMetadata[],
-  },
   purple: {
     name: "Purple Collection",
     description: "A collection focused on purple hues and stunning landscapes.",
@@ -62,19 +48,18 @@ export const galleriesData = {
       { aspectRatio: vertical },
     ] as PhotoMetadata[],
   },
-  people: {
-    name: "People Collection",
-    description: "A portrait collection capturing people in various settings.",
+  nature: {
+    name: "Nature Collection",
+    description: "A beautiful collection of nature photographs.",
     photos: [
       { aspectRatio: vertical },
       { aspectRatio: horizontal },
-      { aspectRatio: horizontal },
+      { aspectRatio: vertical },
+      { aspectRatio: vertical },
       { aspectRatio: vertical },
       { aspectRatio: horizontal },
       { aspectRatio: vertical },
-      { aspectRatio: horizontal },
-      { aspectRatio: horizontal },
-      { aspectRatio: horizontal },
+      { aspectRatio: vertical },
     ] as PhotoMetadata[],
   },
   travel: {
@@ -95,6 +80,22 @@ export const galleriesData = {
       { aspectRatio: horizontal },
     ] as PhotoMetadata[],
   },
+  people: {
+    name: "People Collection",
+    description: "A portrait collection capturing people in various settings.",
+    photos: [
+      { aspectRatio: vertical },
+      { aspectRatio: horizontal },
+      { aspectRatio: horizontal },
+      { aspectRatio: vertical },
+      { aspectRatio: horizontal },
+      { aspectRatio: vertical },
+      { aspectRatio: horizontal },
+      { aspectRatio: horizontal },
+      { aspectRatio: horizontal },
+    ] as PhotoMetadata[],
+  },
+
   pentax: {
     name: "Pentax 17 Collection",
     description: "A collection of picture made on Pentax 17.",
@@ -109,5 +110,4 @@ export const galleriesData = {
       { aspectRatio: vertical },
     ] as PhotoMetadata[],
   },
-
 };
