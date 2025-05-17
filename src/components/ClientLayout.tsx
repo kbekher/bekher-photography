@@ -1,4 +1,3 @@
-// src/components/BodyContent.tsx
 'use client';
 
 import { useState, useEffect } from "react";
