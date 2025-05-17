@@ -38,7 +38,7 @@ const GalleriesContent = () => {
                     return (
                       <motion.div 
                         key={`${name}-${index}`} 
-                        className={`relative col-span-${colSpan}`}
+                        className={`relative ${colSpan === 2 ? 'col-span-2' : colSpan === 3 ? 'col-span-3' : ''}`}
                         style={{ aspectRatio: photo.aspectRatio }}
                         initial={{ opacity: 0, y: 40 }}
                         whileInView={{ opacity: 1, y: 0 }}
