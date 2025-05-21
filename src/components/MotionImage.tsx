@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { motion, useInView } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { PhotoMetadata } from '@/data';
-// import imageLoader from '@/utils/image-loader';
+import imageLoader from '@/utils/image-loader';
 
 interface Props {
   galleryName: string;
@@ -56,10 +56,9 @@ const MotionImage = ({ galleryName, photo }: Props) => {
             style={{ aspectRatio: photo.aspectRatio }}
             draggable="false"
             onLoad={() => setIsLoaded(true)}
-            // quality={60}
             // sizes={`${800}px`}
             priority={galleryName === "travel" || galleryName === "bw"}
-            // loader={imageLoader}
+            loader={imageLoader}
           />
         </motion.div>
       </motion.div>

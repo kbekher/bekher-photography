@@ -8,7 +8,7 @@ import Link from 'next/link';
 
 import { galleriesData } from '@/data';
 import { computeDimensions } from '@/utils/utils';
-// import imageLoader from '@/utils/image-loader';
+import imageLoader from '@/utils/image-loader';
 
 const GalleryContent = () => {
   const params = useParams();
@@ -106,9 +106,8 @@ const GalleryContent = () => {
                     // loading="lazy"
                     // sizes={`${width}px`}
                     // unoptimized
-                    // quality={60}
                     className="object-cover w-full h-full"
-                    // loader={imageLoader}
+                    loader={imageLoader}
                     priority={index < 2}
                   />
                 </motion.div>
@@ -134,7 +133,7 @@ const GalleryContent = () => {
                     sizes="400px"
                     draggable={false}
                     className="object-cover w-full h-full"
-                    // loader={imageLoader}
+                    loader={imageLoader}
                   />
                   <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
                     <span className="text-white text-2xl mb-2">Next Gallery</span>
