@@ -13,13 +13,13 @@ const montserrat = Montserrat({ subsets: ["latin"] });
 
 export default function BodyContent({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
-  const [contentVisible, setContentVisible] = useState(false);
+  const [isContentVisible, setIsContentVisible] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
       setTimeout(() => {
-        setContentVisible(true);
+        setIsContentVisible(true);
       }, 100);
     }, 2000);
 
@@ -45,8 +45,8 @@ export default function BodyContent({ children }: { children: React.ReactNode })
           </AnimatePresence>
 
           {/* Main Content */}
-          <div 
-            style={{ 
+          <div
+            style={{
               opacity: loading ? 0 : 1,
               transition: 'opacity 0.5s ease-in-out'
             }}
@@ -54,7 +54,11 @@ export default function BodyContent({ children }: { children: React.ReactNode })
             <MenuProvider>
               <Header />
               <Navigation />
-              {contentVisible && children}
+              {isContentVisible ? (
+                children
+              ) : (
+                <div className="min-h-screen" />
+              )}
               <Footer />
             </MenuProvider>
           </div>
