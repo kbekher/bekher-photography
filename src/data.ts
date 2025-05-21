@@ -88,11 +88,12 @@ export const galleriesData = {
       { aspectRatio: vertical, path: "people-1.jpg" },
       { aspectRatio: horizontal, path: "people-2.jpg" },
       { aspectRatio: horizontal, path: "people-3.jpg" },
-      { aspectRatio: vertical, path: "people-4.jpg" },
       // { aspectRatio: horizontal, path: "people-5.jpg" },
       // { aspectRatio: vertical, path: "people-6.jpg" },
       { aspectRatio: horizontal, path: "people-7.jpg" },
       { aspectRatio: horizontal, path: "people-8.jpg" },
+      { aspectRatio: vertical, path: "people-4.jpg" },
+
       { aspectRatio: horizontal, path: "people-9.jpg" },
     ] as PhotoMetadata[],
   },

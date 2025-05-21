@@ -103,11 +103,13 @@ const GalleryContent = () => {
                     width={width}
                     height={height}
                     draggable={false}
-                    loading="lazy"
-                    sizes={`${width}px`}
-                    quality={60}
+                    // loading="lazy"
+                    // sizes={`${width}px`}
+                    // unoptimized
+                    // quality={60}
                     className="object-cover w-full h-full"
                     loader={imageLoader}
+                    priority={index < 2}
                   />
                 </motion.div>
               );
@@ -129,7 +131,6 @@ const GalleryContent = () => {
                     width={400}
                     height={800}
                     loading="lazy"
-                    quality={60}
                     sizes="400px"
                     draggable={false}
                     className="object-cover w-full h-full"
