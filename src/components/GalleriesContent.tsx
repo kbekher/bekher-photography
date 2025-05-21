@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { galleriesData } from '@/data';
 import { computeDimensions, getBestFitRow } from '@/utils/utils';
-import imageLoader from '@/utils/image-loader';
+// import imageLoader from '@/utils/image-loader';
 
 const GalleriesContent = () => {
   return (
@@ -53,10 +53,10 @@ const GalleriesContent = () => {
                           height={height}
                           draggable={false}
                           // loading="lazy"
-                          // quality={60}
                           // unoptimized
+                          // sizes={`${width}px`}
                           className="object-cover w-full h-full"
-                          loader={imageLoader}
+                          // loader={imageLoader}
                           priority={i < 3}
                         />
                       </motion.div>
