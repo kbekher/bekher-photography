@@ -8,6 +8,7 @@ import Link from 'next/link';
 
 import { galleriesData } from '@/data';
 import { computeDimensions } from '@/utils/utils';
+import imageLoader from '@/utils/image-loader';
 
 const GalleryContent = () => {
   const params = useParams();
@@ -84,7 +85,7 @@ const GalleryContent = () => {
 
               return (
                 <motion.div
-                  key={index}
+                  key={photo.path}
                   className="shrink-0 relative"
                   initial={{ opacity: 0, x: 100 }}
                   whileInView={{ opacity: 1, x: 0 }}
@@ -97,12 +98,16 @@ const GalleryContent = () => {
                   }}
                 >
                   <Image
-                    src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${activeGalleryName}/${activeGalleryName}-${index + 1}.jpg`}
+                    src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${activeGalleryName}/${photo.path}`}
                     alt={`Picture of ${activeGallery.name}`}
                     width={width}
                     height={height}
                     draggable={false}
+                    loading="lazy"
+                    sizes={`${width}px`}
+                    quality={60}
                     className="object-cover w-full h-full"
+                    loader={imageLoader}
                   />
                 </motion.div>
               );
@@ -119,12 +124,16 @@ const GalleryContent = () => {
               <Link href={`/galleries/${nextGalleryName}`}>
                 <div className="w-[400px] h-screen relative">
                   <Image
-                    src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${nextGalleryName}/${nextGalleryName}-1.jpg`}
+                    src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${nextGalleryName}/${nextGallery.photos[0].path}`}
                     alt={`Preview of ${nextGallery.name}`}
-                    width={300}
-                    height={500}
+                    width={400}
+                    height={800}
+                    loading="lazy"
+                    quality={60}
+                    sizes="400px"
                     draggable={false}
                     className="object-cover w-full h-full"
+                    loader={imageLoader}
                   />
                   <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
                     <span className="text-white text-2xl mb-2">Next Gallery</span>

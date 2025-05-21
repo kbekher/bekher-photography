@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { galleriesData } from '@/data';
 import { computeDimensions, getBestFitRow } from '@/utils/utils';
+import imageLoader from '@/utils/image-loader';
 
 const GalleriesContent = () => {
   return (
@@ -37,7 +38,7 @@ const GalleriesContent = () => {
 
                     return (
                       <motion.div 
-                        key={`${name}-${index}`} 
+                        key={`${name}-${photo.path}`}
                         className={`relative ${colSpan === 2 ? 'col-span-2' : colSpan === 3 ? 'col-span-3' : ''}`}
                         style={{ aspectRatio: photo.aspectRatio }}
                         initial={{ opacity: 0, y: 40 }}
@@ -46,12 +47,16 @@ const GalleriesContent = () => {
                         viewport={{ once: true }}
                       >
                         <Image
-                          src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${slug}/${slug}-${index + 1}.jpg`}
+                          src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${slug}/${photo.path}`}
                           alt={`Picture of ${name}`}
                           width={width}
                           height={height}
-                          draggable="false"
+                          draggable={false}
+                          loading="lazy"
+                          quality={60}
+                          sizes={`${width}px`}
                           className="object-cover w-full h-full"
+                          loader={imageLoader}
                         />
                       </motion.div>
                     )

@@ -7,7 +7,7 @@ export const computeDimensions = (aspectRatio: string, baseWidth: number) => {
   return { width, height };
 };
 
-export const getBestFitRow = (photos: { aspectRatio: string }[]) => {
+export const getBestFitRow = (photos: PhotoMetadata[]) => {
   const maxCols = 12;
   let bestCombo: { photo: PhotoMetadata; index: number; colSpan: number }[] = [];
   let maxColsUsed = 0;

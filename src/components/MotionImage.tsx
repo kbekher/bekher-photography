@@ -5,21 +5,22 @@ import Image from 'next/image';
 import { motion, useInView } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { PhotoMetadata } from '@/data';
+import imageLoader from '@/utils/image-loader';
 
 interface Props {
   galleryName: string;
-  imgIndex: number;
   photo: PhotoMetadata;
 }
 
-const MotionImage = ({ galleryName, imgIndex, photo }: Props) => {
+const MotionImage = ({ galleryName, photo }: Props) => {
   const ref = useRef(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const pathname = usePathname();
   const isInView = useInView(ref, { once: true, amount: 0.4 });
 
-  const imageSrc = `https://d14lj85n4pdzvr.cloudfront.net/galleries/${galleryName}/${galleryName}-${imgIndex + 1}.jpg`;
-
+  // Use photo.path directly instead of constructing with index
+  const imageSrc = `https://d14lj85n4pdzvr.cloudfront.net/galleries/${galleryName}/${photo.path}`;
+  
   // Reset animation when path changes
   useEffect(() => {
     setIsLoaded(false);
@@ -28,7 +29,7 @@ const MotionImage = ({ galleryName, imgIndex, photo }: Props) => {
   return (
     <div className="relative overflow-hidden w-full h-full">
       <motion.div
-        key={`${pathname}-${galleryName}-${imgIndex}`}
+        key={`${pathname}-${galleryName}-${photo.path}`}
         ref={ref}
         className="w-full h-full mx-auto relative overflow-hidden"
       >
@@ -42,7 +43,7 @@ const MotionImage = ({ galleryName, imgIndex, photo }: Props) => {
           initial={{ scale: 1.2, opacity: 0.5 }}
           animate={isInView ? { scale: 1, opacity: 1 } : { scale: 1.2, opacity: 0.5 }}
           transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
-          className="w-full h-full absolute inset-0 "
+          className="w-full h-full absolute inset-0"
         >
           <Image
             src={imageSrc}
@@ -55,7 +56,10 @@ const MotionImage = ({ galleryName, imgIndex, photo }: Props) => {
             style={{ aspectRatio: photo.aspectRatio }}
             draggable="false"
             onLoad={() => setIsLoaded(true)}
-            priority={imgIndex < 2}
+            quality={60}
+            sizes={`${800}px`}
+            priority={true}
+            loader={imageLoader}
           />
         </motion.div>
       </motion.div>
