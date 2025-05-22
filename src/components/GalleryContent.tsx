@@ -103,9 +103,8 @@ const GalleryContent = () => {
                     width={width}
                     height={height}
                     draggable={false}
-                    // loading="lazy"
-                    // sizes={`${width}px`}
-                    // unoptimized
+                    loading="lazy"
+                    sizes={`${width}px`}
                     className="object-cover w-full h-full"
                     loader={imageLoader}
                     priority={index < 2}

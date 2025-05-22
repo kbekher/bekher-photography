@@ -15,7 +15,7 @@ const GalleriesContent = () => {
       </h1>
 
       <ul className="flex flex-col gap-10">
-        {Object.entries(galleriesData).map(([slug, { name, photos }]) => {
+        {Object.entries(galleriesData).map(([slug, { name, photos }], i) => {
           const bestFitPhotos = getBestFitRow(photos);
 
           return (
@@ -53,11 +53,10 @@ const GalleriesContent = () => {
                           height={height}
                           draggable={false}
                           // loading="lazy"
-                          // unoptimized
-                          // sizes={`${width}px`}
+                          sizes={`${width}px`}
                           className="object-cover w-full h-full"
                           loader={imageLoader}
-                          priority={true}
+                          priority={i < 2}
                         />
                       </motion.div>
                     )
