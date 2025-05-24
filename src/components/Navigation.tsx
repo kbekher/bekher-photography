@@ -88,7 +88,7 @@ const Navigation = () => {
       >
         {/* Logo */}
         <motion.div className="hidden md:block w-[50%]" variants={textVariants}>
-            <Logo isLink={false} color="branding" />
+            <Logo isLink={false} />
         </motion.div>
 
         {/* Nav */}
