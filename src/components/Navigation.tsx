@@ -92,10 +92,10 @@ const Navigation = () => {
         </motion.div>
 
         {/* Nav */}
-        <div className="flex flex-col justify-between w-full md:w-[50%]">
+        <div className="flex flex-col gap-[80px] justify-between w-full md:w-[50%]">
           <motion.ul
             variants={listVariants}
-            className='flex flex-col gap-0 text-[60px] leading-none'
+            className='flex flex-col gap-0 text-[60px] leading-none tracking-tighter'
           >
             {navLinks.map(({ name, href }) => (
               <motion.li
@@ -123,7 +123,7 @@ const Navigation = () => {
             ))}
           </motion.ul>
 
-          <motion.div variants={contactVariants} className="pt-[40px]">
+          <motion.div variants={contactVariants}>
             <ContactLinks />
           </motion.div>
         </div>

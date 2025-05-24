@@ -10,7 +10,7 @@ import imageLoader from '@/utils/image-loader';
 const GalleriesContent = () => {
   return (
     <section className='pt-[120px] md:pt-[220px]'>
-      <h1 className='custom-text text-white uppercase absolute top-0 left-1/2 -translate-x-1/2 origin-center'>
+      <h1 className='text-4xl md:text-7xl xl:text-9xl text-white tracking-tighter uppercase absolute top-0 left-1/2 -translate-x-1/2 origin-center'>
         Galleries
       </h1>
 
@@ -52,11 +52,10 @@ const GalleriesContent = () => {
                           width={width}
                           height={height}
                           draggable={false}
-                          // loading="lazy"
-                          sizes={`${width}px`}
+                          loading={i > 2 ? "lazy" : "eager"}
+                          sizes="max((100vw - 110px) / 8, 1px)" // 400px
                           className="object-cover w-full h-full"
                           loader={imageLoader}
-                          priority={i < 2}
                         />
                       </motion.div>
                     )

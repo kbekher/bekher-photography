@@ -6,19 +6,23 @@ export const vertical = "2/3";
 export interface PhotoMetadata {
   aspectRatio: string;
   path: string;
+  spacing: string;
+  space: number;
+  size: number;
 }
 
 export const galleriesData = {
   bw: {
     name: "Black and White Collection",
     description: "A beautiful collection of black and white photographs.",
+    // total gap 480 + 240 + 40 + + 480 + 80 + 
     photos: [
       { aspectRatio: vertical, path: "bw-1.jpg" },
-      { aspectRatio: horizontal, path: "bw-2.jpg" },
-      { aspectRatio: horizontal, path: "bw-3.jpg" },
       { aspectRatio: horizontal, path: "bw-4.jpg" },
-      { aspectRatio: horizontal, path: "bw-5.jpg" },
       { aspectRatio: horizontal, path: "bw-6.jpg" },
+      { aspectRatio: horizontal, path: "bw-3.jpg" },
+      { aspectRatio: horizontal, path: "bw-5.jpg" },
+      { aspectRatio: horizontal, path: "bw-2.jpg" },
     ] as PhotoMetadata[],
   },
   alps: {
@@ -85,16 +89,15 @@ export const galleriesData = {
     name: "People Collection",
     description: "A portrait collection capturing people in various settings.",
     photos: [
-      { aspectRatio: vertical, path: "people-1.jpg" },
-      { aspectRatio: horizontal, path: "people-2.jpg" },
-      { aspectRatio: horizontal, path: "people-3.jpg" },
-      // { aspectRatio: horizontal, path: "people-5.jpg" },
-      // { aspectRatio: vertical, path: "people-6.jpg" },
-      { aspectRatio: horizontal, path: "people-7.jpg" },
-      { aspectRatio: horizontal, path: "people-8.jpg" },
-      { aspectRatio: vertical, path: "people-4.jpg" },
-
-      { aspectRatio: horizontal, path: "people-9.jpg" },
+      { aspectRatio: vertical, path: "people-1.jpg",},
+      { aspectRatio: horizontal, path: "people-2.jpg",},
+      { aspectRatio: horizontal, path: "people-3.jpg",},
+      // { aspectRatio: horizontal, path: "people-5.jpg",},
+      // { aspectRatio: vertical, path: "people-6.jpg",},
+      { aspectRatio: horizontal, path: "people-7.jpg",},
+      { aspectRatio: horizontal, path: "people-8.jpg",},
+      { aspectRatio: vertical, path: "people-4.jpg",},
+      { aspectRatio: horizontal, path: "people-9.jpg",},
     ] as PhotoMetadata[],
   },
 
@@ -102,14 +105,123 @@ export const galleriesData = {
     name: "Pentax 17 Collection",
     description: "A collection of picture made on Pentax 17.",
     photos: [
-      { aspectRatio: vertical, path: "pentax-1.jpg" },
-      { aspectRatio: vertical, path: "pentax-2.jpg" },
-      { aspectRatio: vertical, path: "pentax-3.jpg" },
-      { aspectRatio: vertical, path: "pentax-4.jpg" },
-      { aspectRatio: vertical, path: "pentax-5.jpg" },
-      { aspectRatio: vertical, path: "pentax-6.jpg" },
-      { aspectRatio: vertical, path: "pentax-7.jpg" },
-      { aspectRatio: vertical, path: "pentax-8.jpg" },
+      { aspectRatio: vertical, path: "pentax-1.jpg", },
+      { aspectRatio: vertical, path: "pentax-2.jpg",},
+      { aspectRatio: vertical, path: "pentax-3.jpg", },
+      { aspectRatio: vertical, path: "pentax-4.jpg",},
+      { aspectRatio: vertical, path: "pentax-5.jpg", },
+      { aspectRatio: vertical, path: "pentax-6.jpg", },
+      { aspectRatio: vertical, path: "pentax-7.jpg", },
+      { aspectRatio: vertical, path: "pentax-8.jpg", },
     ] as PhotoMetadata[],
   },
 };
+
+
+
+// export const galleriesData = {
+//   bw: {
+//     name: "Black and White Collection",
+//     description: "A beautiful collection of black and white photographs.",
+//     // total gap 480 + 240 + 40 + + 480 + 80 + 
+//     photos: [
+//       { aspectRatio: vertical, path: "bw-1.jpg", spacing: "", size: 800},
+//       { aspectRatio: horizontal, path: "bw-4.jpg", spacing: "p-[40px] xl:px-[240px]", size: 1300 },
+//       { aspectRatio: horizontal, path: "bw-6.jpg", spacing: "p-[20px] xl:pb-[180px]", size: 800 },
+//       { aspectRatio: horizontal, path: "bw-3.jpg", spacing: "p-[40px] xl:pt-[180px]", size: 800 },
+//       { aspectRatio: horizontal, path: "bw-5.jpg", spacing: "p-[10px] xl:px-[240px]", size: 1300 },
+//       { aspectRatio: horizontal, path: "bw-2.jpg", spacing: "p-[20px] xl:pr-[240px]", size: 1096 },
+//     ] as PhotoMetadata[],
+//   },
+//   alps: {
+//     name: "Swiss Alps Collection",
+//     description: "A beautiful collection of Swiss Alps photographs.",
+//     photos: [
+//       { aspectRatio: vertical, path: "alps-1.jpg", spacing: "", size: 800 },
+//       { aspectRatio: horizontal, path: "alps-2.jpg", spacing: "p-[40px] xl:px-[340px]", size: 1096 },
+//       { aspectRatio: vertical, path: "alps-3.jpg", spacing: "p-[40px] xl:p-0", size: 800 },
+//       { aspectRatio: horizontal, path: "alps-4.jpg", spacing: "p-[20px] xl:px-[260px]", size: 1400 },
+//       { aspectRatio: vertical, path: "alps-5.jpg", spacing: "p-[40px] xl:p-0", size: 800 },
+//       { aspectRatio: vertical, path: "alps-6.jpg", spacing: "p-[40px] xl:p-0 xl:px-[40px]", size: 800 },
+//       { aspectRatio: horizontal, path: "alps-7.jpg", spacing: "p=[10px] xl:px-[240px]", size: 1300 },
+//     ] as PhotoMetadata[],
+//   },
+//   purple: {
+//     name: "Purple Collection",
+//     description: "A collection focused on purple hues and stunning landscapes.",
+//     photos: [
+//       { aspectRatio: vertical, path: "purple-1.jpg", spacing: "", size: 800 },
+//       { aspectRatio: horizontal, path: "purple-2.jpg", spacing: "", size: 800 },
+//       // { aspectRatio: horizontal, path: "purple-3.jpg", spacing: "", size: 800 },
+//       { aspectRatio: vertical, path: "purple-4.jpg", spacing: "", size: 800 },
+//       { aspectRatio: horizontal, path: "purple-5.jpg", spacing: "", size: 800 },
+//       { aspectRatio: horizontal, path: "purple-6.jpg", spacing: "", size: 800 },
+//       // { aspectRatio: horizontal, path: "purple-7.jpg", spacing: "", size: 800 },
+//       { aspectRatio: horizontal, path: "purple-8.jpg", spacing: "", size: 800 },
+//       { aspectRatio: vertical, path: "purple-9.jpg", spacing: "", size: 800 },
+//     ] as PhotoMetadata[],
+//   },
+//   nature: {
+//     name: "Nature Collection",
+//     description: "A beautiful collection of nature photographs.",
+//     photos: [
+//       { aspectRatio: vertical, path: "nature-1.jpg", spacing: "", size: 800 },
+//       { aspectRatio: horizontal, path: "nature-2.jpg", spacing: "", size: 800 },
+//       { aspectRatio: vertical, path: "nature-3.jpg", spacing: "", size: 800 },
+//       { aspectRatio: vertical, path: "nature-4.jpg", spacing: "", size: 800 },
+//       { aspectRatio: vertical, path: "nature-5.jpg", spacing: "", size: 800 },
+//       { aspectRatio: horizontal, path: "nature-6.jpg", spacing: "", size: 800 },
+//       { aspectRatio: vertical, path: "nature-7.jpg", spacing: "", size: 800 },
+//       { aspectRatio: vertical, path: "nature-8.jpg", spacing: "", size: 800 },
+//     ] as PhotoMetadata[],
+//   },
+//   travel: {
+//     name: "Travel Collection",
+//     description: "A collection of travel moments from around the world.",
+//     photos: [
+//       { aspectRatio: vertical, path: "travel-1.jpg", spacing: "p-[40px]", size: 800 },
+//       { aspectRatio: vertical, path: "travel-2.jpg", spacing: "p-[40px]", size: 800 },
+//       { aspectRatio: vertical, path: "travel-3.jpg", spacing: "p-[40px]", size: 800 },
+//       // { aspectRatio: horizontal, path: "travel-4.jpg", spacing: "", size: 800 },
+//       { aspectRatio: horizontal, path: "travel-6.jpg", spacing: "p-[40px]", size: 800 },
+//       { aspectRatio: vertical, path: "travel-5.jpg", spacing: "p-[40px]", size: 800 },
+//       { aspectRatio: vertical, path: "travel-7.jpg", spacing: "p-[40px]", size: 800 },
+//       { aspectRatio: horizontal, path: "travel-8.jpg", spacing: "p-[40px]", size: 800 },
+//       { aspectRatio: vertical, path: "travel-9.jpg", spacing: "p-[40px]", size: 800 },
+//       // { aspectRatio: vertical, path: "travel-10.jpg", spacing: "", size: 800 },
+//       // { aspectRatio: horizontal, path: "travel-11.jpg", spacing: "", size: 800 },
+//       // { aspectRatio: horizontal, path: "travel-12.jpg", spacing: "", size: 800 },
+//     ] as PhotoMetadata[],
+//   },
+//   people: {
+//     name: "People Collection",
+//     description: "A portrait collection capturing people in various settings.",
+//     photos: [
+//       { aspectRatio: vertical, path: "people-1.jpg", spacing: "px-[20px] md:px-[40px]", size: 800 },
+//       { aspectRatio: horizontal, path: "people-2.jpg", spacing: "px-[20px] md:px-[40px]", size: 800 },
+//       { aspectRatio: horizontal, path: "people-3.jpg", spacing: "px-[20px] md:px-[40px]", size: 800 },
+//       // { aspectRatio: horizontal, path: "people-5.jpg", spacing: "px-[20px] md:px-[40px]", size: 800 },
+//       // { aspectRatio: vertical, path: "people-6.jpg", spacing: "px-[20px] md:px-[40px]", size: 800 },
+//       { aspectRatio: horizontal, path: "people-7.jpg", spacing: "px-[20px] md:px-[40px]", size: 800 },
+//       { aspectRatio: horizontal, path: "people-8.jpg", spacing: "px-[20px] md:px-[40px]", size: 800 },
+//       { aspectRatio: vertical, path: "people-4.jpg", spacing: "px-[20px] md:px-[40px]", size: 800 },
+//       { aspectRatio: horizontal, path: "people-9.jpg", spacing: "px-[20px] md:px-[40px]", size: 800 },
+//     ] as PhotoMetadata[],
+//   },
+
+//   pentax: {
+//     name: "Pentax 17 Collection",
+//     description: "A collection of picture made on Pentax 17.",
+//     photos: [
+//       { aspectRatio: vertical, path: "pentax-1.jpg", spacing: "px-[20px] md:px-[40px]", size: 800  },
+//       { aspectRatio: vertical, path: "pentax-2.jpg", spacing: "px-[20px] md:px-[40px]", size: 800 },
+//       { aspectRatio: vertical, path: "pentax-3.jpg", spacing: "px-[20px] md:px-[40px]", size: 800  },
+//       { aspectRatio: vertical, path: "pentax-4.jpg", spacing: "px-[20px] md:px-[40px]", size: 800 },
+//       { aspectRatio: vertical, path: "pentax-5.jpg", spacing: "px-[20px] md:px-[40px]", size: 800  },
+//       { aspectRatio: vertical, path: "pentax-6.jpg", spacing: "px-[20px] md:px-[40px]", size: 800  },
+//       { aspectRatio: vertical, path: "pentax-7.jpg", spacing: "px-[20px] md:px-[40px]", size: 800  },
+//       { aspectRatio: vertical, path: "pentax-8.jpg", spacing: "px-[20px] md:px-[40px]", size: 800  },
+//     ] as PhotoMetadata[],
+//   },
+// };
+

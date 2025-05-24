@@ -62,11 +62,6 @@ section {
   /* padding-top: 250px;  */
 }
 
-.custom-text {
-  font-size: 8.1vw;
-  letter-spacing: -3px;
-}
-
 .custom-transition {
   transition: all 300ms ease-in-out;
 }
