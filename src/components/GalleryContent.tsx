@@ -77,8 +77,8 @@ const GalleryContent = () => {
 
               {/* Intro div */}
               <div className="w-full min-h-screen xl:min-w-[75vw] flex flex-col pt-[64px] px-[20px]">
-                <h1 className="text-[48px] xl:text-[64px] text-white mb-4">{activeGallery.name}</h1>
-                <p className="text-white/70">{activeGallery.description}</p>
+                <h1 className="text-[48px] xl:text-[64px] uppercase text-white mb-4">{activeGallery.name}</h1>
+                <p className="text-white/70 xl:w-1/2">{activeGallery.description}</p>
               </div>
 
               {/* Images */}
@@ -90,7 +90,7 @@ const GalleryContent = () => {
 
                   <div key={path} className="px-5 md:px-[40px] self-center">
                     <motion.div
-                      className="shrink-0 relative max-h-screen"
+                      className={`shrink-0 relative max-h-screen w-[${width}]`}
                       initial={{ opacity: 0, x: 100 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.6, delay: index * 0.1 }}
@@ -110,7 +110,7 @@ const GalleryContent = () => {
                         // loading={index > 1 ? "lazy" : "eager"}
                         loading="lazy"
                         sizes="(min-width: 1280px) 600px, (min-width: 768px) 400px, 300px" // TODO: remove?
-                        className="object-contain w-full h-full"
+                        className="object-contain w-auto h-full"
                         loader={imageLoader}
                       />
                     </motion.div>

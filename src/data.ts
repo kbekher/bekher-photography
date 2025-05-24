@@ -13,9 +13,8 @@ export interface PhotoMetadata {
 
 export const galleriesData = {
   bw: {
-    name: "Black and White Collection",
-    description: "A beautiful collection of black and white photographs.",
-    // total gap 480 + 240 + 40 + + 480 + 80 + 
+    name: "Noir et Blanc",
+    description: "Black and white film photo collection, shot entirely on Kentmere Pan 400 and pushed to 800 ISO. This is my first exploration of pushing film. Landscapes, portraits, and everyday moments transform into something magical through the grain and texture...",
     photos: [
       { aspectRatio: vertical, path: "bw-1.jpg" },
       { aspectRatio: horizontal, path: "bw-4.jpg" },
@@ -26,8 +25,8 @@ export const galleriesData = {
     ] as PhotoMetadata[],
   },
   alps: {
-    name: "Swiss Alps Collection",
-    description: "A beautiful collection of Swiss Alps photographs.",
+    name: "Alpine Escape",
+    description: "Series of photos captured in 2024 during a trip with friends to Lauterbrunnen region, Switzerland. These images hold memories and impressions from an unforgettable 26 km hike up Mount Schilthorn (2,970 meters).",
     photos: [
       { aspectRatio: vertical, path: "alps-1.jpg" },
       { aspectRatio: horizontal, path: "alps-2.jpg" },
@@ -39,8 +38,8 @@ export const galleriesData = {
     ] as PhotoMetadata[],
   },
   purple: {
-    name: "Purple Collection",
-    description: "A collection focused on purple hues and stunning landscapes.",
+    name: "Jazzy Blues",
+    description: "Ever heard of the 25 ISO Jazzy Blues film roll? You'll be lucky if at least half of it ends up properly exposed. I shot one roll a year, and this is all I can share after two years of experimenting. The last two shots were taken in Kyiv in 2020 with a super old FED-5 camera and a Revolog roll. Feels a little jazzy, doesn't it?",
     photos: [
       { aspectRatio: vertical, path: "purple-1.jpg" },
       { aspectRatio: horizontal, path: "purple-2.jpg" },
@@ -54,8 +53,8 @@ export const galleriesData = {
     ] as PhotoMetadata[],
   },
   nature: {
-    name: "Nature Collection",
-    description: "A beautiful collection of nature photographs.",
+    name: "Moments of Stillness",
+    description: "If you look closely, you'll find images captured across the changing seasons. My personal favourite: three flowers hanging in jars, still blooming in winter's cold and glowing in the golden hour light. And then, the animals: a cat resting on a beach in Málaga in May 2023, sheep in Wersten neighborhood in Düsseldorf, and city ducks caught on camera. This collection is dedicated to the nature and quiet life around us.",
     photos: [
       { aspectRatio: vertical, path: "nature-1.jpg" },
       { aspectRatio: horizontal, path: "nature-2.jpg" },
