@@ -32,13 +32,13 @@ const Logo = ({ isLink }: LogoProps) => {
     <Link
       href="/"
       aria-label="Go to homepage"
-      className="flex gap-2 items-center text-white xl:text-[24px] custom-transition hover:text-[var(--accent)]"
+      className="flex gap-2 items-center text-white 2xl:text-[24px] custom-transition hover:text-[var(--accent)]"
     >
       <LogoElement color="bg-[var(--secondary)]" />
       <span className=''>{text}</span>
     </Link>
   ) : (
-    <div className="flex gap-2 items-center select-none xl:text-[24px]">
+    <div className="flex gap-2 items-center select-none 2xl:text-[24px]">
       <LogoElement color="bg-[var(--branding)]" />
       <span>Kristina Bekher</span>
     </div>
