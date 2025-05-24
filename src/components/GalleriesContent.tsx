@@ -9,12 +9,12 @@ import imageLoader from '@/utils/image-loader';
 
 const GalleriesContent = () => {
   return (
-    <section className='pt-[120px] md:pt-[220px]'>
-      <h1 className='text-4xl md:text-7xl xl:text-9xl text-white tracking-tighter uppercase absolute top-0 left-1/2 -translate-x-1/2 origin-center'>
+    <section className='pt-[120px] md:pt-[220px] relative'>
+      <h1 className='text-6xl md:text-8xl lg:text-9xl text-white tracking-tighter uppercase absolute top-12 md:top-0 left-1/2 -translate-x-1/2 origin-center'>
         Galleries
       </h1>
 
-      <ul className="flex flex-col gap-10">
+      <ul className="flex flex-col gap-4 md:gap-10">
         {Object.entries(galleriesData).map(([slug, { name, photos }], i) => {
           const bestFitPhotos = getBestFitRow(photos);
 
@@ -32,14 +32,19 @@ const GalleriesContent = () => {
                 </div>
 
                 {/* Gallery Row */}
-                <div className='grid grid-cols-12 gap-x-5 h-max-[230px] overflow-hidden'>
-                  {bestFitPhotos.map(({ photo, index, colSpan }) => {
+                <div className='grid grid-cols-8 md:grid-cols-12 gap-x-2 items-center md:gap-x-5 h-max-[230px] overflow-hidden'>
+                  {bestFitPhotos.map(({ photo, index, colSpan }, itemIndex) => {
                     const { width, height } = computeDimensions(photo.aspectRatio, 200);
 
+                    // Default to col-span-2 on mobile (8 cols), conditionally override for desktop
+                    const colSpanClass = colSpan === 3
+                      ? 'col-span-2 md:col-span-3'
+                      : 'col-span-2';
+
                     return (
-                      <motion.div 
+                      <motion.div
                         key={`${name}-${photo.path}`}
-                        className={`relative ${colSpan === 2 ? 'col-span-2' : colSpan === 3 ? 'col-span-3' : ''}`}
+                        className={`relative ${colSpanClass} ${itemIndex > 3 ? 'hidden md:block' : 'block'}`}
                         style={{ aspectRatio: photo.aspectRatio }}
                         initial={{ opacity: 0, y: 40 }}
                         whileInView={{ opacity: 1, y: 0 }}

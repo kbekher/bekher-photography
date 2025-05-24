@@ -109,7 +109,7 @@ const GalleryContent = () => {
                         draggable={false}
                         // loading={index > 1 ? "lazy" : "eager"}
                         loading="lazy"
-                        sizes="(min-width: 1280px) 600px, (min-width: 768px) 400px, 300px"
+                        sizes="(min-width: 1280px) 600px, (min-width: 768px) 400px, 300px" // TODO: remove?
                         className="object-contain w-full h-full"
                         loader={imageLoader}
                       />
@@ -135,7 +135,7 @@ const GalleryContent = () => {
                         width={400}
                         height={800}
                         loading="lazy"
-                        sizes="(min-width: 1280px) 600px, (min-width: 768px) 400px, 300px"
+                        sizes="(min-width: 1280px) 600px, (min-width: 768px) 400px, 300px" // TODO: remove?
                         draggable={false}
                         className="object-cover w-full h-full"
                         loader={imageLoader}

@@ -8,6 +8,7 @@
   --foreground: #ffffff;
   --branding: #444251;
   --secondary: #cbcbcf;
+  --grey: #e4e3e5;
   --accent: #8d89a3;
 
   --font-size: 16px;
@@ -60,6 +61,11 @@ section {
   padding-bottom: 140px;
   /* Header height 64px*/ 
   /* padding-top: 250px;  */
+}
+
+.custom-text {
+  font-size: 8.1vw;
+  letter-spacing: -3px;
 }
 
 .custom-transition {
