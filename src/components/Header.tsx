@@ -22,7 +22,7 @@ const Header = () => {
         }}
         className={`${isOpen ? "hidden md:block" : ""}`}
       >
-        <Logo isLink={true} color="secondary"/>
+        <Logo isLink={true} />
       </motion.div>
 
       <MenuToggle text="menu" />

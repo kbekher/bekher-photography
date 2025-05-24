@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 
 interface LogoProps {
   isLink: boolean;
-  color: string;
 }
 
 interface LogoElementProps {
@@ -20,25 +19,27 @@ const LogoElement = ({ color }: LogoElementProps) => (
       repeat: Infinity,
       repeatDelay: 1,
     }}
-    className={`w-5 h-5 rounded-full bg-[var(--${color})]`}
+    className={`w-5 h-5 rounded-full ${color}`}
   />
 )
 
-const Logo = ({ isLink, color }: LogoProps) => {
+const Logo = ({ isLink }: LogoProps) => {
   const pathname = usePathname();
 
+  const text = pathname !== "/" ? "Home" : "Kristina Bekher";
+
   return isLink ? (
-    <Link 
+    <Link
       href="/"
-      aria-label="Go to homepage" 
+      aria-label="Go to homepage"
       className="flex gap-2 items-center text-white xl:text-[24px] custom-transition hover:text-[var(--accent)]"
     >
-      <LogoElement color={color} />
-      <span className=''>{pathname !== "/" ? "Home" : "Kristina Bekher"}</span>
+      <LogoElement color="bg-[var(--secondary)]" />
+      <span className=''>{text}</span>
     </Link>
   ) : (
     <div className="flex gap-2 items-center select-none xl:text-[24px]">
-      <LogoElement color={color} />
+      <LogoElement color="bg-[var(--branding)]" />
       <span>Kristina Bekher</span>
     </div>
   );
