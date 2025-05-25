@@ -9,7 +9,7 @@ const HomeContent = () => {
     <div className="flex flex-col md:grid grid-cols-12 gap-x-5 gap-y-10">
 
       <div className="h-max col-start-2 col-span-3">
-        <Link href={`/galleries/travel`}>
+        <Link href={`/galleries/fromparistovenice`}>
           <MotionImage galleryName="fromparistovenice" photo={galleriesData.fromparistovenice.photos[0]} />
           <span className="pt-2">{galleriesData.fromparistovenice.name}</span>
         </Link>
