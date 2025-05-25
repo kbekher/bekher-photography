@@ -15,7 +15,7 @@ const GalleriesContent = () => {
       </h1>
 
       <ul className="flex flex-col gap-4 md:gap-10">
-        {Object.entries(galleriesData).map(([slug, { name, photos }]) => {
+        {Object.entries(galleriesData).map(([slug, { name, photos }], galleryIndex) => {
           const bestFitPhotos = getBestFitRow(photos);
 
           return (
@@ -28,11 +28,11 @@ const GalleriesContent = () => {
                 {/* Title + Divider */}
                 <div className='relative py-4'>
                   <div className="absolute top-0 left-0 right-0 h-px bg-[var(--secondary)]" />
-                  <p className='w-max'>{name}</p>
+                  <p className='w-max leading-none'>{name}</p>
                 </div>
 
                 {/* Gallery Row */}
-                <div className='grid grid-cols-8 md:grid-cols-12 gap-x-2 items-center md:gap-x-5 h-max-[230px] overflow-hidden'>
+                <div className='grid grid-cols-8 md:grid-cols-12 gap-x-2 md:gap-x-5 h-max-[230px] overflow-hidden'>
                   {bestFitPhotos.map(({ photo, index, colSpan }, itemIndex) => {
                     const { width, height } = computeDimensions(photo.aspectRatio, 200);
 
@@ -61,6 +61,7 @@ const GalleriesContent = () => {
                           sizes="400px"
                           className="object-cover w-full h-full"
                           loader={imageLoader}
+                          priority={galleryIndex < 2}
                         />
                       </motion.div>
                     )

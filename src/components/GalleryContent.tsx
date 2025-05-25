@@ -35,7 +35,15 @@ const GalleryContent = () => {
   const nextGallery = galleriesData[nextGalleryName as keyof typeof galleriesData];
 
   const [prevValidGalleryName, setPrevValidGalleryName] = useState<string | null>(null);
-  const [isDesktop, setIsDesktop] = useState(true);
+  // const [isDesktop, setIsDesktop] = useState(true);
+  const [windowWidth, setWindowWidth] = useState(0);
+
+  useEffect(() => {
+    const updateWidth = () => setWindowWidth(window.innerWidth);
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
 
   useEffect(() => {
     if (gallery && galleryName) {
@@ -43,69 +51,75 @@ const GalleryContent = () => {
     }
   }, [gallery, galleryName]);
 
-  useEffect(() => {
-    const handleResize = () => {
-      setIsDesktop(window.innerWidth >= 1280);
-    };
-  
-    handleResize(); // Initial check
-    window.addEventListener('resize', handleResize);
-  
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   const activeGalleryName = gallery ? galleryName : prevValidGalleryName;
   const activeGallery = galleriesData[activeGalleryName as keyof typeof galleriesData];
 
+  const introWidth = windowWidth * 0.7;         // 70vw
+  const imageGap = 80;                          // Each image has 2 x 40px padding = 40px
+  const nextGalleryWidth = 500;                // Width of preview
+  const nextGalleryMargin = 400;               // `ml-[400px]`
+
   // Calculate total width of all images including the next gallery preview
   const totalWidth = activeGallery?.photos.reduce((acc, photo) => {
-    const { width } = computeDimensions(photo.aspectRatio, 800);
-    return acc + width + 130; // 40px for gap
+    const { width } = computeDimensions(photo.aspectRatio, photo.size || 800);
+    return acc + width + imageGap + photo.buffer;
   }, 0) ?? 0;
 
-  // Add width for next gallery preview (400px) and its gap (40px)
-  const totalContentWidth = totalWidth + 580 + window.innerWidth * 0.75;
+  const totalContentWidth = totalWidth + introWidth + nextGalleryWidth + nextGalleryMargin;
 
   // Transform scroll progress to horizontal movement
   const x = useTransform(
     smoothProgress,
     [0, 1],
-    [0, -totalContentWidth + (typeof window !== 'undefined' ? window.innerWidth : 0)]
+    [0, -totalContentWidth + windowWidth]
   );
 
   if (!activeGallery) {
-    return <div>Gallery not found.</div>;
+    return (
+      <div className="h-screen w-full flex items-center justify-center">
+        <p className="text-white text-xl">404 — No frames to be found.</p>
+      </div>
+    )
   }
 
-  if (!isDesktop) {
-    // MOBILE: stacked column layout
+  // MOBILE: stacked column layout
+  if (windowWidth < 1280) {
     return (
-      <div className="flex flex-col gap-10">
+      <div className="flex flex-col gap-4">
         <div className='px-5 pt-[64px]'>
           <h1 className="text-4xl md:text-6xl text-white uppercase mb-2">{activeGallery.name}</h1>
           {/* <p className="text-white/70">{activeGallery.description}</p> */}
         </div>
-  
+
         {activeGallery.photos.map((photo) => {
-          const { aspectRatio, path } = photo;
+          const { aspectRatio, path, styles } = photo;
           const { width, height } = computeDimensions(aspectRatio, 400); // smaller for mobile
-  
+
           return (
-            <div key={path} className="w-full px-5">
-              <Image
-                src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${activeGalleryName}/${path}`}
-                alt={`Picture of ${activeGallery.name}`}
-                width={width}
-                height={height}
-                loading="lazy"
-                sizes="400px"
-                className="w-full h-auto object-contain"
-                loader={imageLoader}
-              />
+            <div key={path} className={`w-full flex justify-center items-center overflow-hidden ${styles}`}>
+              <motion.div
+                className="w-full"
+                initial={{ opacity: 0.6, scale: 1.1 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4 }}
+                viewport={{ amount: 0.5 }}
+              >
+                <Image
+                  src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${activeGalleryName}/${path}`}
+                  alt={`Picture of ${activeGallery.name}`}
+                  width={width}
+                  height={height}
+                  loading="lazy"
+                  sizes="400px"
+                  className="w-full h-auto object-contain"
+                  loader={imageLoader}
+                />
+              </motion.div>
             </div>
           );
-        })}
-  
+        })
+        }
+
         {/* Optional: Show next gallery preview at the bottom */}
         <div className="w-full mt-10">
           <Link href={`/galleries/${nextGalleryName}`}>
@@ -119,14 +133,14 @@ const GalleryContent = () => {
               />
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-center">
                 <div>
-                  <p className="text-xl">Next Collection</p>
-                  <p className="text-2xl font-light">{nextGallery.name}</p>
+                  <p className="text-xl font-light">Next Collection</p>
+                  <p className="text-2xl uppercase">{nextGallery.name}</p>
                 </div>
               </div>
             </div>
           </Link>
         </div>
-      </div>
+      </div >
     );
   }
 
@@ -136,27 +150,27 @@ const GalleryContent = () => {
         <div className="h-full relative">
           <div className='overflow-hidden'>
             <motion.div
-              className="flex w-min-content"
+              className="flex w-min-content items-center"
               style={{ x }}
             >
 
               {/* Intro div */}
-              <div className="w-full min-h-screen xl:min-w-[75vw] flex flex-col pt-[64px] px-[20px]">
+              <div className="w-full min-h-screen xl:min-w-[70vw] flex flex-col pt-[64px] px-[20px]">
                 <h1 className="text-[48px] xl:text-[64px] uppercase text-white mb-4">{activeGallery.name}</h1>
                 {/* <p className="text-white/70 xl:w-1/2">{activeGallery.description}</p> */}
               </div>
 
               {/* Images */}
               {activeGallery.photos.map((photo, index) => {
-                const { aspectRatio, path } = photo;
-                const { width, height } = computeDimensions(aspectRatio, 800);
+                const { aspectRatio, path, styles, size } = photo;
+                const { width, height } = computeDimensions(aspectRatio, size || 800);
 
                 return (
 
-                  <div key={path} className="px-5 md:px-[40px] self-center">
+                  <div key={path} className="px-[40px]">
                     <motion.div
-                      className={`shrink-0 relative max-h-screen w-[${width}]`}
-                      initial={{ opacity: 0, x: 100 }}
+                      className={`shrink-0 relative w-full h-full flex items-center justify-center max-h-screen overflow-hidden ${styles}`}
+                      initial={index === 0 ? false : { opacity: 0, x: 100 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.6, delay: index * 0.1 }}
                       viewport={{ once: true }}
@@ -166,25 +180,33 @@ const GalleryContent = () => {
                         aspectRatio: aspectRatio,
                       }}
                     >
-                      <Image
-                        src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${activeGalleryName}/${path}`}
-                        alt={`Picture of ${activeGallery.name}`}
-                        width={width}
-                        height={height}
-                        draggable={false}
-                        // loading={index > 1 ? "lazy" : "eager"}
-                        loading="lazy"
-                        sizes="400px"
-                        className="object-contain w-auto h-full"
-                        loader={imageLoader}
-                      />
+                      <motion.div
+                        initial={{ scale: 1.2, opacity: 0.6 }}
+                        whileInView={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
+                        className="w-full h-full"
+                      >
+                        <Image
+                          src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${activeGalleryName}/${path}`}
+                          alt={`Picture of ${activeGallery.name}`}
+                          width={width}
+                          height={height}
+                          draggable={false}
+                          // loading={index === 0 ? 'eager' : 'lazy'}
+                          // loading="lazy"
+                          sizes="400px"
+                          className="w-auto h-full object-contain"
+                          loader={imageLoader}
+                          priority={index === 0}
+                        />
+                      </motion.div>
                     </motion.div>
                   </div>
                 );
               })}
 
               {/* Next Gallery Preview */}
-              <div className="px-5 md:px-[40px] self-center">
+              <div className="ml-[400px]">
                 <motion.div
                   className="shrink-0 relative"
                   initial={{ opacity: 0 }}
@@ -193,21 +215,21 @@ const GalleryContent = () => {
                   viewport={{ once: true }}
                 >
                   <Link href={`/galleries/${nextGalleryName}`}>
-                    <div className="w-[400px] h-screen relative">
+                    <div className="w-[500px] h-screen relative">
                       <Image
                         src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${nextGalleryName}/${nextGallery.photos[0].path}`}
                         alt={`Preview of ${nextGallery.name}`}
-                        width={400}
+                        width={500}
                         height={800}
                         loading="lazy"
-                        sizes="400px"
+                        // sizes="400px"
                         draggable={false}
                         className="object-cover w-full h-full"
                         loader={imageLoader}
                       />
                       <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center">
-                        <span className="text-white text-2xl mb-2">Next Collection</span>
-                        <span className="text-white text-3xl font-light">{nextGallery.name}</span>
+                        <span className="text-white text-2xl mb-2 font-light">Next Collection</span>
+                        <span className="text-white text-3xl uppercase">{nextGallery.name}</span>
                       </div>
                     </div>
                   </Link>

@@ -15,13 +15,13 @@ const AboutContent = () => {
       <div className='flex flex-col-reverse lg:flex-row gap-10 items-center mb-24'>
         <div className='flex-1 text-[14px] md:text-2xl xl:text-3xl leading-relaxed space-y-4 lg:pt-5'>
           <p>
-            I{"'"}m Kristina Bekher, a Ukrainian film photographer.
+            I&apos;m Kristina Bekher, a Ukrainian film photographer.
           </p>
           <p>
-            In my photography I mix street, travel, architecture and lots of aspects of a day-to-day life. I like to find beauty, feel and celebrate every little thing I encounter.
+            I mix street, nature, architecture and many aspects of everyday life. I like shooting anything that seems interesting and experimenting with light, gear, and color.
           </p>
           <p>
-            By day, I am a software developer driving onsite-experimentation at Douglas.
+            By day, I&apos;m a software developer driving on-site experimentation at Douglas.
           </p>
         </div>
         <div className='w-full lg:max-w-[50vw] lg:translate-x-[20px] shrink-0'>
@@ -46,8 +46,8 @@ const AboutContent = () => {
           <div className="space-y-2 font-mono">
             {[
               ['2025', 'Canon AE-1'],
-              ['2024', 'Pentax T7'],
-              ['2022', 'Minolta SR-T 16'],
+              ['2024', 'Pentax 17'],
+              ['2022', 'Minolta SR-1s'],
               ['2021', 'ZENIT 11'],
               ['2019', 'FED 5'],
             ].map(([year, model], index) => (
@@ -73,14 +73,16 @@ const AboutContent = () => {
           {/* Gear Story */}
           <div className='leading-relaxed space-y-4'>
             <p>
-              I started my film photography journey with a 1€ copy — an old USSR restored rangefinder camera called FED 5. Took me a whole summer to get it all to work. I rode it until the gears broke, using nothing but 50mm with their rangefinder, rather than with a 35mm SLR ZENIT 11.
+              My first ever film camera was an old rangefinder, the FED 5. It took me some time to get used to it, but eventually, I was shooting with it up until 2022, and I did much better with the rangefinder than with SLRs.
             </p>
             <p>
-              In 2022, the whole new story began with a 35mm lens of Minolta SR-T. I was impressed by their image sharpness and realization that the gear really shapes how you see. Eventually the Pentax T7 followed, and then Canon AE-1 for color experiments.
+              In 2022, a new chapter began with the Japanese Minolta SR-1s. I was really impressed by the shots I got and realized that the older gear I&apos;d been using does have its limits. That same year, the Pentax 17 was announced by Asahi Optical, and I&apos;d been looking forward to it ever since.
             </p>
             <p>
-              And a recent update – Canon AE-1 – an electronic SLR using the aperture vs. automatic exposure. Something new to me, looking forward to the first roll developed and scanned.
+              When the Pentax 17 finally came out, I soon found myself unboxing my first &lsquo;new&rsquo; camera. I loved its small size and cool design. And even though I like setting the aperture manually, Pentax still lets me experiment with exposure, modes, and focus — which takes some getting used to.
             </p>
+            <p>
+              Recently, my friends added a Canon AE-1 to my kit. With its automatic aperture exposure, I worry less about missing moments. Paired with a Rolev M.G. 55mm Skylight filter on the lens, the images I&apos;m getting are absolutely incredible. Still exploring...            </p>
           </div>
         </div>
       </div>
