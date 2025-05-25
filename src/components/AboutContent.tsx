@@ -42,7 +42,7 @@ const AboutContent = () => {
         <h2 className='text-3xl md:text-4xl uppercase mb-6'>Gear</h2>
         <div className='flex flex-col-reverse lg:grid lg:grid-cols-2 gap-10 text-[14px] md:text-[24px]'>
 
-          {/* Timeline */}
+          {/* Timeline TODO: sticky on Desktop*/}
           <div className="space-y-2 font-mono">
             {[
               ['2025', 'Canon AE-1'],

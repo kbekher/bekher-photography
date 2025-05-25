@@ -15,13 +15,14 @@ const GalleriesContent = () => {
       </h1>
 
       <ul className="flex flex-col gap-4 md:gap-10">
-        {Object.entries(galleriesData).map(([slug, { name, photos }], galleryIndex) => {
+        {Object.values(galleriesData).map((gallery, galleryIndex) => {
+          const { id, name, photos } = gallery;
           const bestFitPhotos = getBestFitRow(photos);
 
           return (
-            <li key={slug}>
+            <li key={id}>
               <Link
-                href={`/galleries/${slug}`}
+                href={`/galleries/${id}`}
                 aria-label={`Go to ${name} gallery page`}
                 className='w-full flex flex-col'
               >
@@ -46,18 +47,17 @@ const GalleriesContent = () => {
                         key={`${name}-${photo.path}`}
                         className={`relative ${colSpanClass} ${itemIndex > 3 ? 'hidden md:block' : 'block'}`}
                         style={{ aspectRatio: photo.aspectRatio }}
-                        initial={{ opacity: 0, y: 40 }}
+                        initial={itemIndex < 3 ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: index * 0.1 }}
                         viewport={{ once: true }}
                       >
                         <Image
-                          src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${slug}/${photo.path}`}
+                          src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${id}/${photo.path}`}
                           alt={`Picture of ${name}`}
                           width={width}
                           height={height}
                           draggable={false}
-                          // loading={i > 2 ? "lazy" : "eager"}
                           sizes="400px"
                           className="object-cover w-full h-full"
                           loader={imageLoader}

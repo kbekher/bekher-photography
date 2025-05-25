@@ -3,12 +3,13 @@
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
-import Link from 'next/link';
+// import Link from 'next/link';
 
 import { galleriesData } from '@/data';
 import { computeDimensions } from '@/utils/utils';
 import imageLoader from '@/utils/image-loader';
 import { useEffect, useRef, useState } from 'react';
+import NextGallery from './NextGallery';
 
 const GalleryContent = () => {
   const params = useParams();
@@ -28,14 +29,12 @@ const GalleryContent = () => {
     restDelta: 0.001
   });
 
-  const gallery = galleriesData[galleryName as keyof typeof galleriesData];
-  const galleryNames = Object.keys(galleriesData);
-  const currentIndex = galleryNames.indexOf(galleryName);
-  const nextGalleryName = galleryNames[(currentIndex + 1) % galleryNames.length];
-  const nextGallery = galleriesData[nextGalleryName as keyof typeof galleriesData];
+  const galleryList = Object.values(galleriesData);
+  const gallery = galleryList.find(g => g.id === galleryName);
+  const currentIndex = galleryList.findIndex(g => g.id === galleryName);
+  const nextGallery = galleryList[(currentIndex + 1) % galleryList.length];
 
   const [prevValidGalleryName, setPrevValidGalleryName] = useState<string | null>(null);
-  // const [isDesktop, setIsDesktop] = useState(true);
   const [windowWidth, setWindowWidth] = useState(0);
 
   useEffect(() => {
@@ -62,7 +61,7 @@ const GalleryContent = () => {
   // Calculate total width of all images including the next gallery preview
   const totalWidth = activeGallery?.photos.reduce((acc, photo) => {
     const { width } = computeDimensions(photo.aspectRatio, photo.size || 800);
-    return acc + width + imageGap + photo.buffer;
+    return acc + width + imageGap + activeGallery.buffer;
   }, 0) ?? 0;
 
   const totalContentWidth = totalWidth + introWidth + nextGalleryWidth + nextGalleryMargin;
@@ -96,50 +95,34 @@ const GalleryContent = () => {
           const { width, height } = computeDimensions(aspectRatio, 400); // smaller for mobile
 
           return (
-            <div key={path} className={`w-full flex justify-center items-center overflow-hidden ${styles}`}>
-              <motion.div
-                className="w-full"
-                initial={{ opacity: 0.6, scale: 1.1 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4 }}
-                viewport={{ amount: 0.5 }}
-              >
-                <Image
-                  src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${activeGalleryName}/${path}`}
-                  alt={`Picture of ${activeGallery.name}`}
-                  width={width}
-                  height={height}
-                  loading="lazy"
-                  sizes="400px"
-                  className="w-full h-auto object-contain"
-                  loader={imageLoader}
-                />
-              </motion.div>
+            <div key={path} className={`w-full relative ${styles}`}>
+              {/* Outer wrapper that defines the clip boundary */}
+              <div className="w-full overflow-hidden" >
+                <motion.div
+                  className="w-full h-full"
+                  initial={{ opacity: 0.6, scale: 1.1 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4 }}
+                  viewport={{ amount: 0.5 }}
+                >
+                  <Image
+                    src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${activeGalleryName}/${path}`}
+                    alt={`Picture of ${activeGallery.name}`}
+                    width={width}
+                    height={height}
+                    loading="lazy"
+                    sizes="400px"
+                    className="w-full h-full object-cover"
+                    loader={imageLoader}
+                  />
+                </motion.div>
+              </div>
             </div>
           );
         })
         }
 
-        {/* Optional: Show next gallery preview at the bottom */}
-        <div className="w-full mt-10">
-          <Link href={`/galleries/${nextGalleryName}`}>
-            <div className="relative w-full h-[250px]">
-              <Image
-                src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${nextGalleryName}/${nextGallery.photos[0].path}`}
-                alt={`Preview of ${nextGallery.name}`}
-                fill
-                className="object-cover"
-                loader={imageLoader}
-              />
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-center">
-                <div>
-                  <p className="text-xl font-light">Next Collection</p>
-                  <p className="text-2xl uppercase">{nextGallery.name}</p>
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
+        <NextGallery nextGallery={nextGallery} />
       </div >
     );
   }
@@ -157,7 +140,7 @@ const GalleryContent = () => {
               {/* Intro div */}
               <div className="w-full min-h-screen xl:min-w-[70vw] flex flex-col pt-[64px] px-[20px]">
                 <h1 className="text-[48px] xl:text-[64px] uppercase text-white mb-4">{activeGallery.name}</h1>
-                {/* <p className="text-white/70 xl:w-1/2">{activeGallery.description}</p> */}
+                <p aria-label='hidden' className="text-white/70 xl:w-1/2 hidden">{activeGallery.description}</p>
               </div>
 
               {/* Images */}
@@ -166,7 +149,6 @@ const GalleryContent = () => {
                 const { width, height } = computeDimensions(aspectRatio, size || 800);
 
                 return (
-
                   <div key={path} className="px-[40px]">
                     <motion.div
                       className={`shrink-0 relative w-full h-full flex items-center justify-center max-h-screen overflow-hidden ${styles}`}
@@ -206,35 +188,8 @@ const GalleryContent = () => {
               })}
 
               {/* Next Gallery Preview */}
-              <div className="ml-[400px]">
-                <motion.div
-                  className="shrink-0 relative"
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  transition={{ duration: 0.6 }}
-                  viewport={{ once: true }}
-                >
-                  <Link href={`/galleries/${nextGalleryName}`}>
-                    <div className="w-[500px] h-screen relative">
-                      <Image
-                        src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${nextGalleryName}/${nextGallery.photos[0].path}`}
-                        alt={`Preview of ${nextGallery.name}`}
-                        width={500}
-                        height={800}
-                        loading="lazy"
-                        // sizes="400px"
-                        draggable={false}
-                        className="object-cover w-full h-full"
-                        loader={imageLoader}
-                      />
-                      <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center">
-                        <span className="text-white text-2xl mb-2 font-light">Next Collection</span>
-                        <span className="text-white text-3xl uppercase">{nextGallery.name}</span>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              </div>
+                <NextGallery nextGallery={nextGallery} isDesktop={true} />
+
             </motion.div>
           </div>
         </div>
