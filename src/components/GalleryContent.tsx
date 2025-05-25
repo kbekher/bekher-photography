@@ -140,7 +140,7 @@ const GalleryContent = () => {
               {/* Intro div */}
               <div className="w-full min-h-screen xl:min-w-[70vw] flex flex-col pt-[64px] px-[20px]">
                 <h1 className="text-[48px] xl:text-[64px] uppercase text-white mb-4">{activeGallery.name}</h1>
-                <p aria-label='hidden' className="text-white/70 xl:w-1/2 hidden">{activeGallery.description}</p>
+                <p aria-hidden="true" className="text-white/70 xl:w-1/2 hidden">{activeGallery.description}</p>
               </div>
 
               {/* Images */}
