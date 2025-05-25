@@ -69,6 +69,7 @@ const AboutContent = () => {
                 className="relative py-2"
                 initial="hidden"
                 whileInView="visible"
+                viewport={{ once: true }}
                 custom={index}
                 variants={itemVariants}
               >
