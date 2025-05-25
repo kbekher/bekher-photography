@@ -7,13 +7,21 @@ const Preloader = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Disable scrolling while preloader is active
+    if (isLoading) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
     // Simulate loading delay or wait for assets if needed
     const timeout = setTimeout(() => {
       setIsLoading(false);
-    }, 1200); // tweak this if needed
+      document.body.style.overflow = '';
+    }, 1200); // change this if needed
 
     return () => clearTimeout(timeout);
-  }, []);
+  }, [isLoading]);
 
   return (
     <AnimatePresence>
