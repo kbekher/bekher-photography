@@ -57,7 +57,7 @@ const MotionImage = ({ galleryName, photo }: Props) => {
             draggable="false"
             onLoad={() => setIsLoaded(true)}
             // sizes={`${800}px`}
-            priority={galleryName === "travel" || galleryName === "bw"}
+            priority={galleryName === "fromparistovenice" || galleryName === "noiretblanc"}
             loader={imageLoader}
           />
         </motion.div>

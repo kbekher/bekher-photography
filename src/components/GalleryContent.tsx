@@ -1,6 +1,5 @@
 'use client';
 
-import * as React from 'react';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
@@ -9,11 +8,12 @@ import Link from 'next/link';
 import { galleriesData } from '@/data';
 import { computeDimensions } from '@/utils/utils';
 import imageLoader from '@/utils/image-loader';
+import { useEffect, useRef, useState } from 'react';
 
 const GalleryContent = () => {
   const params = useParams();
   const { galleryName } = params as { galleryName: string };
-  const containerRef = React.useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Track scroll progress
   const { scrollYProgress } = useScroll({
@@ -34,13 +34,25 @@ const GalleryContent = () => {
   const nextGalleryName = galleryNames[(currentIndex + 1) % galleryNames.length];
   const nextGallery = galleriesData[nextGalleryName as keyof typeof galleriesData];
 
-  const [prevValidGalleryName, setPrevValidGalleryName] = React.useState<string | null>(null);
+  const [prevValidGalleryName, setPrevValidGalleryName] = useState<string | null>(null);
+  const [isDesktop, setIsDesktop] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (gallery && galleryName) {
       setPrevValidGalleryName(galleryName);
     }
   }, [gallery, galleryName]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 1280);
+    };
+  
+    handleResize(); // Initial check
+    window.addEventListener('resize', handleResize);
+  
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const activeGalleryName = gallery ? galleryName : prevValidGalleryName;
   const activeGallery = galleriesData[activeGalleryName as keyof typeof galleriesData];
@@ -65,6 +77,59 @@ const GalleryContent = () => {
     return <div>Gallery not found.</div>;
   }
 
+  if (!isDesktop) {
+    // MOBILE: stacked column layout
+    return (
+      <div className="flex flex-col gap-10">
+        <div className='px-5 pt-[64px]'>
+          <h1 className="text-4xl md:text-6xl text-white uppercase mb-2">{activeGallery.name}</h1>
+          {/* <p className="text-white/70">{activeGallery.description}</p> */}
+        </div>
+  
+        {activeGallery.photos.map((photo) => {
+          const { aspectRatio, path } = photo;
+          const { width, height } = computeDimensions(aspectRatio, 400); // smaller for mobile
+  
+          return (
+            <div key={path} className="w-full px-5">
+              <Image
+                src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${activeGalleryName}/${path}`}
+                alt={`Picture of ${activeGallery.name}`}
+                width={width}
+                height={height}
+                loading="lazy"
+                sizes="400px"
+                className="w-full h-auto object-contain"
+                loader={imageLoader}
+              />
+            </div>
+          );
+        })}
+  
+        {/* Optional: Show next gallery preview at the bottom */}
+        <div className="w-full mt-10">
+          <Link href={`/galleries/${nextGalleryName}`}>
+            <div className="relative w-full h-[250px]">
+              <Image
+                src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${nextGalleryName}/${nextGallery.photos[0].path}`}
+                alt={`Preview of ${nextGallery.name}`}
+                fill
+                className="object-cover"
+                loader={imageLoader}
+              />
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-center">
+                <div>
+                  <p className="text-xl">Next Collection</p>
+                  <p className="text-2xl font-light">{nextGallery.name}</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div ref={containerRef} className="h-[1300vh]">
       <div className="sticky top-0 h-screen">
@@ -78,7 +143,7 @@ const GalleryContent = () => {
               {/* Intro div */}
               <div className="w-full min-h-screen xl:min-w-[75vw] flex flex-col pt-[64px] px-[20px]">
                 <h1 className="text-[48px] xl:text-[64px] uppercase text-white mb-4">{activeGallery.name}</h1>
-                <p className="text-white/70 xl:w-1/2">{activeGallery.description}</p>
+                {/* <p className="text-white/70 xl:w-1/2">{activeGallery.description}</p> */}
               </div>
 
               {/* Images */}
@@ -109,7 +174,7 @@ const GalleryContent = () => {
                         draggable={false}
                         // loading={index > 1 ? "lazy" : "eager"}
                         loading="lazy"
-                        sizes="(min-width: 1280px) 600px, (min-width: 768px) 400px, 300px" // TODO: remove?
+                        sizes="400px"
                         className="object-contain w-auto h-full"
                         loader={imageLoader}
                       />
@@ -135,13 +200,13 @@ const GalleryContent = () => {
                         width={400}
                         height={800}
                         loading="lazy"
-                        sizes="(min-width: 1280px) 600px, (min-width: 768px) 400px, 300px" // TODO: remove?
+                        sizes="400px"
                         draggable={false}
                         className="object-cover w-full h-full"
                         loader={imageLoader}
                       />
                       <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center">
-                        <span className="text-white text-2xl mb-2">Next Gallery</span>
+                        <span className="text-white text-2xl mb-2">Next Collection</span>
                         <span className="text-white text-3xl font-light">{nextGallery.name}</span>
                       </div>
                     </div>
