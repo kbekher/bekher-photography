@@ -5,7 +5,7 @@ interface Props {
 const CONTACTS = [
   { name: 'LinkedIn', href: 'https://www.linkedin.com/in/kristina-bekher' },
   { name: 'Instagram', href: 'https://instagram.com/ninjagexly' },
-  { name: 'Telegram', href: 'https://t.me/ninjagexly' },
+  { name: 'Telegram', href: 'https://t.me/krbekher' },
 ];
 
 const ContactLinks = ({ isFooter = false }: Props) => {

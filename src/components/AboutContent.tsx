@@ -106,7 +106,6 @@ const AboutContent = () => {
 
       {/* // TODO: Selected Galleries */}
 
-
     </section>
   );
 };
