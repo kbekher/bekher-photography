@@ -1,3 +1,5 @@
+import { useCursor } from "@/contexts/CursorContext";
+
 interface Props {
   isFooter?: boolean;
 }
@@ -9,6 +11,8 @@ const CONTACTS = [
 ];
 
 const ContactLinks = ({ isFooter = false }: Props) => {
+  const { setCursorStyle, resetCursorStyle } = useCursor();
+
   return (
     <div className={`flex ${isFooter ? "flex-col" : "flex-row gap-5"} w-[50%]`}>
       {CONTACTS.map(({ name, href }) => (
@@ -19,6 +23,8 @@ const ContactLinks = ({ isFooter = false }: Props) => {
           rel="noopener noreferrer"
           className='w-max custom-transition hover:text-[var(--accent)]'
           aria-label={`Visit ${name}`}
+          onMouseEnter={() => setCursorStyle({ variant: "text" })}
+          onMouseLeave={resetCursorStyle}
         >
           {name}
         </a>

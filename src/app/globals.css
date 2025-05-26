@@ -43,7 +43,13 @@ body {
   background-color: var(--background);
 }
 
+* {
+  cursor: none;
+}
+
+
 body {
+  /* cursor: none; */
   /* font-family: var(--font-montserrat), sans-serif; */
   /* margin: 0;
   padding: 0; */
@@ -61,6 +67,21 @@ section {
   padding-bottom: 140px;
   /* Header height 64px*/ 
   /* padding-top: 250px;  */
+}
+
+
+/* Base circle cursor */
+.cursor {
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  mix-blend-mode: difference;
+  background-color: #fff;
+  z-index: 99;
 }
 
 .custom-text {

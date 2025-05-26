@@ -8,6 +8,7 @@ import { navLinks } from "@/constants/constants";
 import { textVariants } from "@/constants/animations";
 import { useRouter } from "next/navigation";
 import Logo from "./Logo";
+import { useCursor } from "@/contexts/CursorContext";
 
 const containerVariants = {
   open: {
@@ -69,6 +70,7 @@ const contactVariants = {
 const Navigation = () => {
   const { toggle, isOpen } = useMenu();
   const router = useRouter();
+  const { setCursorStyle, resetCursorStyle } = useCursor();
 
   return (
     <>
@@ -107,6 +109,8 @@ const Navigation = () => {
                   color: "#8d89a3",
                   transition: { duration: 0.3 },
                 }}
+                onMouseEnter={() => setCursorStyle({ variant: "text" })}
+                onMouseLeave={resetCursorStyle}
               >
                 <button
                   className="uppercase cursor-pointer"

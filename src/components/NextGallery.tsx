@@ -25,7 +25,7 @@ const NextGallery = ({ nextGallery, isDesktop = false }: NextGallery) => {
 
   return (
     <div className="w-full mt-30 lg:mt-0 xl:ml-[400px]">
-      <Link href={`/galleries/${nextGallery.id}`}>
+      <Link href={`/galleries/${nextGallery.id}`} className="cursor-none" data-cursor="view">
         <div className="relative w-full h-[250px] xl:w-[500px] xl:h-screen overflow-hidden">
           <motion.div
             ref={ref}
