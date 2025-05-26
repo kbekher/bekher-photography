@@ -1,5 +1,3 @@
-// /data/galleryConfig.ts
-
 export const horizontal = "3/2";
 export const vertical = "2/3";
 

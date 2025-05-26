@@ -34,9 +34,9 @@ const AboutContent = () => {
 
       {/* Intro & Portrait */}
       <div className='flex flex-col-reverse lg:flex-row gap-10 items-center mb-24'>
-        <div className='flex-1 text-[14px] md:text-2xl xl:text-3xl leading-relaxed space-y-4 lg:pt-5'>
+        <div className='flex-1 text-[14px] md:text-2xl xl:text-3xl leading-tight space-y-4 lg:pt-5 lg:sticky lg:top-54 lg:self-start'>
           <p>
-            I&apos;m Kristina Bekher, and I shoot on film.
+            My name is Kristina Bekher, and I shoot on film.
           </p>
           <p>
             In my photography, I mix street, nature, architecture, and many aspects of everyday life. I like shooting anything that seems interesting and experimenting with light and color.
