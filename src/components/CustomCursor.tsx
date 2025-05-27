@@ -1,11 +1,14 @@
-// components/CustomCursor.tsx
 "use client";
 
 import { useCursor } from "@/contexts/CursorContext";
+import useIsTouchDevice from "@/hooks/useIsTouchDevice";
 import { motion } from "framer-motion";
 
 const CustomCursor = () => {
   const { mousePosition, cursorStyle } = useCursor();
+  const isTouch = useIsTouchDevice();
+
+  if (isTouch) return null;
 
   const variants = {
     default: {
