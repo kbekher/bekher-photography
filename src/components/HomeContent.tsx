@@ -26,7 +26,7 @@ const HomeContent = () => {
 
             return (
               <div key={id} className={styles}>
-                <Link href={`/galleries/${id}`}>
+                <Link href={`/galleries/${id}`} data-cursor="view">
                   <MotionImage galleryName={id} photo={gallery.photos[photoIndex]} />
                   <span className="pt-2">{gallery.name}</span>
                 </Link>

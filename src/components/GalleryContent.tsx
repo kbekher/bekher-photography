@@ -10,16 +10,17 @@ import imageLoader from '@/utils/image-loader';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import NextGallery from './NextGallery';
 import { useMediaQuery } from 'react-responsive';
+import { getImageMotionScale } from '@/constants/animations';
 
 interface GalleryView {
   activeGallery: Gallery;
   nextGallery: Gallery;
 }
 
-const GalleryMobile = ({activeGallery, nextGallery }: GalleryView) => (
+const GalleryMobile = ({ activeGallery, nextGallery }: GalleryView) => (
   <div className="flex flex-col gap-4">
     <div className='px-5 pt-[64px]'>
-      <h1 className="text-4xl md:text-6xl text-white uppercase mb-2">{activeGallery.name}</h1>
+      <h1 className="text-4xl md:text-6xl text-white uppercase mb-2" data-cursor="text">{activeGallery.name}</h1>
       <p aria-hidden="true" className="text-white/70 xl:w-1/2 hidden">{activeGallery.description}</p>
     </div>
 
@@ -32,11 +33,12 @@ const GalleryMobile = ({activeGallery, nextGallery }: GalleryView) => (
           {/* Outer wrapper that defines the clip boundary */}
           <div className="w-full overflow-hidden" >
             <motion.div
-              className="w-full h-full"
-              initial={{ opacity: 0.6, scale: 1.1 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut'}}
+              // className="w-full h-full"
+              // initial={{ opacity: 0.6, scale: 1.05}}
+              // whileInView={{ opacity: 1, scale: 1 }}
+              // transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut'}}
               // viewport={{ amount: 0.5 }}
+              {...getImageMotionScale()}
             >
               <Image
                 src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${activeGallery.id}/${path}`}
@@ -96,7 +98,7 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
       return acc + width + imageGap + activeGallery.buffer;
     }, 0) ?? 0;
   }, [activeGallery, imageGap]);
-  
+
   const totalContentWidth = useMemo(() => {
     return totalWidth + introWidth + nextGalleryWidth + nextGalleryMargin;
   }, [totalWidth, introWidth, nextGalleryWidth, nextGalleryMargin]);
@@ -120,7 +122,7 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
 
               {/* Intro div */}
               <div className="w-full min-h-screen xl:min-w-[70vw] flex flex-col pt-[64px] px-[20px]">
-                <h1 className="text-[48px] xl:text-[64px] uppercase text-white mb-4">{activeGallery.name}</h1>
+                <h1 className="text-[48px] xl:text-[64px] uppercase text-white mb-4" data-cursor="text">{activeGallery.name}</h1>
                 <p aria-hidden="true" className="text-white/70 xl:w-1/2 hidden">{activeGallery.description}</p>
               </div>
 
@@ -144,10 +146,15 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
                       }}
                     >
                       <motion.div
-                        initial={{ scale: 1.2, opacity: 0.6 }}
-                        whileInView={{ scale: 1, opacity: 1 }}
-                        transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
                         className="w-full h-full"
+                        // initial={{ scale: 1.2, opacity: 0.6 }}
+                        // whileInView={{ scale: 1, opacity: 1 }}
+                        // transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
+                        style={{
+                          willChange: 'transform, opacity',
+                          transformStyle: 'preserve-3d',
+                        }}
+                        {...getImageMotionScale(1.2)}
                       >
                         <Image
                           src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${activeGallery.id}/${path}`}
@@ -169,7 +176,7 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
               })}
 
               {/* Next Gallery Preview */}
-                <NextGallery nextGallery={nextGallery} isDesktop={true} />
+              <NextGallery nextGallery={nextGallery} isDesktop={true} />
 
             </motion.div>
           </div>
@@ -209,7 +216,7 @@ const GalleryContent = () => {
     )
   }
 
-  return isMobile ?(
+  return isMobile ? (
     <GalleryMobile activeGallery={activeGallery} nextGallery={nextGallery} />
   ) : (
     <GalleryDesktop activeGallery={activeGallery} nextGallery={nextGallery} />

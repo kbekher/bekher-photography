@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { galleriesData } from '@/data';
 import { computeDimensions, getBestFitRow } from '@/utils/utils';
 import imageLoader from '@/utils/image-loader';
+import { imageHoverMotion } from '@/constants/animations';
 
 const GalleriesContent = () => {
   return (
@@ -25,6 +26,7 @@ const GalleriesContent = () => {
                 href={`/galleries/${id}`}
                 aria-label={`Go to ${name} gallery page`}
                 className='w-full flex flex-col'
+                data-cursor="view"
               >
                 {/* Title + Divider */}
                 <div className='relative py-4'>
@@ -45,24 +47,29 @@ const GalleriesContent = () => {
                     return (
                       <motion.div
                         key={`${name}-${photo.path}`}
-                        className={`relative ${colSpanClass} ${imgIndex > 3 ? 'hidden md:block' : ''}`}
+                        className={`overflow-hidden relative ${colSpanClass} ${imgIndex > 3 ? 'hidden md:block' : ''}`}
                         style={{ aspectRatio: photo.aspectRatio }}
                         initial={galleryIndex < 3 ? { opacity: 1, y: 40 } : { opacity: 0, y: 40 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: index * 0.1 }}
                         viewport={{ once: true }}
                       >
-                        <Image
-                          src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${id}/${photo.path}`}
-                          alt={`Picture of ${name}`}
-                          width={width}
-                          height={height}
-                          draggable={false}
-                          sizes="400px"
-                          className="object-cover w-full h-full"
-                          loader={imageLoader}
-                          priority={galleryIndex < 2}
-                        />
+                        <motion.div
+                          {...imageHoverMotion}
+                          className="w-full h-full absolute inset-0"
+                        >
+                          <Image
+                            src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${id}/${photo.path}`}
+                            alt={`Picture of ${name}`}
+                            width={width}
+                            height={height}
+                            draggable={false}
+                            sizes="400px"
+                            className="object-cover w-full h-full"
+                            loader={imageLoader}
+                            priority={galleryIndex < 2}
+                          />
+                        </motion.div>
                       </motion.div>
                     )
                   })}

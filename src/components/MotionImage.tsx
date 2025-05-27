@@ -6,6 +6,7 @@ import { motion, useInView } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { PhotoMetadata } from '@/data';
 import imageLoader from '@/utils/image-loader';
+import { imageHoverMotion } from '@/constants/animations';
 
 interface Props {
   galleryName: string;
@@ -43,6 +44,7 @@ const MotionImage = ({ galleryName, photo }: Props) => {
           initial={{ scale: 1.2, opacity: 0.5 }}
           animate={isInView ? { scale: 1, opacity: 1 } : { scale: 1.2, opacity: 0.5 }}
           transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+          {...imageHoverMotion}
           className="w-full h-full absolute inset-0"
         >
           <Image

@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion'
-import { useCursor } from '@/contexts/CursorContext';
 
 interface LogoProps {
   isLink: boolean;
@@ -26,7 +25,6 @@ const LogoElement = ({ color }: LogoElementProps) => (
 
 const Logo = ({ isLink }: LogoProps) => {
   const pathname = usePathname();
-  const { setCursorStyle, resetCursorStyle } = useCursor();
 
   const text = pathname !== "/" ? "Home" : "Kristina Bekher";
 
@@ -35,8 +33,7 @@ const Logo = ({ isLink }: LogoProps) => {
       href="/"
       aria-label="Go to homepage"
       className="flex gap-2 items-center text-white 2xl:text-[24px] custom-transition hover:text-[var(--accent)]"
-      onMouseEnter={() => setCursorStyle({ variant: "text" })}
-      onMouseLeave={resetCursorStyle}
+      data-cursor="text"
     >
       <LogoElement color="bg-[var(--secondary)]" />
       <span className=''>{text}</span>
@@ -44,8 +41,7 @@ const Logo = ({ isLink }: LogoProps) => {
   ) : (
     <div 
       className="flex gap-2 items-center select-none 2xl:text-[24px]"
-      onMouseEnter={() => setCursorStyle({variant: "text"})}
-      onMouseLeave={resetCursorStyle}
+      data-cursor="text"
     >
       <LogoElement color="bg-[var(--branding)]" />
       <span >Kristina Bekher</span>

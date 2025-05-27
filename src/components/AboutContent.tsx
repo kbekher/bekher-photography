@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 const gearItems = [
   ['2025', 'Canon AE-1'],
@@ -34,7 +35,7 @@ const AboutContent = () => {
 
       {/* Intro & Portrait */}
       <div className='flex flex-col-reverse lg:flex-row gap-10 items-center mb-24'>
-        <div className='flex-1 text-[14px] md:text-2xl xl:text-3xl leading-tight space-y-4 lg:pt-5 lg:sticky lg:top-54 lg:self-start'>
+        <div data-cursor="text" className='flex-1 text-[14px] md:text-2xl xl:text-3xl leading-tight space-y-4 lg:pt-5 lg:sticky lg:top-54 lg:self-start'>
           <p>
             My name is Kristina Bekher, and I shoot on film.
           </p>
@@ -47,7 +48,7 @@ const AboutContent = () => {
         </div>
         <div className='w-full lg:max-w-[50vw] lg:translate-x-[20px] shrink-0'>
           <Image
-            src='https://d14lj85n4pdzvr.cloudfront.net/hero.jpg' // replace with your actual image path
+            src='https://d14lj85n4pdzvr.cloudfront.net/hero.jpg?w=600&format=webp&cache=31536000' // replace with your actual image path
             alt='Kristina Bekher portrait'
             width={500}
             height={600}
@@ -58,11 +59,10 @@ const AboutContent = () => {
 
       {/* Gear Timeline */}
       <div className="mb-24">
-        <h2 className="text-3xl md:text-4xl uppercase mb-6">Gear</h2>
-        <div className="flex flex-col-reverse lg:grid lg:grid-cols-2 gap-10 text-[14px] md:text-[24px]">
+        <div className="flex flex-col-reverse lg:grid lg:grid-cols-2 gap-10 text-[14px] md:text-[18px]">
 
           {/* Animated, Sticky Timeline */}
-          <div className="space-y-2 font-mono lg:sticky lg:top-14 lg:self-start">
+          <div className="space-y-2 font-mono lg:sticky lg:top-14 lg:self-start lg:pt-[46px] pb-5">
             {gearItems.map(([year, model], index) => (
               <motion.div
                 key={year}
@@ -88,7 +88,9 @@ const AboutContent = () => {
           </div>
 
           {/* Gear Story */}
-          <div className="leading-relaxed space-y-4 pt-10 text-balance">
+          <div className="leading-relaxed space-y-4 pb-2 text-balance">
+            <h2 className="text-3xl md:text-6xl mb-6">Gear</h2>
+
             <p>
               My first ever film camera was an old rangefinder, the FED 5. I started with the hard artillery, so to speak, slowly switching to easier-to-use SLRs.
             </p>
@@ -99,13 +101,55 @@ const AboutContent = () => {
               When Pentax 17 finally came out, I soon found myself unboxing my first-ever new and half-frame film camera. I was a bit suspicios about it at first, mainly because I prefer full manual control. But Pentax still lets me experiment with exposure steps, modes, and focus, which is quite tricky.
             </p>
             <p>
-              Canon AE-1 is the most recent addition to my kit. With its automatic aperture exposure, I worry less about missing moments. It&apos;s paired with a Rolev M.G. 55mm Skylight filter on the lens. I absolutely love the images I get, and I hope you&apos;ll enjoy them as much. :)
+              Canon AE-1 is the most recent addition to my kit. With its automatic aperture exposure, I worry less about missing moments. It&apos;s paired with a Rolev M.G. 55mm Skylight filter on the lens. I absolutely love the images I get, and I hope you&apos;ll enjoy them as much.
             </p>
           </div>
         </div>
       </div>
 
       {/* // TODO: Selected Galleries */}
+
+      <div className="mb-24">
+        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-10">
+          <div>
+            <h2 className="text-3xl md:text-4xl mb-6 uppercase">Where Film Comes to LIfe</h2>
+
+            <p className='mb-6'>All the images you see here were developed and scanned by Foto v Ramci, located in Kyiv, and Film Speed Lab — a Kyiv-hearted film lab based in Berlin. If you shoot film, you should definitely give them a try!</p>
+
+            <div className='flex flex-col gap-4 text-2xl'>
+              <Link
+                href="https://fotovramci.com/?srsltid=AfmBOopLTn3khuFhn_KLyzZV3vapYgKymv51BY5a4aphVes0bVGFeqq5"
+                aria-label="Visit Foto v Ramci — a film developing and scanning lab"
+                className="uppercase"
+                target="blank"
+                data-cursor="text"
+              >
+                Fotovramci
+              </Link>
+              <Link
+                href="https://filmspeedlab.com/?srsltid=AfmBOop1F_0ZJmwpr82_93Ie-vRs8FcVmjtJMhgRESK4FCWs0t4_tkCg"
+                aria-label="Visit Film Speed Lab — a film developing and scanning lab"
+                className="uppercase"
+                target="blank"
+                data-cursor="text"
+              >
+                FILM.SPEED.LAB
+              </Link>
+            </div>
+          </div>
+
+          {/* <div className='flex-1 w-full lg:max-w-[600px] m-auto lg:m-0'>
+            <Image
+              src="https://d14lj85n4pdzvr.cloudfront.net/fsl.jpg?w=600&format=webp&cache=31536000"
+              alt='Foto v Ramci Crew'
+              width={300}
+              height={300}
+              className='w-full h-auto object-cover grayscale'
+            />
+          </div> */}
+
+        </div>
+      </div>
 
     </section>
   );

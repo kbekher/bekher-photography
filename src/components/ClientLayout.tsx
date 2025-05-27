@@ -8,15 +8,12 @@ import Header from "@/components/Header";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { MenuProvider } from "@/contexts/MenuContext";
-import { CursorProvider } from "@/contexts/CursorContext";
-import CustomCursor from "./CustomCursor";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
 export default function BodyContent({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isContentVisible, setIsContentVisible] = useState(false);
-
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -54,19 +51,16 @@ export default function BodyContent({ children }: { children: React.ReactNode })
               transition: 'opacity 0.5s ease-in-out'
             }}
           >
-            <CursorProvider>
-              <CustomCursor />
-              <MenuProvider>
-                <Header />
-                <Navigation />
-                {isContentVisible ? (
-                  children
-                ) : (
-                  <div className="min-h-screen" />
-                )}
-                <Footer />
-              </MenuProvider>
-            </CursorProvider>
+            <MenuProvider>
+              <Header />
+              <Navigation />
+              {isContentVisible ? (
+                children
+              ) : (
+                <div className="min-h-screen" />
+              )}
+              <Footer />
+            </MenuProvider>
           </div>
         </div>
       </div>

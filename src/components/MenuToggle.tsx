@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { useMenu } from "@/contexts/MenuContext";
 import { textVariants } from "@/constants/animations";
-import { useCursor } from "@/contexts/CursorContext";
 
 interface Props {
   text: string;
@@ -9,7 +8,6 @@ interface Props {
 
 const MenuToggle = ({ text }: Props) => {
   const { toggle, isOpen } = useMenu();
-  const { setCursorStyle, resetCursorStyle } = useCursor();
 
   return (
     <div className={`fixed p-5 top-0 right-0 z-70`}>
@@ -25,8 +23,7 @@ const MenuToggle = ({ text }: Props) => {
             color: "#8d89a3",
             transition: { duration: 0.3 },
           }}
-          onMouseEnter={() => setCursorStyle({ variant: "text" })}
-          onMouseLeave={resetCursorStyle}
+          data-cursor="text"
         >
           {text}
         </motion.span>
