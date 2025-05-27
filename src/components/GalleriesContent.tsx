@@ -34,7 +34,7 @@ const GalleriesContent = () => {
 
                 {/* Gallery Row */}
                 <div className='grid grid-cols-8 md:grid-cols-12 gap-x-2 md:gap-x-5 h-max-[230px] overflow-hidden'>
-                  {bestFitPhotos.map(({ photo, index, colSpan }) => {
+                  {bestFitPhotos.map(({ photo, index, colSpan }, imgIndex) => {
                     const { width, height } = computeDimensions(photo.aspectRatio, 200);
 
                     // Default to col-span-2 on mobile (8 cols), conditionally override for desktop
@@ -45,7 +45,7 @@ const GalleriesContent = () => {
                     return (
                       <motion.div
                         key={`${name}-${photo.path}`}
-                        className={`relative ${colSpanClass} ${galleryIndex > 3 ? 'hidden md:block' : 'block'}`}
+                        className={`relative ${colSpanClass} ${imgIndex > 3 ? 'hidden md:block' : ''}`}
                         style={{ aspectRatio: photo.aspectRatio }}
                         initial={galleryIndex < 3 ? { opacity: 1, y: 40 } : { opacity: 0, y: 40 }}
                         whileInView={{ opacity: 1, y: 0 }}
