@@ -3,6 +3,8 @@
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { galleriesData, horizontal } from '@/data';
+import imageLoader from '@/utils/image-loader';
 
 const gearItems = [
   ['2025', 'Canon AE-1'],
@@ -26,6 +28,14 @@ const itemVariants = {
 }
 
 const AboutContent = () => {
+  const previewPhotos = Object.values(galleriesData)
+    .slice(3, 7)
+    .map((gallery) => ({
+      id: gallery.id,
+      name: gallery.name,
+      photo: gallery.photos.find(photo => photo.aspectRatio === horizontal) || gallery.photos[0], // first photo
+    }));
+
   return (
     <section className='relative pt-[120px] lg:pt-0'>
       {/* Header */}
@@ -34,7 +44,7 @@ const AboutContent = () => {
       </h1>
 
       {/* Intro & Portrait */}
-      <div className='flex flex-col-reverse lg:flex-row gap-10 items-center mb-24'>
+      <div className='flex flex-col-reverse lg:flex-row gap-10 items-center mb-16 md:mb-[140px]'>
         <div data-cursor="text" className='flex-1 text-[14px] md:text-2xl xl:text-3xl leading-tight space-y-4 lg:pt-5 lg:sticky lg:top-54 lg:self-start'>
           <p>
             Hey, I&apos;m Kristina Bekher, and I love film photography.
@@ -57,8 +67,36 @@ const AboutContent = () => {
         </div>
       </div>
 
+      {/* Selected Galleries */}
+      <div className="w-full h-px bg-[var(--secondary)] mb-4 md:mb-6" />
+
+      <div className="grid grid-cols-4 gap-2 md:gap-4 ">
+
+        {previewPhotos.map(({ id, name, photo }) => (
+          <Link
+            key={`${id}-${photo.path}`}
+            href={`/galleries/${id}`}
+            aria-label={`Go to ${name} gallery`}
+            className="relative aspect-[3/2] overflow-hidden group"
+            data-cursor="view"
+          >
+            <Image
+              src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${id}/${photo.path}`}
+              alt={`Preview of ${name}`}
+              fill
+              className="object-cover w-full h-full transition-transform duration-500 ease-in-out group-hover:scale-105"
+              loader={imageLoader}
+              sizes="(min-width: 768px) 25vw, 50vw"
+              draggable={false}
+            />
+          </Link>
+        ))}
+      </div>
+      <div className="w-full h-px bg-[var(--secondary)] mt-4 md:mt-6 mb-16 md:mb-24" />
+
+
       {/* Gear Timeline */}
-      <div className="mb-24">
+      <div className="md:mb-24">
         <div className="flex flex-col-reverse lg:grid lg:grid-cols-2 gap-10 text-[14px] md:text-[18px]">
 
           {/* Animated, Sticky Timeline */}
@@ -92,16 +130,16 @@ const AboutContent = () => {
             <h2 className="text-3xl md:text-6xl mb-6">Gear</h2>
 
             <p>
-              My first ever film camera was an old rangefinder, the FED 5. I started with the hard artillery, so to speak, slowly switching o, in my opinion, easier-to-use SLRs.
+              My first ever film camera was an old rangefinder, the FED 5. I started with the hard artillery, so to speak, slowly switching to SLRs, which I found easier to use.
             </p>
             <p>
-              In 2022, a whole new world opened up to me thanks to the Japanese Minolta SR-1s. That was when I realized the older cameras I&apos;d been using did have their limits.
+              In 2022, a whole new world opened up to me thanks to the Japanese Minolta SR-1s — that&apos;s when I realized the older cameras I&apos;d been using did have their limits.
             </p>
             <p>
-              When Pentax 17 finally came out, I soon found myself unboxing my first-ever new film camera. I was a bit suspicios about it at first, but Pentax does have room for experiment with its exposure steps and modes. Shooting full 35mm after a half frame feels like shooting medium size (which I haven&apos;t tried yet).
+              When Pentax 17 finally came out, I soon found myself unboxing my first-ever brand-new film camera. I was a bit suspicios about it at first, but Pentax leaves me room for experimentation with its exposure steps and various modes. Switching from half-frame back to standard 35mm feels almost like stepping into medium format — which I haven&apos;t tried yet...
             </p>
             <p>
-              Canon AE-1 with a Rolev M.G. 55mm Skylight filter on the lens is the most recent addition to my kit. I may worry less now about missing moments thank to the built-in automatic aperture exposure.
+              Canon AE-1 with a Rolev M.G. 55mm Skylight filter, is the most recent addition to my kit. Its auto exposure helps me worry less about missing a moment.
             </p>
             <p className='text-[14px] color-[var(--accent)]'>
               Note: All images were developed and scanned at <Link
@@ -125,8 +163,6 @@ const AboutContent = () => {
           </div>
         </div>
       </div>
-
-      {/* // TODO: Selected Galleries */}
 
     </section>
   );

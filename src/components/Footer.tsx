@@ -5,9 +5,12 @@ import ContactLinks from './ContactLinks';
 import { navLinks } from "@/constants/constants";
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useMediaQuery } from 'react-responsive';
 
 const Footer = () => {
   const pathname = usePathname();
+
+  const isMobile = useMediaQuery({ maxWidth: 767 });
 
   if (pathname.startsWith('/galleries/')) return null;
 
@@ -36,8 +39,8 @@ const Footer = () => {
 
         <motion.div
           className="w-auto h-full flex items-end col-span-full row-start-1 md:row-start-3"
-          initial={{ opacity: 1, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 1, y: isMobile ? 0 : 50, x: isMobile ? -100 : 0 }}
+          whileInView={{ opacity: 1, y: 0, x: 0}}
           transition={{ duration: 0.3, ease: "easeOut" }}
         >
           <p className="uppercase bold leading-[100%] custom-text">RUN. SHOOT. DEVELOP.</p>

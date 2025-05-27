@@ -34,10 +34,6 @@ const GalleryMobile = ({ activeGallery, nextGallery }: GalleryView) => (
           <div className="w-full overflow-hidden" >
             <motion.div
               // className="w-full h-full"
-              // initial={{ opacity: 0.6, scale: 1.05}}
-              // whileInView={{ opacity: 1, scale: 1 }}
-              // transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut'}}
-              // viewport={{ amount: 0.5 }}
               {...getImageMotionScale()}
             >
               <Image
@@ -122,7 +118,7 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
 
               {/* Intro div */}
               <div className="w-full min-h-screen xl:min-w-[70vw] flex flex-col pt-[64px] px-[20px]">
-                <h1 className="text-[48px] xl:text-[64px] uppercase text-white mb-4" data-cursor="text">{activeGallery.name}</h1>
+                <h1 className="w-max text-[48px] xl:text-[64px] uppercase text-white mb-4" data-cursor="text">{activeGallery.name}</h1>
                 <p aria-hidden="true" className="text-white/70 xl:w-1/2 hidden">{activeGallery.description}</p>
               </div>
 
@@ -146,15 +142,12 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
                       }}
                     >
                       <motion.div
+                        {...getImageMotionScale(1.2)}
                         className="w-full h-full"
-                        // initial={{ scale: 1.2, opacity: 0.6 }}
-                        // whileInView={{ scale: 1, opacity: 1 }}
-                        // transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
                         style={{
                           willChange: 'transform, opacity',
                           transformStyle: 'preserve-3d',
                         }}
-                        {...getImageMotionScale(1.2)}
                       >
                         <Image
                           src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${activeGallery.id}/${path}`}

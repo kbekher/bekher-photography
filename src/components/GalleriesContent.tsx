@@ -6,7 +6,6 @@ import { motion } from 'framer-motion';
 import { galleriesData } from '@/data';
 import { computeDimensions, getBestFitRow } from '@/utils/utils';
 import imageLoader from '@/utils/image-loader';
-import { imageHoverMotion } from '@/constants/animations';
 
 const GalleriesContent = () => {
   return (
@@ -54,9 +53,8 @@ const GalleriesContent = () => {
                         transition={{ duration: 0.6, delay: index * 0.1 }}
                         viewport={{ once: true }}
                       >
-                        <motion.div
-                          {...imageHoverMotion}
-                          className="w-full h-full absolute inset-0"
+                        <div
+                          className="w-full h-full absolute inset-0 group"
                         >
                           <Image
                             src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${id}/${photo.path}`}
@@ -65,11 +63,11 @@ const GalleriesContent = () => {
                             height={height}
                             draggable={false}
                             sizes="400px"
-                            className="object-cover w-full h-full"
+                            className="object-cover w-full h-full transition-transform duration-500 ease-in-out group-hover:scale-105"
                             loader={imageLoader}
                             priority={galleryIndex < 2}
                           />
-                        </motion.div>
+                        </div>
                       </motion.div>
                     )
                   })}
