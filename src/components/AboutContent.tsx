@@ -130,7 +130,7 @@ const AboutContent = () => {
             <h2 className="text-3xl md:text-6xl mb-6">Gear</h2>
 
             <p>
-              My first ever film camera was an old rangefinder, the FED 5. I started with the hard artillery, so to speak, slowly switching to SLRs, which I found easier to use.
+              My first film camera was an old rangefinder, the FED 5. I started with the hard artillery, so to speak, slowly switching to SLRs, which I found easier to use.
             </p>
             <p>
               In 2022, a whole new world opened up to me thanks to the Japanese Minolta SR-1s — that&apos;s when I realized the older cameras I&apos;d been using did have their limits.

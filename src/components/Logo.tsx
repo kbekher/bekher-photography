@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion'
+import ApertureLogo from './ApertureLogo';
 
 interface LogoProps {
   isLink: boolean;
@@ -13,14 +14,19 @@ const LogoElement = ({ color }: LogoElementProps) => (
   <motion.div
     animate={{
       scale: [1, 1.2, 1],
+      rotate: [0, 30, 0]
     }}
     transition={{
       duration: 2,
       repeat: Infinity,
-      repeatDelay: 1,
+      repeatDelay: 5,
     }}
-    className={`w-5 h-5 rounded-full ${color}`}
-  />
+    // className={`w-5 h-5 rounded-full ${color}`}
+  >
+    <ApertureLogo color={color} />
+
+
+  </motion.div>
 )
 
 const Logo = ({ isLink }: LogoProps) => {
@@ -35,7 +41,7 @@ const Logo = ({ isLink }: LogoProps) => {
       className="flex gap-2 items-center text-white 2xl:text-[24px] custom-transition hover:text-[var(--accent)]"
       data-cursor="text"
     >
-      <LogoElement color="bg-[var(--secondary)]" />
+      <LogoElement color="#cbcbcf" />
       <span className=''>{text}</span>
     </Link>
   ) : (
@@ -43,7 +49,7 @@ const Logo = ({ isLink }: LogoProps) => {
       className="flex gap-2 items-center select-none 2xl:text-[24px]"
       data-cursor="text"
     >
-      <LogoElement color="bg-[var(--branding)]" />
+      <LogoElement color="#444251" />
       <span >Kristina Bekher</span>
     </div>
   );
