@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     description: "Explore the film photography of Kristina Bekher — a Ukrainian photographer and developer based in Germany showcasing her collection of timeless analog moments.",
     images: [
       {
-        url: "https://yourdomain.com/og-image.jpg", // TODO:Replace with your actual image URL
+        url: "https://d14lj85n4pdzvr.cloudfront.net/hero.jpg", // TODO:Replace with your SMALLER img
         width: 1200,
         height: 630,
         alt: "Kristina Bekher Film Photography Gallery",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Kristina Bekher | Film Photography",
     description: "Explore the film photography of Kristina Bekher — a Ukrainian photographer and developer based in Germany showcasing her collection of timeless analog moments.",
-    images: ["https://yourdomain.com/og-image.jpg"], // TODO:Same or different image
+    images: ["https://d14lj85n4pdzvr.cloudfront.net/hero.jpg"], // TODO:Replace with your SMALLER img
   },
 };
 
