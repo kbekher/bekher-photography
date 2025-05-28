@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { galleriesData, horizontal } from '@/data';
 import imageLoader from '@/utils/image-loader';
+import { useState } from 'react';
 
 const gearItems = [
   ['2025', 'Canon AE-1'],
@@ -28,6 +29,8 @@ const itemVariants = {
 }
 
 const AboutContent = () => {
+  const [isLoaded, setIsLoaded] = useState(false);
+
   const previewPhotos = Object.values(galleriesData)
     .slice(3, 7)
     .map((gallery) => ({
@@ -50,47 +53,64 @@ const AboutContent = () => {
             Hey, I&apos;m Kristina Bekher, and I love film photography.
           </p>
           <p>
-            Whether it&apos;s a certain light, the feeling of a place, or the simplicity of ordinary objects — if you see it in my frame, it means the moment was too special to resist shooting.
+            Whether it&apos;s a certain light, a place or an ordinary object — if you see it in my frame, it means the moment was too special to resist shooting.
           </p>
           <p>
-            By day, I&apos;m a software developer driving on-site experimentation at Douglas.
+            When I&apos;m not behind the camera, I work as a software developer, driving on-site experimentation at Douglas.
           </p>
         </div>
-        <div className='w-full lg:max-w-[50vw] lg:translate-x-[20px] shrink-0'>
+        <div className='w-full lg:max-w-[50vw] lg:translate-x-[20px] shrink-0 relative overflow-hidden'>
+          {!isLoaded && (
+            <div className="absolute inset-0 bg-zinc-800 animate-pulse" />
+          )}
+
           <Image
-            src='https://d14lj85n4pdzvr.cloudfront.net/hero.jpg?w=600&format=webp&cache=31536000' // replace with your actual image path
+            src='https://d14lj85n4pdzvr.cloudfront.net/hero.jpg?w=600&format=webp&cache=31536000'
             alt='Kristina Bekher portrait'
             width={500}
             height={600}
-            className='w-full h-auto object-cover grayscale'
+            className={`w-full h-auto object-cover grayscale transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+            onLoad={() => setIsLoaded(true)}
+            priority
           />
         </div>
       </div>
 
       {/* Selected Galleries */}
-      <div className="w-full h-px bg-[var(--secondary)] mb-4 md:mb-6" />
+      <h2 className="text-3xl md:text-6xl mb-6">Selected Galleries</h2>
 
-      <div className="grid grid-cols-4 gap-2 md:gap-4 ">
+      <div className="w-full h-px bg-[var(--secondary)] mb-6" />
 
+      <div className="grid grid-row lg:grid-cols-4 gap-4 lg:gap-4 ">
         {previewPhotos.map(({ id, name, photo }) => (
           <Link
             key={`${id}-${photo.path}`}
             href={`/galleries/${id}`}
             aria-label={`Go to ${name} gallery`}
-            className="relative aspect-[3/2] overflow-hidden group"
+            className="group inline-block w-full" // control width as needed
             data-cursor="view"
           >
-            <Image
-              src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${id}/${photo.path}`}
-              alt={`Preview of ${name}`}
-              fill
-              className="object-cover w-full h-full transition-transform duration-500 ease-in-out group-hover:scale-105"
-              loader={imageLoader}
-              sizes="(min-width: 768px) 25vw, 50vw"
-              draggable={false}
-            />
+            <div className="relative aspect-[3/2] overflow-hidden">
+              <Image
+                src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${id}/${photo.path}`}
+                alt={`Preview of ${name}`}
+                fill
+                className="object-cover w-full h-full transition-transform duration-500 ease-in-out group-hover:scale-105"
+                loader={imageLoader}
+                sizes="(min-width: 768px) 25vw, 50vw"
+                draggable={false}
+              />
+            </div>
+
+            {/* Name below the image */}
+            <div className="mt-2 text-sm font-semibold select-none">
+              {name}
+            </div>
           </Link>
         ))}
+
+
       </div>
       <div className="w-full h-px bg-[var(--secondary)] mt-4 md:mt-6 mb-16 md:mb-24" />
 
