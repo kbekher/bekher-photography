@@ -78,7 +78,7 @@ const AboutContent = () => {
       </div>
 
       {/* Selected Galleries */}
-      <h2 className="text-3xl md:text-6xl mb-6">Selected Galleries</h2>
+      {/* <h2 className="text-3xl md:text-6xl mb-6">Selected Galleries</h2> */}
 
       <div className="w-full h-px bg-[var(--secondary)] mb-6" />
 

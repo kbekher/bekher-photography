@@ -7,6 +7,24 @@ import CustomCursor from "@/components/CustomCursor";
 export const metadata: Metadata = {
   title: "Kristina Bekher | Film Photography",
   description: "Explore the film photography of Kristina Bekher — a Ukrainian photographer and developer based in Germany showcasing a her collection of timeless analog moments.",
+  openGraph: {
+    title: "Kristina Bekher | Film Photography",
+    description: "Explore the film photography of Kristina Bekher — a Ukrainian photographer and developer based in Germany showcasing her collection of timeless analog moments.",
+    images: [
+      {
+        url: "https://yourdomain.com/og-image.jpg", // TODO:Replace with your actual image URL
+        width: 1200,
+        height: 630,
+        alt: "Kristina Bekher Film Photography Gallery",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Kristina Bekher | Film Photography",
+    description: "Explore the film photography of Kristina Bekher — a Ukrainian photographer and developer based in Germany showcasing her collection of timeless analog moments.",
+    images: ["https://yourdomain.com/og-image.jpg"], // TODO:Same or different image
+  },
 };
 
 const montserrat = Montserrat({

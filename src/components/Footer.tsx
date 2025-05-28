@@ -39,9 +39,10 @@ const Footer = () => {
 
         <motion.div
           className="w-auto h-full flex items-end col-span-full row-start-1 md:row-start-3"
-          initial={{ opacity: 1, y: isMobile ? 0 : 50, x: isMobile ? -100 : 0 }}
+          initial={{ opacity: 1, y: isMobile ? 0 : 50, x: isMobile ? -50 : 0 }}
           whileInView={{ opacity: 1, y: 0, x: 0}}
-          transition={{ duration: 0.3, ease: "easeOut" }}
+          transition={{ duration: 0.3 }}
+          viewport={{ amount: 0.5 }}
         >
           <p className="uppercase bold leading-[100%] custom-text">RUN. SHOOT. DEVELOP.</p>
         </motion.div>
