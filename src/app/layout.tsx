@@ -5,8 +5,8 @@ import { Montserrat } from "next/font/google";
 import CustomCursor from "@/components/CustomCursor";
 
 export const metadata: Metadata = {
-  title: "Kristina Bekher",
-  description: "Kristina Bekher | Film Photography Gallery",
+  title: "Kristina Bekher | Film Photography",
+  description: "Explore the film photography of Kristina Bekher — a Ukrainian photographer and developer based in Germany showcasing a her collection of timeless analog moments.",
 };
 
 const montserrat = Montserrat({
