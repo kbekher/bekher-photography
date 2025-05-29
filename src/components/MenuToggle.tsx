@@ -10,7 +10,7 @@ const MenuToggle = ({ text }: Props) => {
   const { toggle, isOpen } = useMenu();
 
   return (
-    <div className={`fixed p-5 top-0 right-0 z-70`}>
+    <div className={`fixed p-5 top-0 right-0`}>
       <motion.button
         onClick={toggle}
         className="bg-transparent border-none cursor-pointer capitalize text-white 2xl:text-[24px]"

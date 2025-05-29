@@ -11,7 +11,7 @@ const Header = () => {
   const { isOpen } = useMenu();
 
   return (
-    <header className={`fixed z-40 top-0 left-0 right-0 p-5 flex justify-between custom-transition mix-blend-difference`}>
+    <header className={`fixed z-10 top-0 left-0 right-0 p-5 flex justify-between custom-transition mix-blend-difference`}>
       <motion.div
         variants={textVariants}
         initial={false}

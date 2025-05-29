@@ -76,7 +76,7 @@ const Navigation = () => {
         <div
           id="menu-backdrop"
           onClick={() => { toggle(); }}
-          className="fixed inset-0 z-50"
+          className="fixed inset-0 z-20"
         />
       )}
 
@@ -84,7 +84,7 @@ const Navigation = () => {
         variants={containerVariants}
         initial={false}
         animate={isOpen ? "open" : "closed"}
-        className="fixed z-50 top-0 left-0 right-0 p-5 w-full h-max flex justify-between gap-5 bg-[var(--secondary)] text-[var(--branding)]"
+        className="fixed z-20 top-0 left-0 right-0 p-5 w-full h-max flex justify-between gap-5 bg-[var(--secondary)] text-[var(--branding)]"
       >
         {/* Logo */}
         <motion.div className="hidden md:block w-[50%]" variants={textVariants}>
