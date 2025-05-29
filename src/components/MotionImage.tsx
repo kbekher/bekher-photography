@@ -33,18 +33,18 @@ const MotionImage = ({ galleryName, photo }: Props) => {
         className="w-full h-full mx-auto relative overflow-hidden"
       >
         {/* Placeholder with same aspect ratio */}
-        {!isLoaded && (
+        {/* {!isLoaded && ( */}
           <div
-            className="absolute inset-0 bg-zinc-800 image-loading"
+            className="absolute inset-0 z-[-1] bg-zinc-800 image-loading"
             style={{ aspectRatio: photo.aspectRatio }}
           />
-        )} 
+        {/* )}  */}
 
         <motion.div
           initial={{ scale: 1.2, opacity: 0.5 }}
           animate={isInView ? { scale: 1, opacity: 1 } : { scale: 1.2, opacity: 0.5 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="group"
+          className="w-full h-full absolute inset-0 group"
         >
           <Image
             src={`${DOMAIN}/galleries/${galleryName}/${photo.path}`}
