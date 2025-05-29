@@ -95,7 +95,7 @@ const Navigation = () => {
         <div className="flex flex-col gap-[80px] justify-between w-full md:w-[50%]">
           <motion.ul
             variants={listVariants}
-            className='flex flex-col gap-0 text-[60px] leading-none tracking-tighter'
+            className='flex flex-col gap-0 text-6xl leading-none tracking-tighter'
           >
             {navLinks.map(({ name, href }) => (
               <motion.li

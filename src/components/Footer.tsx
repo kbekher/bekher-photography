@@ -16,46 +16,40 @@ const Footer = () => {
 
   return (
     <footer
-      className="bg-[var(--secondary)] text-[var(--branding)] w-full p-5 md:pb-2 text-[24px] leading-[28px] tracking-tighter overflow-hidden"
+      className="bg-[var(--secondary)] text-[var(--branding)] w-full p-5 md:pb-2 text-sm sm:text-xl md:leading-[28px] tracking-tighter overflow-hidden"
       aria-label="Site footer"
     >
-      <div className="grid gap-5 grid-cols-4 grid-rows-3 md:pt-[80px] justify-center">
-        {/* Copyright */}
-        <div className="row-start-3 md:row-start-1 col-span-4 md:col-span-2">
-          <p className="text-[14px] md:text-[24px] w-max" data-cursor="text">
+      <div className="flex flex-col-reverse md:grid gap-5 grid-cols-4 grid-rows-3 md:grid-rows-2 md:pt-[80px]">
+
+        <div className="row-start-3 md:row-start-1 col-span-full md:col-span-2">
+          <p className='text-sm md:text-2xl w-max' data-cursor="text">
             ©2025 Kristina Bekher
           </p>
         </div>
 
-        {/* Navigation links and Contact */}
-        <div className="flex gap-20 col-span-4 md:col-span-2 row-start-2 md:row-start-1">
-          <nav className="flex flex-col w-[50%]" aria-label="Footer navigation">
+        <div className='flex gap-4 md:gap-20 md:col-span-2 md:row-start-1'>
+          <div className="flex flex-col w-[50%]">
             {navLinks.map(({ name, href }) => (
               <Link
                 key={name}
                 href={href}
-                className="w-max custom-transition hover:text-[var(--accent)]"
+                className='w-max custom-transition hover:text-[var(--accent)]'
                 data-cursor="text"
-              >
-                {name}
-              </Link>
+              >{name}</Link>
             ))}
-          </nav>
+          </div>
 
           <ContactLinks isFooter={true} />
         </div>
 
-        {/* Motion slogan */}
         <motion.div
-          className="w-auto h-full flex items-end col-span-4 row-start-1 md:row-start-3"
+          className="col-span-full row-start-1 md:row-start-2 md:pt-4"
           initial={{ opacity: 1, y: isMobile ? 0 : 50, x: isMobile ? -50 : 0 }}
-          whileInView={{ opacity: 1, y: 0, x: 0 }}
+          whileInView={{ opacity: 1, y: 0, x: 0}}
           transition={{ duration: 0.3 }}
           viewport={{ amount: 0.3 }}
         >
-          <p className="uppercase font-bold leading-[100%] custom-text">
-            RUN. SHOOT. DEVELOP.
-          </p>
+          <p className="uppercase bold leading-[100%] custom-text">RUN. SHOOT. DEVELOP.</p>
         </motion.div>
       </div>
     </footer>

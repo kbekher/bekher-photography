@@ -21,7 +21,6 @@ const LogoElement = ({ color }: LogoElementProps) => (
       repeat: Infinity,
       repeatDelay: 5,
     }}
-    // className={`w-5 h-5 rounded-full ${color}`}
   >
     <ApertureLogo color={color} />
 
@@ -38,7 +37,7 @@ const Logo = ({ isLink }: LogoProps) => {
     <Link
       href="/"
       aria-label="Go to homepage"
-      className="flex gap-2 items-center text-white 2xl:text-[24px] custom-transition hover:text-[var(--accent)]"
+      className="flex gap-2 items-center text-white 2xl:text-xl custom-transition hover:text-[var(--accent)]"
       data-cursor="text"
     >
       <LogoElement color="#cbcbcf" />
@@ -46,7 +45,7 @@ const Logo = ({ isLink }: LogoProps) => {
     </Link>
   ) : (
     <div 
-      className="flex gap-2 items-center select-none 2xl:text-[24px]"
+      className="flex gap-2 items-center select-none 2xl:text-xl"
       data-cursor="text"
     >
       <LogoElement color="#444251" />
