@@ -1,4 +1,4 @@
-export const DOMAIN = process.env.NEXT_PUBLIC_DOMAIN;
+export const DOMAIN = "https://d14lj85n4pdzvr.cloudfront.net";
 
 export const navLinks = [
   { name: "Home", href: "/" },
