@@ -8,11 +8,7 @@
   --foreground: #ffffff;
   --branding: #444251;
   --secondary: #cbcbcf;
-  /* --grey: #e4e3e5; */
   --accent: #8d89a3;
-
-  --font-size: 16px;
-  --font-size-scale: 1.5; 
 }
 
 
@@ -48,10 +44,6 @@ body {
 }
 
 body {
-  /* cursor: none; */
-  /* font-family: var(--font-montserrat), sans-serif; */
-  /* margin: 0;
-  padding: 0; */
   min-height: -webkit-fill-available;
   padding-top: env(safe-area-inset-top);
   overflow-x: hidden; 

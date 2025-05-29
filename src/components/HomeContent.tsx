@@ -18,7 +18,7 @@ const galleryLayout = [
 
 const HomeContent = () => {
   return (
-      <div className="w-auto min-h-full h-auto mx-5 md:mx-[60px] pb-[140px] pt-[64px]">
+      <div className="w-auto min-h-full h-auto mx-5 md:mx-[60px] pb-[140px] pt-16">
         <div className="flex flex-col md:grid grid-cols-12 gap-x-5 gap-y-10">
           {galleryLayout.map(({ id, styles, photoIndex }) => {
             const gallery = galleriesData[id as keyof typeof galleriesData];

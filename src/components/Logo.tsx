@@ -37,7 +37,7 @@ const Logo = ({ isLink }: LogoProps) => {
     <Link
       href="/"
       aria-label="Go to homepage"
-      className="flex gap-2 items-center text-white 2xl:text-xl custom-transition hover:text-[var(--accent)]"
+      className="flex gap-2 items-center text-white lg:text-xl custom-transition hover:text-[var(--accent)]"
       data-cursor="text"
     >
       <LogoElement color="#cbcbcf" />
@@ -45,7 +45,7 @@ const Logo = ({ isLink }: LogoProps) => {
     </Link>
   ) : (
     <div 
-      className="flex gap-2 items-center select-none 2xl:text-xl"
+      className="flex gap-2 items-center select-none lg:text-xl"
       data-cursor="text"
     >
       <LogoElement color="#444251" />

@@ -19,9 +19,9 @@ interface GalleryView {
 
 const GalleryMobile = ({ activeGallery, nextGallery }: GalleryView) => (
   <div className="flex flex-col gap-4">
-    <div className='px-5 pt-[64px]'>
+    <div className='px-5 pt-16'>
       <h1 className="text-4xl md:text-6xl text-white uppercase mb-2" data-cursor="text">{activeGallery.name}</h1>
-      <p aria-hidden="true" className="text-white/70 xl:w-1/2 hidden">{activeGallery.description}</p>
+      <p aria-hidden="true" className="hidden">{activeGallery.description}</p>
     </div>
 
     {activeGallery.photos.map((photo: PhotoMetadata) => {
@@ -42,7 +42,7 @@ const GalleryMobile = ({ activeGallery, nextGallery }: GalleryView) => (
                 width={width}
                 height={height}
                 loading="lazy"
-                sizes="400px"
+                sizes="100vw"
                 className="w-full h-full object-cover"
                 loader={imageLoader}
               />
@@ -106,20 +106,24 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
     [0, -totalContentWidth + windowWidth]
   );
 
+    //   const isHorizontal = parseFloat(photo.aspectRatio) > 1;
+
+  // const sizes = isHorizontal
+  //   ? "(max-width: 768px) 100vw, 80vw"
+  //   : "(max-width: 768px) 100vw, 800px";
+
+
   return (
     <div ref={containerRef} className="h-[1300vh]">
       <div className="sticky top-0 h-screen">
         <div className="h-full relative">
           <div className='overflow-hidden'>
-            <motion.div
-              className="flex w-min-content items-center"
-              style={{ x }}
-            >
+            <motion.div className="flex w-max items-center" style={{ x }}>
 
               {/* Intro div */}
-              <div className="w-full min-h-screen xl:min-w-[70vw] flex flex-col pt-[64px] px-[20px]">
-                <h1 className="w-max text-[48px] xl:text-[64px] uppercase text-white mb-4" data-cursor="text">{activeGallery.name}</h1>
-                <p aria-hidden="true" className="text-white/70 xl:w-1/2 hidden">{activeGallery.description}</p>
+              <div className="w-full min-h-screen xl:min-w-[70vw] flex flex-col pt-16 px-10">
+                <h1 className="text-4xl md:text-6xl uppercase text-white mb-4" data-cursor="text">{activeGallery.name}</h1>
+                <p aria-hidden="true" className="hidden">{activeGallery.description}</p>
               </div>
 
               {/* Images */}
@@ -135,19 +139,12 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
                       whileInView={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.6, delay: index * 0.1 }}
                       viewport={{ once: true }}
-                      style={{
-                        width,
-                        height,
-                        aspectRatio: aspectRatio,
-                      }}
+                      style={{ width, height, aspectRatio }}
                     >
                       <motion.div
                         {...getImageMotionScale(1.2)}
                         className="w-full h-full"
-                        style={{
-                          willChange: 'transform, opacity',
-                          transformStyle: 'preserve-3d',
-                        }}
+                        style={{ willChange: 'transform, opacity', transformStyle: 'preserve-3d' }}
                       >
                         <Image
                           src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${activeGallery.id}/${path}`}
@@ -155,9 +152,8 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
                           width={width}
                           height={height}
                           draggable={false}
-                          // loading={index === 0 ? 'eager' : 'lazy'}
-                          // loading="lazy"
                           sizes="400px"
+                          // sizes={sizes}
                           className="w-auto h-full object-contain"
                           loader={imageLoader}
                           priority={index === 0}

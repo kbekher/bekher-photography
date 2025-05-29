@@ -30,11 +30,11 @@ const GalleriesContent = () => {
                 {/* Title + Divider */}
                 <div className='relative py-4'>
                   <div className="absolute top-0 left-0 right-0 h-px bg-[var(--secondary)]" />
-                  <p className='w-max leading-none'>{name}</p>
+                  <p className='w-max text-sm md:text-xl leading-none'>{name}</p>
                 </div>
 
                 {/* Gallery Row */}
-                <div className='grid grid-cols-8 md:grid-cols-12 gap-x-2 md:gap-x-5 h-max-[230px] overflow-hidden'>
+                <div className='grid grid-cols-8 md:grid-cols-12 gap-x-2 md:gap-x-5 overflow-hidden'>
                   {bestFitPhotos.map(({ photo, index, colSpan }, imgIndex) => {
                     const { width, height } = computeDimensions(photo.aspectRatio, 200);
 
@@ -63,7 +63,7 @@ const GalleriesContent = () => {
                             height={height}
                             draggable={false}
                             sizes="400px"
-                            className="object-cover w-full h-full transition-transform duration-500 ease-in-out group-hover:scale-105"
+                            className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
                             loader={imageLoader}
                             priority={galleryIndex < 2}
                           />
