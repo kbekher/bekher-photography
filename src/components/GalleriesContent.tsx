@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { galleriesData } from '@/data';
 import { computeDimensions, getBestFitRow } from '@/utils/utils';
 import imageLoader from '@/utils/image-loader';
+import { DOMAIN } from '@/constants/constants';
 
 const GalleriesContent = () => {
   return (
@@ -57,15 +58,15 @@ const GalleriesContent = () => {
                           className="w-full h-full absolute inset-0 group"
                         >
                           <Image
-                            src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${id}/${photo.path}`}
+                            src={`${DOMAIN}/galleries/${id}/${photo.path}`}
                             alt={`Picture of ${name}`}
                             width={width}
                             height={height}
                             draggable={false}
-                            sizes="400px"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
                             loader={imageLoader}
-                            priority={galleryIndex < 2}
+                            priority={galleryIndex < 3}
                           />
                         </div>
                       </motion.div>

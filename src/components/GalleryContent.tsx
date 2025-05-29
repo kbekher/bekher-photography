@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import NextGallery from './NextGallery';
 import { useMediaQuery } from 'react-responsive';
 import { getImageMotionScale } from '@/constants/animations';
+import { DOMAIN } from '@/constants/constants';
 
 interface GalleryView {
   activeGallery: Gallery;
@@ -37,12 +38,12 @@ const GalleryMobile = ({ activeGallery, nextGallery }: GalleryView) => (
               {...getImageMotionScale()}
             >
               <Image
-                src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${activeGallery.id}/${path}`}
+                src={`${DOMAIN}/galleries/${activeGallery.id}/${path}`}
                 alt={`Picture of ${activeGallery.name}`}
                 width={width}
                 height={height}
                 loading="lazy"
-                sizes="100vw"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="w-full h-full object-cover"
                 loader={imageLoader}
               />
@@ -105,14 +106,7 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
     [0, 1],
     [0, -totalContentWidth + windowWidth]
   );
-
-    //   const isHorizontal = parseFloat(photo.aspectRatio) > 1;
-
-  // const sizes = isHorizontal
-  //   ? "(max-width: 768px) 100vw, 80vw"
-  //   : "(max-width: 768px) 100vw, 800px";
-
-
+  
   return (
     <div ref={containerRef} className="h-[1300vh]">
       <div className="sticky top-0 h-screen">
@@ -147,13 +141,12 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
                         style={{ willChange: 'transform, opacity', transformStyle: 'preserve-3d' }}
                       >
                         <Image
-                          src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${activeGallery.id}/${path}`}
+                          src={`${DOMAIN}/galleries/${activeGallery.id}/${path}`}
                           alt={`Picture of ${activeGallery.name}`}
                           width={width}
                           height={height}
                           draggable={false}
-                          sizes="400px"
-                          // sizes={sizes}
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           className="w-auto h-full object-contain"
                           loader={imageLoader}
                           priority={index === 0}

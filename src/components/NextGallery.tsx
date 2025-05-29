@@ -1,3 +1,4 @@
+import { DOMAIN } from "@/constants/constants";
 import { Gallery } from "@/data";
 import imageLoader from "@/utils/image-loader";
 import { motion, useInView } from "framer-motion";
@@ -31,8 +32,10 @@ const NextGallery = ({ nextGallery, isDesktop = false }: NextGallery) => {
             className="w-full h-full"
           >
             <Image
-              src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${nextGallery.id}/${nextGallery.photos[0].path}`}
+              src={`${DOMAIN}/galleries/${nextGallery.id}/${nextGallery.photos[0].path}`}
               alt={`Preview of ${nextGallery.name}`}
+              priority={true}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 300px"
               fill
               loader={imageLoader}
               className={`object-cover transition-[object-position] duration-[1200ms] ease-[cubic-bezier(0.4,0.0,0.2,1)] will-change-[object-position] ${objectPositionClass}`}

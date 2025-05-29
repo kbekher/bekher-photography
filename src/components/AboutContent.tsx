@@ -1,11 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { galleriesData, horizontal } from '@/data';
 import imageLoader from '@/utils/image-loader';
-import { useState } from 'react';
+import { DOMAIN } from '@/constants/constants';
 
 const gearItems = [
   ['2025', 'Canon AE-1'],
@@ -58,15 +59,17 @@ const AboutContent = () => {
           </p>
         </div>
 
-        <div className="w-full lg:max-w-[50vw] lg:translate-x-5 relative overflow-hidden">
+        <div className="w-full h-full lg:max-w-[50vw] lg:translate-x-5 relative overflow-hidden">
           {!isLoaded && (
             <div className="absolute inset-0 bg-zinc-800 image-loading aspect-[3/4]" />
           )}
+          
           <Image
-            src="https://d14lj85n4pdzvr.cloudfront.net/hero.jpg"
+            src={`${DOMAIN}/hero.jpg`}
             alt="Kristina Bekher portrait"
             width={600}
             height={800}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className={`w-full h-auto object-cover transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
             onLoad={() => setIsLoaded(true)}
             loader={imageLoader}
@@ -95,7 +98,7 @@ const AboutContent = () => {
                   fill
                   className="object-cover w-full h-full transition-transform duration-500 ease-in-out group-hover:scale-105"
                   loader={imageLoader}
-                  sizes="(min-width: 768px) 25vw, 50vw"
+                  sizes="(max-width: 500x) 100vw, (max-width: 1200px) 50vw, 33vw"
                   draggable={false}
                 />
               </div>
