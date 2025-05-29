@@ -34,11 +34,12 @@ const NextGallery = ({ nextGallery, isDesktop = false }: NextGallery) => {
             <Image
               src={`${DOMAIN}/galleries/${nextGallery.id}/${nextGallery.photos[0].path}`}
               alt={`Preview of ${nextGallery.name}`}
-              priority={true}
+              width={300}
+              height={600}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 300px"
-              fill
               loader={imageLoader}
-              className={`object-cover transition-[object-position] duration-[1200ms] ease-[cubic-bezier(0.4,0.0,0.2,1)] will-change-[object-position] ${objectPositionClass}`}
+              loading="lazy"
+              className={`w-full h-full object-cover transition-[object-position] duration-[1200ms] ease-[cubic-bezier(0.4,0.0,0.2,1)] will-change-[object-position] ${objectPositionClass}`}
             />
           </motion.div>
 

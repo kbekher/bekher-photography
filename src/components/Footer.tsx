@@ -16,7 +16,7 @@ const Footer = () => {
 
   return (
     <footer
-      className="bg-[var(--secondary)] text-[var(--branding)] w-full p-5 md:pb-2 text-sm sm:text-xl md:leading-[28px] tracking-tighter overflow-hidden"
+      className="bg-[var(--secondary)] text-[var(--branding)] w-full p-5 md:pb-2 text-[16px] md:text-2xl md:leading-auto tracking-tighter overflow-hidden"
       aria-label="Site footer"
     >
       <div className="flex flex-col-reverse md:grid gap-5 grid-cols-4 grid-rows-3 md:grid-rows-2 md:pt-[80px]">

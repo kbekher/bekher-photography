@@ -121,12 +121,12 @@ export const galleriesData = {
     buffer: 78,
     photos: [
       { aspectRatio: vertical, path: "plant-stature-amterdam-jazzy-blues.jpg", styles: "px-5 xl:p-0", },
-      { aspectRatio: horizontal, path: "jazzy-blues-chamomile.jpg", styles: "px-5 xl:p-0", },
-      { aspectRatio: vertical, path: "design-books-jazzy-blues.jpg", styles: "px-5 xl:p-0", },
-      { aspectRatio: horizontal, path: "white-cat-walking-jazzy-blues.jpg", styles: "px-5 xl:p-0", },
-      { aspectRatio: horizontal, path: "lady-smelling-roses.jpg", styles: "px-5 xl:p-0", },
-      { aspectRatio: horizontal, path: "mother-and-daughter-revolog.jpg", styles: "px-5 xl:p-0", },
-      { aspectRatio: vertical, path: "guy-portrait-kyiv-revolog.jpg", styles: "px-5 xl:p-0", },
+      { aspectRatio: horizontal, path: "jazzy-blues-chamomile.jpg", styles: "p-8 xl:p-0", size: 1000 },
+      { aspectRatio: vertical, path: "design-books-jazzy-blues.jpg", styles: "p-0 xl:p-0", },
+      { aspectRatio: horizontal, path: "white-cat-walking-jazzy-blues.jpg", styles: "pt-20 px-10 xl:p-0", },
+      { aspectRatio: horizontal, path: "lady-smelling-roses.jpg", styles: "pb-20 px-10 xl:p-0", },
+      { aspectRatio: horizontal, path: "mother-and-daughter-revolog.jpg", styles: "p-0 pb-8 xl:p-0", },
+      { aspectRatio: vertical, path: "guy-portrait-kyiv-revolog.jpg", styles: "px-8 xl:p-0", },
     ] as PhotoMetadata[],
   },
   facesandplaces: {

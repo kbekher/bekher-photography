@@ -27,7 +27,7 @@ export default function BodyContent({ children }: { children: React.ReactNode })
   }, []);
 
   return (
-    <body className={montserrat.className}>
+    <main className={montserrat.className}>
       <div className="antialiased scroll-smooth bg-[var(--background)] text-[var(--secondary)] font-bold tracking-[0.5px]">
         <div className="relative min-h-screen">
           {/* Preloader */}
@@ -64,6 +64,6 @@ export default function BodyContent({ children }: { children: React.ReactNode })
           </div>
         </div>
       </div>
-    </body>
+    </main>
   );
 }

@@ -5,7 +5,7 @@ import { Montserrat } from "next/font/google";
 import CustomCursor from "@/components/CustomCursor";
 
 export const metadata: Metadata = {
-  title: "Kristina Bekher | Film Photography",
+  title: "Kristina Bekher | Film Photo Gallery",
   description: "Explore the film photography of Kristina Bekher — a Ukrainian photographer and developer based in Germany showcasing a her collection of timeless analog moments.",
   openGraph: {
     title: "Kristina Bekher | Film Photography",

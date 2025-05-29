@@ -108,8 +108,8 @@ const AboutContent = () => {
         </div>
         <div className="w-full h-px bg-[var(--secondary)] mt-4" />
 
-        <p className='text-sm mt-4'>
-          Note: All images were developed and scanned at <Link
+        <p className='text-[12px] md:text-sm mt-4'>
+          Note: All images were developed and scanned by <Link
             href="https://fotovramci.com/?srsltid=AfmBOopLTn3khuFhn_KLyzZV3vapYgKymv51BY5a4aphVes0bVGFeqq5"
             aria-label="Visit Foto v Ramci — a film developing and scanning lab"
             className="font-mono custom-transition hover:text-[var(--accent)]"
