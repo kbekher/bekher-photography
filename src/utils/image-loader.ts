@@ -13,10 +13,7 @@ const imageLoader: ImageLoader = ({ src, width }) => {
 
   if (suitableWidth) {
     const baseName = path.replace(/\.\w+$/, ''); // remove extension
-    // TODO: revert line here
-    // return `${DOMAIN}${baseName}-${suitableWidth}.jpg`;
-    const extension = width >= 1200 ? 'webp' : 'jpg';
-    return `${DOMAIN}${baseName}-${suitableWidth}.${extension}`;
+    return `${DOMAIN}${baseName}-${suitableWidth}.jpg`;
   }
 
   // If requested width is greater than all allowed sizes, return original (full-size) image
