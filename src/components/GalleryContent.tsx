@@ -25,7 +25,7 @@ const GalleryMobile = ({ activeGallery, nextGallery }: GalleryView) => (
       <p aria-hidden="true" className="hidden">{activeGallery.description}</p>
     </div>
 
-    {activeGallery.photos.map((photo: PhotoMetadata) => {
+    {activeGallery.photos.map((photo: PhotoMetadata, index) => {
       const { aspectRatio, path, styles } = photo;
       const { width, height } = computeDimensions(aspectRatio, 400); // smaller for mobile
 
@@ -40,12 +40,22 @@ const GalleryMobile = ({ activeGallery, nextGallery }: GalleryView) => (
               <Image
                 src={`${DOMAIN}/galleries/${activeGallery.id}/${path}`}
                 alt={`Picture of ${activeGallery.name}`}
+                className="w-full h-full object-cover"
                 width={width}
                 height={height}
-                loading="lazy"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="w-full h-full object-cover"
+                //sizes="
+                //  (max-width: 320px) 256px,
+                //  (max-width: 480px) 384px,
+                //  (max-width: 768px) 640px,
+                //  (max-width: 1024px) 828px,
+                //  (max-width: 1280px) 1080px,
+                //  (max-width: 1440px) 1200px,
+                //  1200px
+                // "
                 loader={imageLoader}
+                loading={index > 0 ? "lazy" : "eager"}
+                priority={index === 0}
               />
             </motion.div>
           </div>
@@ -106,7 +116,7 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
     [0, 1],
     [0, -totalContentWidth + windowWidth]
   );
-  
+
   return (
     <div ref={containerRef} className="h-[1300vh]">
       <div className="sticky top-0 h-screen">
@@ -143,12 +153,22 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
                         <Image
                           src={`${DOMAIN}/galleries/${activeGallery.id}/${path}`}
                           alt={`Picture of ${activeGallery.name}`}
+                          className="w-auto h-full object-contain"
                           width={width}
                           height={height}
                           draggable={false}
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          className="w-auto h-full object-contain"
+                          //sizes="
+                          //  (max-width: 320px) 256px,
+                          //  (max-width: 480px) 384px,
+                          //  (max-width: 768px) 640px,
+                          //  (max-width: 1024px) 828px,
+                          //  (max-width: 1280px) 1080px,
+                          //  (max-width: 1440px) 1200px,
+                          //  1200px
+                          // "
                           loader={imageLoader}
+                          loading={index > 0 ? "lazy" : "eager"}
                           priority={index === 0}
                         />
                       </motion.div>
