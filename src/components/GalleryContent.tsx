@@ -122,10 +122,13 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
       <div className="sticky top-0 h-screen">
         <div className="h-full relative">
           <div className='overflow-hidden'>
-            <motion.div className="flex w-max items-center" style={{ x }}>
+            <motion.div
+             className="flex w-max items-center"
+              style={{ x }}
+            >
 
               {/* Intro div */}
-              <div className="w-full min-h-screen xl:min-w-[70vw] flex flex-col pt-16 px-10">
+              <div className="w-full min-h-screen xl:min-w-[70vw] flex flex-col pt-16 px-5">
                 <h1 className="text-4xl md:text-6xl uppercase text-white mb-4" data-cursor="text">{activeGallery.name}</h1>
                 <p aria-hidden="true" className="hidden">{activeGallery.description}</p>
               </div>
