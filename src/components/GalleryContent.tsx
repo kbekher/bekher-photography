@@ -122,10 +122,7 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
       <div className="sticky top-0 h-screen">
         <div className="h-full relative">
           <div className='overflow-hidden'>
-            <motion.div
-             className="flex w-max items-center"
-              style={{ x }}
-            >
+            <motion.div className="flex w-max items-center" style={{ x }}>
 
               {/* Intro div */}
               <div className="w-full min-h-screen xl:min-w-[70vw] flex flex-col pt-16 px-5">
@@ -149,8 +146,8 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
                       style={{ width, height, aspectRatio }}
                     >
                       <motion.div
-                        {...getImageMotionScale(1.2)}
-                        className="w-full h-full"
+                        {...getImageMotionScale(1.2, true)}
+                        className='-full h-full'
                         style={{ willChange: 'transform, opacity', transformStyle: 'preserve-3d' }}
                       >
                         <Image
@@ -161,15 +158,6 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
                           height={height}
                           draggable={false}
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          //sizes="
-                          //  (max-width: 320px) 256px,
-                          //  (max-width: 480px) 384px,
-                          //  (max-width: 768px) 640px,
-                          //  (max-width: 1024px) 828px,
-                          //  (max-width: 1280px) 1080px,
-                          //  (max-width: 1440px) 1200px,
-                          //  1200px
-                          // "
                           loader={imageLoader}
                           loading={index > 0 ? "lazy" : "eager"}
                           priority={index === 0}

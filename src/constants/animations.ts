@@ -11,9 +11,9 @@ export const textVariants = {
   },
 };
 
-export const getImageMotionScale = (scale = 1.05, delay = 0.2, duration = 0.8) => ({
+export const getImageMotionScale = (scale = 1.05, once = false) => ({
   initial: { opacity: 0.6, scale },
   whileInView: { opacity: 1, scale: 1 },
-  transition: { duration, delay, ease: 'easeOut' },
-  // viewport: { once: true },
+  transition: { duration: 0.8, delay:0.2, ease: 'easeOut' },
+  viewport: { once },
 });
