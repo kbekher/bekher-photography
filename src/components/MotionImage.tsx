@@ -18,7 +18,7 @@ const MotionImage = ({ galleryName, photo }: Props) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const pathname = usePathname();
   const isInView = useInView(ref, { once: true, amount: 0.3 });
-  const isPriority = galleryName === "europeanfeel" || galleryName === "noiretblanc";
+  // const isPriority = galleryName === "europeanfeel" || galleryName === "noiretblanc";
 
   // Reset animation when path changes
   useEffect(() => {
@@ -56,7 +56,7 @@ const MotionImage = ({ galleryName, photo }: Props) => {
             style={{ aspectRatio: photo.aspectRatio }}
             draggable="false"
             onLoad={() => setIsLoaded(true)}
-            priority={isPriority}
+            // priority={isPriority}
             loader={imageLoader}
           />
         </motion.div>
