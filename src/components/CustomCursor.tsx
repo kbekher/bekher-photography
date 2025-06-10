@@ -1,6 +1,6 @@
 "use client";
 
-import useIsTouchDevice from "@/hooks/useIsTouchDevice";
+import useDeviceDetection from "@/hooks/useDeviceDetection";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
@@ -8,7 +8,7 @@ const CustomCursor = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [cursorVariant, setCursorVariant] = useState<"default" | "text" | "view">("default");
 
-  const isTouch = useIsTouchDevice();
+  const deviceType = useDeviceDetection();
 
   useEffect(() => {
     const mouseMove = (e: MouseEvent) => {
@@ -30,7 +30,7 @@ const CustomCursor = () => {
   }, []);
 
 
-  if (isTouch) return null;
+  if (deviceType !== 'Desktop') return null;
 
   const variants = {
     default: {
