@@ -172,10 +172,10 @@ const AboutContent = () => {
               In 2022, a whole new world opened up to me thanks to the Japanese Minolta SR-1s — that&apos;s when I realized my previous cameras did have their limits.
             </p>
             <p>
-              When Pentax 17 finally came out, I soon found myself unboxing my first-ever brand-new film camera. Even though I prefer full manual control, Pentax still gives me plenty of room to experiment through its exposure steps and various modes. Switching from half-frame back to standard 35mm feels almost like stepping into medium format,which I haven&apos;t tried yet.
+              When Pentax 17 finally came out, I soon found myself unboxing my first-ever brand-new film camera. Even though I prefer full manual control, Pentax still gives me plenty of room to experiment through its exposure steps and various modes. Switching from half-frame back to standard 35mm feels almost like stepping into medium format, which I haven&apos;t tried yet.
             </p>
             <p>
-              Canon AE-1 with a Rolev M.G. 55mm Skylight filter, is the most recent addition to my kit. Its shutter-priority auto exposure helps me worry less about missing a moment. Still exploring...
+              Canon AE-1 with a 50mm f/1.8 FD S.C. lens, is the most recent addition to my kit. Its shutter-priority auto exposure helps me worry less about missing a moment. My next goal is to try different (zoom) lenses for this camera, and see what comes out of it.
             </p>
 
           </div>
