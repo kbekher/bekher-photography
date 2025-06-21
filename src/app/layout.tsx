@@ -6,7 +6,7 @@ import CustomCursor from "@/components/CustomCursor";
 
 export const metadata: Metadata = {
   title: "Kristina Bekher | Film Photo Gallery",
-  description: "Explore the film photography of Kristina Bekher — a Ukrainian photographer and developer based in Germany showcasing a her collection of timeless analog moments.",
+  description: "Explore the film photography of Kristina Bekher — a Ukrainian photographer and developer based in Germany showcasing her collection of timeless analog moments.",
   openGraph: {
     title: "Kristina Bekher | Film Photography",
     description: "Explore the film photography of Kristina Bekher — a Ukrainian photographer and developer based in Germany showcasing her collection of timeless analog moments.",
