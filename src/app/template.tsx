@@ -2,12 +2,18 @@
 
 import { motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 import { useMediaQuery } from 'react-responsive';
 
 export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isGalleryPage = pathname.indexOf('/galleries/') !== -1;
   const isDesktop = useMediaQuery({ minWidth: 1280 });
+
+   // Reset scroll position when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   return (
     <motion.div

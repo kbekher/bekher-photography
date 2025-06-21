@@ -10,11 +10,6 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Reset scroll position when component mounts
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
   // Track scroll progress
   const { scrollYProgress } = useScroll({
     target: containerRef,
