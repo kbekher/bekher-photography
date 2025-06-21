@@ -21,9 +21,9 @@ const NextGallery = ({ nextGallery, isDesktop = false }: NextGallery) => {
     : isInView ? "object-center" : "object-top";
 
   return (
-    <div className="w-full mt-[200px] xl:mt-0 xl:ml-[400px]">
-      <Link href={`/galleries/${nextGallery.id}`} className="cursor-none" data-cursor="view">
-        <div className="relative w-full h-[300px] xl:w-[500px] xl:h-screen overflow-hidden">
+    <div className="w-full mt-[200px] xl:mt-0 xl:ml-[400px] xl:flex xl:justify-end">
+      <Link href={`/galleries/${nextGallery.id}`} className="cursor-none block xl:w-[25vw]" data-cursor="view">
+        <div className="relative w-full h-[300px] xl:h-screen overflow-hidden">
           <motion.div
             ref={ref}
             initial={{ scale: 1.05, opacity: 0.7 }}

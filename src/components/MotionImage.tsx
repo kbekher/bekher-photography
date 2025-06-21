@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { motion, useInView } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { PhotoMetadata } from '@/data';
 import imageLoader from '@/utils/image-loader';
 import { DOMAIN } from '@/constants/constants';
+import { useMediaQuery } from 'react-responsive';
 
 interface Props {
   galleryName: string;
@@ -18,6 +19,10 @@ const MotionImage = ({ galleryName, photo }: Props) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const pathname = usePathname();
   const isInView = useInView(ref, { once: true, amount: 0.3 });
+  const isMobile = useMediaQuery({ maxWidth: 1279 });
+  const isFirstImage = useMemo(() => {
+    return (isMobile && galleryName === 'europeanfeel') || (!isMobile && (galleryName === 'europeanfeel' || galleryName === 'noiretblanc'));
+  }, [isMobile, galleryName]);
 
   // Reset animation when path changes
   useEffect(() => {
@@ -31,18 +36,16 @@ const MotionImage = ({ galleryName, photo }: Props) => {
         ref={ref}
         className="w-full h-full mx-auto relative overflow-hidden"
       >
-        {/* Placeholder with same aspect ratio */}
-        {/* {!isLoaded && ( */}
-          <div
-            className="absolute inset-0 z-[-1] bg-zinc-800 image-loading"
-            style={{ aspectRatio: photo.aspectRatio }}
-          />
-        {/* )}  */}
+
+        <div
+          className="relative inset-0 z-[-1] image-loading"
+          style={{ aspectRatio: photo.aspectRatio }}
+        />
 
         <motion.div
           initial={{ scale: 1.2, opacity: 0.5 }}
           animate={isInView ? { scale: 1, opacity: 1 } : { scale: 1.2, opacity: 0.5 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 0.8, delay: isFirstImage ? 0.8 : 0.2 }}
           className="w-full h-full absolute inset-0 group"
         >
           <Image

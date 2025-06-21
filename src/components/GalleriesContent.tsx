@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { galleriesData } from '@/data';
-import { computeDimensions, getBestFitRow } from '@/utils/utils';
+import { getBestFitRow } from '@/utils/utils';
 import imageLoader from '@/utils/image-loader';
 import { DOMAIN } from '@/constants/constants';
 
@@ -16,7 +16,7 @@ const GalleriesContent = () => {
       </h1>
 
       <ul className="flex flex-col gap-4 md:gap-10">
-        {Object.values(galleriesData).map((gallery, galleryIndex) => {
+        {Object.values(galleriesData).map((gallery) => {
           const { id, name, photos } = gallery;
           const bestFitPhotos = getBestFitRow(photos);
 
@@ -37,8 +37,6 @@ const GalleriesContent = () => {
                 {/* Gallery Row */}
                 <div className='grid grid-cols-8 md:grid-cols-12 gap-x-2 md:gap-x-5 overflow-hidden'>
                   {bestFitPhotos.map(({ photo, index, colSpan }, imgIndex) => {
-                    const { width, height } = computeDimensions(photo.aspectRatio, 200);
-
                     // Default to col-span-2 on mobile (8 cols), conditionally override for desktop
                     const colSpanClass = colSpan === 3
                       ? 'col-span-2 md:col-span-3'
@@ -49,7 +47,7 @@ const GalleriesContent = () => {
                         key={`${name}-${photo.path}`}
                         className={`overflow-hidden relative ${colSpanClass} ${imgIndex > 3 ? 'hidden md:block' : ''}`}
                         style={{ aspectRatio: photo.aspectRatio }}
-                        initial={galleryIndex < 3 ? { opacity: 1, y: 40 } : { opacity: 0, y: 40 }}
+                        initial={{ opacity: 0, y: 40 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: index * 0.1 }}
                         viewport={{ once: true }}
@@ -60,13 +58,11 @@ const GalleriesContent = () => {
                           <Image
                             src={`${DOMAIN}/galleries/${id}/${photo.path}`}
                             alt={`Picture of ${name}`}
-                            width={width}
-                            height={height}
+                            fill
                             draggable={false}
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
                             loader={imageLoader}
-                            priority={galleryIndex < 3}
                           />
                         </div>
                       </motion.div>
