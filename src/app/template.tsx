@@ -20,7 +20,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
       key={pathname}
       initial={{ 
         y: isDesktop && isGalleryPage ? 0 : 20, 
-        x: isDesktop && isGalleryPage ? -20 : 0, 
+        x: isDesktop && isGalleryPage ? 20 : 0, 
         opacity: 0 
       }}
       animate={{ y: 0, x: 0, opacity: 1 }}
