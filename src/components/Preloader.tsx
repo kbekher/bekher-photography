@@ -9,16 +9,16 @@ const Preloader = () => {
 
   useEffect(() => {
     // Disable scrolling while preloader is active
-    if (isLoading) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    // if (isLoading) {
+    //   document.body.style.overflow = 'hidden';
+    // } else {
+    //   document.body.style.overflow = '';
+    // }
 
     // Simulate loading delay or wait for assets if needed
     const timeout = setTimeout(() => {
       setIsLoading(false);
-      document.body.style.overflow = '';
+      document.body.style.overflowY = 'visible'; // Manage body overflow
     }, 1300); // change this if needed
 
     return () => clearTimeout(timeout);

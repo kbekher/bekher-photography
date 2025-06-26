@@ -21,18 +21,18 @@ export default function BodyContent({ children }: { children: React.ReactNode })
   const REQUIRED_IMAGES = 3; // Only wait for first 3 images
   const MIN_LOADING_TIME = 2000; // 2 seconds minimum
 
-  // Manage body overflow
-  useEffect(() => {
-    if (loading) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
+  // // Manage body overflow
+  // useEffect(() => {
+  //   if (loading) {
+  //     document.body.style.overflow = 'hidden';
+  //   } else {
+  //     document.body.style.overflow = 'unset';
+  //   }
 
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [loading]);
+  //   return () => {
+  //     document.body.style.overflow = 'unset';
+  //   };
+  // }, [loading]);
 
   // Ensure minimum loading time
   useEffect(() => {
