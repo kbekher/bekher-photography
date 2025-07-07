@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kristina Bekher | Film Photo Gallery | Portfolio Website
 
-## Getting Started
+> A minimalistic portfolio site showcasing my film photography 🎞️
 
-First, run the development server:
+## ✨ Live Preview
+
+**Website:** [https://bekher.photography](https://bekher.photography)  
+
+## 📸 Preview
+![image](https://github.com/user-attachments/assets/6bd8481e-599e-465e-833a-6dd2483fbfd4)
+
+![image](https://github.com/user-attachments/assets/dac13ba6-22a3-434b-a261-6371dba3eb63)
+
+![image](https://github.com/user-attachments/assets/2c820b4b-45ae-4f99-b99d-5e62e8324590)
+
+![image](https://github.com/user-attachments/assets/7bfb07a4-950e-4d2c-8881-c1c61b8961d7)
+
+![image](https://github.com/user-attachments/assets/7d45e884-edc8-4f3e-9ac5-97aae6018576)
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework**: [Next.js](https://nextjs.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Animation**: [Framer Motion](https://www.framer.com/motion/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/) (for maintainability as project grows)
+- **Hosting**: [Vercel](https://vercel.com/)
+- **Image Delivery**: [AWS CloudFront](https://aws.amazon.com/cloudfront/) (for fast and efficient image serving)
+
+---
+
+## 🚀 Getting Started (Local Development)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/kbekher/kristinabekher.git
+cd kristinabekher
+pnpm install   # or npm / yarn
+pnpm dev       # Starts development server on http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🧩 Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Smooth page transitions and image animations  
+- Responsive layout optimized for all devices  
+- Lazy-loaded and CDN-served high-resolution images  
+- Clean codebase for easy customization and future growth  
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 📝 License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT — Feel free to use and modify.
