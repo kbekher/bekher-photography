@@ -33,8 +33,8 @@
 ## 🚀 Getting Started (Local Development)
 
 ```bash
-git clone https://github.com/kbekher/kristinabekher.git
-cd kristinabekher
+git clone https://github.com/kbekher/bekher-photography.git
+cd bekher-photography
 pnpm install   # or npm / yarn
 pnpm dev       # Starts development server on http://localhost:3000
 ```
