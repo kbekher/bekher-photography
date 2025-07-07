@@ -3,9 +3,9 @@ interface Props {
 }
 
 const CONTACTS = [
+  { name: 'GitHub', href: 'https://github.com/kbekher' },
   { name: 'LinkedIn', href: 'https://www.linkedin.com/in/kristina-bekher' },
   { name: 'Instagram', href: 'https://instagram.com/ninjagexly' },
-  { name: 'Telegram', href: 'https://t.me/krbekher' },
 ];
 
 const ContactLinks = ({ isFooter = false }: Props) => {
