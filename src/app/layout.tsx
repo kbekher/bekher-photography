@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from 'next/script';
 import "./globals.css";
 import ClientLayout from "@/components/ClientLayout";
 import { Montserrat } from "next/font/google";
@@ -43,19 +42,6 @@ export function Head() {
       <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
       <meta name="apple-mobile-web-app-title" content="Kristina Bekher | Film Photography Gallery" />
       <link rel="manifest" href="/site.webmanifest" />
-      <Script async src="https://www.googletagmanager.com/gtag/js?id=G-PNTLQ3S7BY" />
-      <Script
-          id="google-analytics"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-PNTLQ3S7BY');
-            `,
-          }}
-        />
     </>
   );
 }
