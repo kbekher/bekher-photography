@@ -46,7 +46,6 @@ body {
 body {
   min-height: -webkit-fill-available;
   padding-top: env(safe-area-inset-top);
-  overflow: hidden; 
   min-height: 100vh; 
 }
 

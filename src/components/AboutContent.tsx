@@ -61,7 +61,7 @@ const AboutContent = () => {
 
         <div className="w-full h-full lg:max-w-[50vw] lg:translate-x-5 relative overflow-hidden">
           {!isLoaded && (
-            <div className="absolute min-h-[80vh] inset-0 bg-zinc-800 aspect-[3/4]" />
+            <div className="absolute min-h-[80vh] inset-0 aspect-[3/4]" />
           )}
           
           <Image

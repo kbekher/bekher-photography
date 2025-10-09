@@ -4,25 +4,100 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ApertureLogo from "./ApertureLogo";
 
-const Preloader = () => {
+interface PreloaderProps {
+  onComplete: () => void;
+}
+
+const Preloader = ({ onComplete }: PreloaderProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Disable scrolling while preloader is active
-    // if (isLoading) {
-    //   document.body.style.overflow = 'hidden';
-    // } else {
-    //   document.body.style.overflow = '';
-    // }
-
-    // Simulate loading delay or wait for assets if needed
-    const timeout = setTimeout(() => {
+    document.body.style.overflow = 'hidden';
+    let loadedImages = 0;
+    const REQUIRED_IMAGES = 2; // Wait for first 2 images on home page
+    const timeoutId = setTimeout(() => {
       setIsLoading(false);
-      document.body.style.overflowY = 'visible'; // Manage body overflow
-    }, 1300); // change this if needed
+      document.body.style.overflow = ''; // Re-enable scrolling
+      setTimeout(() => onComplete(), 500); // Smooth transition
+    }, 5000); // 5 second maximum timeout
 
-    return () => clearTimeout(timeout);
-  }, [isLoading]);
+    const handleImageLoad = () => {
+      loadedImages++;
+      if (loadedImages >= REQUIRED_IMAGES) {
+        // Wait a bit more for smooth transition
+        setTimeout(() => {
+          setIsLoading(false);
+          document.body.style.overflow = ''; // Re-enable scrolling
+          setTimeout(() => onComplete(), 500);
+        }, 500);
+      }
+    };
+
+    const handleImageError = () => {
+      loadedImages++; // Count errors as loaded too
+      if (loadedImages >= REQUIRED_IMAGES) {
+        setTimeout(() => {
+          setIsLoading(false);
+          document.body.style.overflow = ''; // Re-enable scrolling
+          setTimeout(() => onComplete(), 500);
+        }, 500);
+      }
+    };
+
+    // Wait for DOM to be ready, then start tracking images
+    const checkImages = () => {
+      const images = document.querySelectorAll('img');
+      
+      if (images.length === 0) {
+        // No images found, hide preloader
+        setIsLoading(false);
+        document.body.style.overflow = ''; // Re-enable scrolling
+        setTimeout(() => onComplete(), 500);
+        return;
+      }
+
+      // Track the first 2 images
+      const imagesToTrack = Array.from(images).slice(0, REQUIRED_IMAGES);
+      
+      imagesToTrack.forEach(img => {
+        if (img.complete) {
+          handleImageLoad();
+        } else {
+          img.addEventListener('load', handleImageLoad);
+          img.addEventListener('error', handleImageError);
+        }
+      });
+
+      // If all required images are already loaded
+      if (loadedImages >= REQUIRED_IMAGES) {
+        setTimeout(() => {
+          setIsLoading(false);
+          document.body.style.overflow = ''; // Re-enable scrolling
+          setTimeout(() => onComplete(), 500);
+        }, 500);
+      }
+    };
+
+    // Small delay to ensure DOM is ready
+    const domTimer = setTimeout(checkImages, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      clearTimeout(domTimer);
+      
+      // Re-enable scrolling when preloader is done
+      document.body.style.overflow = '';
+      
+      // Clean up event listeners
+      const images = document.querySelectorAll('img');
+      const imagesToTrack = Array.from(images).slice(0, REQUIRED_IMAGES);
+      imagesToTrack.forEach(img => {
+        img.removeEventListener('load', handleImageLoad);
+        img.removeEventListener('error', handleImageError);
+      });
+    };
+  }, [onComplete]);
 
   return (
     <AnimatePresence>
