@@ -8,7 +8,7 @@ const galleryLayout = [
   { id: "momentsofstillness", styles: "h-max row-start-2 col-start-4 col-span-6", photoIndex: 1 },
   { id: "jazzyblues", styles: "h-max row-start-3 col-start-8 col-span-5", photoIndex: 4 },
   { id: "grainofukraine", styles: "h-max row-start-3 col-start-1 col-span-5 md:pt-50", photoIndex: 3 },
-  { id: "alpineescape", styles: "h-max row-start-4 col-start-3 col-span-8", photoIndex: 3 },
+  { id: "alpineescape", styles: "h-max row-start-4 col-start-3 col-span-8", photoIndex: 6 },
   { id: "facesandplaces", styles: "h-max row-start-5 col-start-2 col-span-3 md:pt-20", photoIndex: 3 },
   { id: "pentax17", styles: "h-max row-start-5 col-start-8 col-span-4", photoIndex: 0 },
 ];

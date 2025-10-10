@@ -60,7 +60,7 @@ export const galleriesData = {
       { aspectRatio: vertical, path: "bike-corner-canals-amsterdam-pentax17.jpg", styles: "xl:p-0 xl:py-6 xl:pl-14" },
       { aspectRatio: vertical, path: "bath-market-uk.jpg", styles: "p-14 pb-0 xl:p-0 xl:py-6 xl:pl-80 xl:pr-2" },
       { aspectRatio: vertical, path: "book-store-bath-market-uk.jpg", styles: "p-14 pt-0 xl:p-0 xl:py-6 xl:px-50" },
-      { aspectRatio: horizontal, path: "charity-shop-vinyl.jpg", styles: "p-16 xl:p-24 xl:pr-0" },
+      { aspectRatio: horizontal, path: "charity-shop-vinyl.jpg", styles: "p-16 xl:p-24 xl:pl-60 xl:pr-0" },
     ] as PhotoMetadata[],
   },
   momentsofstillness: {

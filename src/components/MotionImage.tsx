@@ -24,7 +24,7 @@ const MotionImage = ({ galleryName, photo }: Props) => {
   }, [isMobile, galleryName]);
 
   return (
-    <div 
+    <div
       ref={ref}
       className="relative overflow-hidden w-full h-full"
       style={{ aspectRatio: photo.aspectRatio }}
@@ -33,20 +33,20 @@ const MotionImage = ({ galleryName, photo }: Props) => {
         key={`${pathname}-${galleryName}-${photo.path}`}
         initial={{ scale: 1.2, opacity: isFirstImage ? 1 : 0.5 }}
         animate={isInView ? { scale: 1, opacity: 1 } : { scale: 1.2, opacity: 0.5 }}
-        transition={{ duration: 0.8, delay: isFirstImage ? 0.5 : 0.2 }}
+        transition={{ duration: 0.8, delay: isFirstImage ? 1.7 : 0.2 }}
         className="w-full h-full group relative"
       >
-        <Image
-          src={`${DOMAIN}/galleries/${galleryName}/${photo.path}`}
-          alt={`Picture from ${galleryName} gallery`}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="object-cover object-center transition-transform ease-in-out group-hover:scale-105"
-          draggable="false"
-          loader={imageLoader}
-          priority={isFirstImage}
-          quality={85}
-        />
+          <Image
+            src={`${DOMAIN}/galleries/${galleryName}/${photo.path}`}
+            alt={`Picture from ${galleryName} gallery`}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-in-out"
+            draggable="false"
+            loader={imageLoader}
+            priority={isFirstImage}
+            quality={85}
+          />
       </motion.div>
     </div>
   );
