@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ApertureLogo from "./ApertureLogo";
 
@@ -9,132 +9,86 @@ interface PreloaderProps {
 }
 
 const Preloader = ({ onComplete }: PreloaderProps) => {
-  const [isLoading, setIsLoading] = useState(true);
+  const REQUIRED_IMAGES = 2;
+  const MIN_LOADING_TIME = 1000; // 2 seconds minimum
 
   useEffect(() => {
-    // Disable scrolling while preloader is active
     document.body.style.overflow = 'hidden';
-    let loadedImages = 0;
-    const REQUIRED_IMAGES = 2; // Wait for first 2 images on home page
-    const timeoutId = setTimeout(() => {
-      setIsLoading(false);
-      document.body.style.overflow = ''; // Re-enable scrolling
-      setTimeout(() => onComplete(), 500); // Smooth transition
-    }, 5000); // 5 second maximum timeout
+    
+    let loadCount = 0;
+    let imagesLoaded = false;
+    let minTimeElapsed = false;
+
+    const checkIfComplete = () => {
+      if (imagesLoaded && minTimeElapsed) {
+        document.body.style.overflow = '';
+        onComplete();
+      }
+    };
 
     const handleImageLoad = () => {
-      loadedImages++;
-      if (loadedImages >= REQUIRED_IMAGES) {
-        // Wait a bit more for smooth transition
-        setTimeout(() => {
-          setIsLoading(false);
-          document.body.style.overflow = ''; // Re-enable scrolling
-          setTimeout(() => onComplete(), 500);
-        }, 500);
-      }
-    };
-
-    const handleImageError = () => {
-      loadedImages++; // Count errors as loaded too
-      if (loadedImages >= REQUIRED_IMAGES) {
-        setTimeout(() => {
-          setIsLoading(false);
-          document.body.style.overflow = ''; // Re-enable scrolling
-          setTimeout(() => onComplete(), 500);
-        }, 500);
-      }
-    };
-
-    // Wait for DOM to be ready, then start tracking images
-    const checkImages = () => {
-      const images = document.querySelectorAll('img');
+      loadCount++;
       
-      if (images.length === 0) {
-        // No images found, hide preloader
-        setIsLoading(false);
-        document.body.style.overflow = ''; // Re-enable scrolling
-        setTimeout(() => onComplete(), 500);
+      if (loadCount >= REQUIRED_IMAGES) {
+        imagesLoaded = true;
+        checkIfComplete();
+      }
+    };
+
+    // Minimum loading time
+    const minTimer = setTimeout(() => {
+      minTimeElapsed = true;
+      checkIfComplete();
+    }, MIN_LOADING_TIME);
+
+    // Wait for DOM to be ready
+    const domTimer = setTimeout(() => {
+      const images = document.querySelectorAll('img');
+      const imagesToTrack = Array.from(images).slice(0, REQUIRED_IMAGES);
+      
+      if (imagesToTrack.length === 0) {
+        // No images, still wait for minimum time
         return;
       }
 
-      // Track the first 2 images
-      const imagesToTrack = Array.from(images).slice(0, REQUIRED_IMAGES);
-      
       imagesToTrack.forEach(img => {
         if (img.complete) {
           handleImageLoad();
         } else {
           img.addEventListener('load', handleImageLoad);
-          img.addEventListener('error', handleImageError);
+          img.addEventListener('error', handleImageLoad);
         }
       });
-
-      // If all required images are already loaded
-      if (loadedImages >= REQUIRED_IMAGES) {
-        setTimeout(() => {
-          setIsLoading(false);
-          document.body.style.overflow = ''; // Re-enable scrolling
-          setTimeout(() => onComplete(), 500);
-        }, 500);
-      }
-    };
-
-    // Small delay to ensure DOM is ready
-    const domTimer = setTimeout(checkImages, 100);
+    }, 100);
 
     return () => {
-      clearTimeout(timeoutId);
       clearTimeout(domTimer);
-      
-      // Re-enable scrolling when preloader is done
+      clearTimeout(minTimer);
       document.body.style.overflow = '';
-      
-      // Clean up event listeners
-      const images = document.querySelectorAll('img');
-      const imagesToTrack = Array.from(images).slice(0, REQUIRED_IMAGES);
-      imagesToTrack.forEach(img => {
-        img.removeEventListener('load', handleImageLoad);
-        img.removeEventListener('error', handleImageError);
-      });
     };
   }, [onComplete]);
 
   return (
     <AnimatePresence>
-      {isLoading && (
-        <motion.div
-          initial={{ opacity: 1 }}
-          animate={{ opacity: 1 }}
-          exit={{
-            opacity: 0,
-            transition: { 
-              duration: 0.5,
-              ease: "easeInOut" 
-            }
-          }}
-          className="fixed inset-0 z-40 flex items-center justify-center bg-[var(--background)]"
-        >
-          <motion.div
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 1 }}
-            exit={{ 
-              opacity: 0,
-              transition: { 
-                duration: 0.4, 
-                ease: "easeInOut" 
-              }
-            }}
-            className="text-l sm:text-xl md:text-2xl flex items-center gap-1" 
-            data-cursor="text"
-          >
-            N
-            <div className="animate-spin">
+      <motion.div
+        initial={{ opacity: 1 }}
+        exit={{
+          opacity: 0,
+          transition: { 
+            duration: 0.5,
+            ease: "easeOut" 
+          }
+        }}
+        className="fixed inset-0 z-40 flex items-center justify-center bg-[var(--background)]"
+      >
+        <div className="text-l sm:text-xl md:text-2xl flex items-center gap-1" data-cursor="text">
+          N
+          <div className="animate-spin">
             <ApertureLogo color="#cbcbcf" />
-            </div>
-            thing Beats Film Photography
-          </motion.div>
-        </motion.div>
-      )}
+          </div>
+          thing Beats Film Photography
+        </div>
+      </motion.div>
     </AnimatePresence>
   );
 }

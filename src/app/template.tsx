@@ -25,7 +25,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
       }}
       animate={{ y: 0, x: 0, opacity: 1 }}
       exit={{ y: 20, opacity: 0 }}
-      transition={{ ease: 'easeIn', duration: 0.8 }}
+      transition={{ ease: 'easeIn', duration: 0.8, delay: isDesktop && isGalleryPage ? 0.2 : 0 }}
     >
       {children}
     </motion.div>

@@ -53,9 +53,15 @@ section {
   padding-bottom: 100px;
 }
 
+
 .custom-text {
   font-size: 8.1vw;
   letter-spacing: -3px;
+  width: 100%;
+  text-align: justify;
+  text-justify: inter-character;
+  word-spacing: 0;
+  white-space: nowrap;
 }
 
 .custom-transition {

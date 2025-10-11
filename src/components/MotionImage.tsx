@@ -31,9 +31,9 @@ const MotionImage = ({ galleryName, photo }: Props) => {
     >
       <motion.div
         key={`${pathname}-${galleryName}-${photo.path}`}
-        initial={{ scale: 1.2, opacity: isFirstImage ? 1 : 0.5 }}
+        initial={{ scale: 1.2, opacity: 0.5 }}
         animate={isInView ? { scale: 1, opacity: 1 } : { scale: 1.2, opacity: 0.5 }}
-        transition={{ duration: 0.8, delay: isFirstImage ? 1.7 : 0.2 }}
+        transition={{ duration: 0.8, delay: isFirstImage ? 0.8 : 0.2 }}
         className="w-full h-full group relative"
       >
           <Image

@@ -3,8 +3,8 @@ import { Gallery } from "@/data";
 import imageLoader from "@/utils/image-loader";
 import { motion, useInView } from "framer-motion";
 import Image from "next/image";
-import Link from "next/link";
 import { useRef } from "react";
+import { TransitionLink } from "./TransitionLink";
 
 interface NextGallery {
   nextGallery: Gallery;
@@ -22,7 +22,7 @@ const NextGallery = ({ nextGallery, isDesktop = false }: NextGallery) => {
 
   return (
     <div className="w-full mt-[200px] xl:mt-0 xl:ml-[400px] xl:flex xl:justify-end">
-      <Link href={`/galleries/${nextGallery.id}`} className="cursor-none block xl:w-[25vw]" data-cursor="view">
+      <TransitionLink href={`/galleries/${nextGallery.id}`} dataCursor="view" className="cursor-none block xl:w-[25vw]" >
         <div className="relative w-full h-[300px] xl:h-screen overflow-hidden">
           <motion.div
             ref={ref}
@@ -48,7 +48,7 @@ const NextGallery = ({ nextGallery, isDesktop = false }: NextGallery) => {
             <span className="text-white text-3xl uppercase">{nextGallery.name}</span>
           </div>
         </div>
-      </Link>
+      </TransitionLink>
     </div>
   )
 }
