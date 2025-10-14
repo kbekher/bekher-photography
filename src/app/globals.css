@@ -43,7 +43,8 @@ body {
   overflow-x: hidden;
   min-height: -webkit-fill-available;
   padding-top: env(safe-area-inset-top);
-  min-height: 100vh; 
+  min-height: 100vh;
+  user-select: none;
 }
 
 section {
@@ -67,6 +68,7 @@ section {
 .custom-transition {
   transition: all 300ms ease-in-out;
 }
+
 
 /* Add to your globals.css */
 .image-loading {

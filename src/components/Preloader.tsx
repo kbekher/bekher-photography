@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import ApertureLogo from "./ApertureLogo";
 
 interface PreloaderProps {
@@ -10,7 +10,7 @@ interface PreloaderProps {
 
 const Preloader = ({ onComplete }: PreloaderProps) => {
   const REQUIRED_IMAGES = 2;
-  const MIN_LOADING_TIME = 1000; // 2 seconds minimum
+  const MIN_LOADING_TIME = 2000; // 2 seconds minimum
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -22,6 +22,7 @@ const Preloader = ({ onComplete }: PreloaderProps) => {
     const checkIfComplete = () => {
       if (imagesLoaded && minTimeElapsed) {
         document.body.style.overflow = '';
+        window.scrollTo(0, 0);
         onComplete();
       }
     };
@@ -69,27 +70,36 @@ const Preloader = ({ onComplete }: PreloaderProps) => {
   }, [onComplete]);
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 1 }}
+    <motion.div
+      initial={{ opacity: 1 }}
+      exit={{
+        opacity: 0,
+        transition: { 
+          duration: 0.5,
+          delay: 0.3,
+          ease: "easeOut" 
+        }
+      }}
+      className="fixed inset-0 z-40 flex items-center justify-center bg-[var(--background)]"
+    >
+      <motion.div 
+        className="text-l sm:text-xl md:text-2xl flex items-center gap-1" 
+        data-cursor="text"
         exit={{
           opacity: 0,
-          transition: { 
-            duration: 0.5,
-            ease: "easeOut" 
+          transition: {
+            duration: 0.3,
+            ease: "easeOut"
           }
         }}
-        className="fixed inset-0 z-40 flex items-center justify-center bg-[var(--background)]"
       >
-        <div className="text-l sm:text-xl md:text-2xl flex items-center gap-1" data-cursor="text">
-          N
-          <div className="animate-spin">
-            <ApertureLogo color="#cbcbcf" />
-          </div>
-          thing Beats Film Photography
+        N
+        <div className="animate-spin">
+          <ApertureLogo color="#cbcbcf" />
         </div>
+        thing Beats Film Photography
       </motion.div>
-    </AnimatePresence>
+    </motion.div>
   );
 }
 

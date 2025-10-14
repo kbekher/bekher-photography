@@ -46,20 +46,20 @@ const CustomCursor = () => {
       y: mousePosition.y - 24,
     },
     view: {
-      height: 72,
-      width: 72,
-      x: mousePosition.x - 46,
-      y: mousePosition.y - 44,
+      height: 42,
+      width: 88,
+      x: mousePosition.x - 44,
+      y: mousePosition.y - 28,
     },
   };
 
   return (
     <motion.div
-      className={`w-[24px] h-[24px] fixed top-0 left-0 z-[101] pointer-events-none mix-blend-difference flex items-center justify-center rounded-full ${cursorVariant === 'view' ? 'border-2 border-white' : 'bg-white'}`}
+      className={`w-[24px] h-[24px] fixed top-0 left-0 z-[110] pointer-events-none mix-blend-difference flex items-center justify-center rounded-full bg-white`}
       variants={variants}
       animate={cursorVariant}
     >
-      {cursorVariant === 'view' && <div className="h-max text-md uppercase font-bold text-white">view</div>}
+      {cursorVariant === 'view' && <div className="h-max text-lg uppercase font-bold text-black">view</div>}
     </motion.div>
   );
 };

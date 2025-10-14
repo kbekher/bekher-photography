@@ -12,12 +12,15 @@ const overlayVariants = {
     opacity: 1,
     transition: {
       duration: 0.3,
+      ease: "easeOut",
     },
   },
   closed: {
     opacity: 0,
     transition: {
       duration: 0.3,
+      ease: "easeOut",
+      delay: 0.2,
     },
   },
 };
@@ -53,14 +56,16 @@ const itemVariants = {
     y: 0,
     opacity: 1,
     transition: {
-      y: { stiffness: 1000, velocity: -100 }
+      y: { duration: 0.5, ease: [0.33, 1, 0.68, 1] },
+      opacity: { duration: 0.3 }
     }
   },
   closed: {
-    y: -50,
+    y: 80,
     opacity: 0,
     transition: {
-      y: { stiffness: 1000 }
+      y: { duration: 0.4, ease: [0.32, 0, 0.67, 0] },
+      opacity: { duration: 0.2 }
     }
   }
 };
@@ -134,15 +139,19 @@ const Navigation = () => {
                   className='flex flex-col gap-2 text-5xl sm:text-6xl leading-none tracking-tighter'
                 >
                   {navLinks.map(({ name, href }) => (
-                    <motion.li
+                    <li
                       key={name}
-                      variants={itemVariants}
-                      whileTap={{ scale: 0.95 }}
-                      className="flex items-center w-max list-none uppercase cursor-pointer"
-                      data-cursor="text"
+                      className="overflow-hidden list-none"
                     >
-                      <TransitionLink href={href}>{name}</TransitionLink>
-                    </motion.li>
+                      <motion.div
+                        variants={itemVariants}
+                        whileTap={{ scale: 0.95 }}
+                        className="flex items-center w-max uppercase cursor-pointer"
+                        data-cursor="text"
+                      >
+                        <TransitionLink href={href}>{name}</TransitionLink>
+                      </motion.div>
+                    </li>
                   ))}
                 </motion.ul>
 

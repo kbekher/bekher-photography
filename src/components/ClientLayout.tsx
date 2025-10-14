@@ -1,34 +1,41 @@
 'use client';
 
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { Montserrat } from "next/font/google";
+import { AnimatePresence } from "framer-motion";
+import { usePathname } from "next/navigation";
 import Header from "@/components/Header";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import Preloader from "@/components/Preloader";
 import { MenuProvider } from "@/contexts/MenuContext";
-import { PageTransitionProvider } from "@/contexts/PageTransitionContext";
-
-import { PageTransition } from "@/components/PageTransition";
-// import PreloaderWrapper from "@/components/PreloaderWrapper";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
+  const [showPreloader, setShowPreloader] = useState(true);
+  const pathname = usePathname();
+
+  const handlePreloaderComplete = useCallback(() => {
+    setShowPreloader(false);
+  }, []);
+
   return (
     <main className={montserrat.className}>
       <div className="antialiased scroll-smooth bg-[var(--background)] text-[var(--secondary)] font-bold tracking-[0.5px]">
         <div className="relative min-h-screen">
-          <PageTransitionProvider>
-            <MenuProvider>
-              {/* // TODO: fix preloader!!  */}
-              {/* <PreloaderWrapper /> */}
-              <Header />
-              <Navigation />
-              <PageTransition />
-              {children}
-              <Footer />
-            </MenuProvider>
-          </PageTransitionProvider>
+          <MenuProvider>
+            <AnimatePresence mode="wait">
+              {showPreloader && pathname === '/' && (
+                <Preloader onComplete={handlePreloaderComplete} />
+              )}
+            </AnimatePresence>
+            
+            <Header />
+            <Navigation />
+            {children}
+            <Footer />
+          </MenuProvider>
         </div>
       </div>
     </main>
