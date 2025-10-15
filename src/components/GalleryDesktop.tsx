@@ -65,7 +65,7 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
 
               {/* Intro div */}
               <div className="w-full min-h-screen flex flex-col pt-16 px-5" style={{ width: "75vw" }} >
-                <h1 className="text-4xl md:text-6xl uppercase text-white mb-4" data-cursor="text">{activeGallery.name}</h1>
+                <h1 className="text-4xl w-max md:text-6xl uppercase text-white mb-4" data-cursor="text">{activeGallery.name}</h1>
                 <p aria-hidden="true" className="hidden">{activeGallery.description}</p>
               </div>
 
