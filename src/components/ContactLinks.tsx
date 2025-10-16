@@ -4,7 +4,8 @@ interface Props {
 
 const CONTACTS = [
   { name: 'GitHub', href: 'https://github.com/kbekher' },
-  { name: 'LinkedIn', href: 'https://www.linkedin.com/in/kristina-bekher' },
+  { name: 'Behance', href: 'https://www.behance.net/kristinabekher' },
+  // { name: 'LinkedIn', href: 'https://www.linkedin.com/in/kristina-bekher' },
   { name: 'Instagram', href: 'https://instagram.com/ninjagexly' },
 ];
 
@@ -18,7 +19,7 @@ const ContactLinks = ({ isFooter = false }: Props) => {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className='w-max custom-transition hover:text-[var(--accent)]'
+          className='w-max custom-transition'
           aria-label={`Visit ${name}`}
           data-cursor="text"
         >

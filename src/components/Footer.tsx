@@ -33,7 +33,7 @@ const Footer = () => {
               <Link
                 key={name}
                 href={href}
-                className='w-max custom-transition hover:text-[var(--accent)]'
+                className='w-max custom-transition'
                 data-cursor="text"
               >{name}</Link>
             ))}
@@ -49,7 +49,7 @@ const Footer = () => {
           transition={{ duration: 0.3 }}
           viewport={{ amount: 0.3 }}
         >
-          <p className="uppercase bold leading-[100%] custom-text">RUN. SHOOT. DEVELOP.</p>
+          <p className="uppercase bold leading-[100%] custom-text" data-cursor="text">RUN. SHOOT. DEVELOP.</p>
         </motion.div>
       </div>
     </footer>

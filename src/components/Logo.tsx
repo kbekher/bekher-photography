@@ -1,7 +1,8 @@
-import Link from 'next/link';
+// import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion'
 import ApertureLogo from './ApertureLogo';
+import { TransitionLink } from './TransitionLink';
 
 interface LogoProps {
   isLink: boolean;
@@ -34,18 +35,18 @@ const Logo = ({ isLink }: LogoProps) => {
   const text = pathname !== "/" ? "Home" : "Kristina Bekher";
 
   return isLink ? (
-    <Link
+    <TransitionLink
       href="/"
-      aria-label="Go to homepage"
-      className="flex gap-2 items-center text-white lg:text-xl custom-transition hover:text-[var(--accent)]"
-      data-cursor="text"
+      ariaLabel="Go to homepage"
+      className="flex gap-2 items-center text-white lg:text-xl custom-transition"
+      dataCursor="text"
     >
       <LogoElement color="#cbcbcf" />
       <span className=''>{text}</span>
-    </Link>
+    </TransitionLink>
   ) : (
-    <div 
-      className="flex gap-2 items-center select-none lg:text-xl"
+    <div
+      className="flex gap-2 items-center lg:text-xl hover:cursor-text"
       data-cursor="text"
     >
       <LogoElement color="#444251" />

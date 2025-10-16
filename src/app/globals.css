@@ -24,7 +24,7 @@
   width: 1px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--background);
 }
 ::-webkit-scrollbar-thumb {
   background: var(--secondary);
@@ -34,20 +34,17 @@
   background: var(--secondary);
 }
 
-html,
-body {
+html {
   background-color: var(--background);
 }
 
-* {
-  cursor: none;
-}
-
 body {
+  background-color: var(--background);
+  overflow-x: hidden;
   min-height: -webkit-fill-available;
   padding-top: env(safe-area-inset-top);
-  overflow: hidden; 
-  min-height: 100vh; 
+  min-height: 100vh;
+  user-select: none;
 }
 
 section {
@@ -57,14 +54,21 @@ section {
   padding-bottom: 100px;
 }
 
+
 .custom-text {
   font-size: 8.1vw;
   letter-spacing: -3px;
+  width: 100%;
+  text-align: justify;
+  text-justify: inter-character;
+  word-spacing: 0;
+  white-space: nowrap;
 }
 
 .custom-transition {
   transition: all 300ms ease-in-out;
 }
+
 
 /* Add to your globals.css */
 .image-loading {

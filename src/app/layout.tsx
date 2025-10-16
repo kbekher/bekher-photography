@@ -5,11 +5,11 @@ import { Montserrat } from "next/font/google";
 import CustomCursor from "@/components/CustomCursor";
 
 export const metadata: Metadata = {
-  title: "Kristina Bekher | Film Photo Gallery",
-  description: "Explore the film photography of Kristina Bekher — a Ukrainian photographer and developer based in Germany showcasing her collection of timeless analog moments.",
+  title: "Kristina Bekher",
+  description: "Film Photo Gallery of Kristina Bekher — a Ukrainian photographer and developer based in Germany.",
   openGraph: {
-    title: "Kristina Bekher | Film Photography",
-    description: "Explore the film photography of Kristina Bekher — a Ukrainian photographer and developer based in Germany showcasing her collection of timeless analog moments.",
+    title: "Kristina Bekher",
+    description: "Film Photo Gallery of Kristina Bekher — a Ukrainian photographer and developer based in Germany.",
     images: [
       {
         url: "https://d14lj85n4pdzvr.cloudfront.net/hero-1200.jpg",
@@ -21,8 +21,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Kristina Bekher | Film Photography",
-    description: "Explore the film photography of Kristina Bekher — a Ukrainian photographer and developer based in Germany showcasing her collection of timeless analog moments.",
+    title: "Kristina Bekher",
+    description: "Film Photo Gallery of Kristina Bekher — a Ukrainian photographer and developer based in Germany.",
     images: ["https://d14lj85n4pdzvr.cloudfront.net/hero-256.jpg"],
   },
 };
@@ -40,7 +40,7 @@ export function Head() {
       <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       <link rel="shortcut icon" href="/favicon.ico" />
       <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-      <meta name="apple-mobile-web-app-title" content="Kristina Bekher | Film Photography Gallery" />
+      <meta name="apple-mobile-web-app-title" content="Kristina Bekher" />
       <meta name="apple-mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       <link rel="manifest" href="/site.webmanifest" />

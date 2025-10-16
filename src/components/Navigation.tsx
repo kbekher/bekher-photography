@@ -1,38 +1,52 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import ContactLinks from "./ContactLinks";
-import MenuToggle from "./MenuToggle";
 import { useMenu } from "@/contexts/MenuContext";
 import { navLinks } from "@/constants/constants";
-import { textVariants } from "@/constants/animations";
-import { useRouter } from "next/navigation";
 import Logo from "./Logo";
+import { TransitionLink } from "./TransitionLink";
 
-const containerVariants = {
+const overlayVariants = {
   open: {
-    y: 0,
     opacity: 1,
     transition: {
-      duration: 0.1,
-      staggerChildren: 0.07,
+      duration: 0.3,
+      ease: "easeOut",
     },
-
   },
   closed: {
-    y: -300,
     opacity: 0,
-    transition: { duration: 0.3 },
-  }
+    transition: {
+      duration: 0.3,
+      ease: "easeOut",
+      delay: 0.2,
+    },
+  },
+};
+
+const menuVariants = {
+  open: {
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: [0.76, 0, 0.24, 1],
+    },
+  },
+  closed: {
+    y: "-100%",
+    transition: {
+      duration: 0.5,
+      ease: [0.76, 0, 0.24, 1],
+    },
+  },
 };
 
 const listVariants = {
   open: {
-    height: "max-content",
     transition: { staggerChildren: 0.07, delayChildren: 0.3 },
   },
   closed: {
-    height: 0,
     transition: { staggerChildren: 0.05, staggerDirection: -1 },
   },
 };
@@ -42,14 +56,16 @@ const itemVariants = {
     y: 0,
     opacity: 1,
     transition: {
-      y: { stiffness: 1000, velocity: -100 }
+      y: { duration: 0.5, ease: [0.33, 1, 0.68, 1] },
+      opacity: { duration: 0.3 }
     }
   },
   closed: {
-    y: -50,
+    y: 80,
     opacity: 0,
     transition: {
-      y: { stiffness: 1000 }
+      y: { duration: 0.4, ease: [0.32, 0, 0.67, 0] },
+      opacity: { duration: 0.2 }
     }
   }
 };
@@ -65,74 +81,89 @@ const contactVariants = {
   },
 };
 
-
 const Navigation = () => {
   const { toggle, isOpen } = useMenu();
-  const router = useRouter();
 
   return (
-    <>
+    <AnimatePresence>
       {isOpen && (
-        <div
-          id="menu-backdrop"
-          onClick={() => { toggle(); }}
-          className="fixed inset-0 z-20"
-        />
-      )}
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial="closed"
+            animate="open"
+            exit="closed"
+            variants={overlayVariants}
+            onClick={toggle}
+            className="fixed inset-0 z-[99] bg-black/50 backdrop-blur-sm"
+          />
 
-      <motion.div
-        variants={containerVariants}
-        initial={false}
-        animate={isOpen ? "open" : "closed"}
-        className="fixed z-20 top-0 left-0 right-0 p-5 w-full h-max flex justify-between gap-5 bg-[var(--secondary)] text-[var(--branding)]"
-      >
-        {/* Logo */}
-        <motion.div className="hidden md:block w-[50%]" variants={textVariants}>
-            <Logo isLink={false} />
-        </motion.div>
-
-        {/* Nav */}
-        <div className="flex flex-col gap-[80px] justify-between w-full md:w-[50%]">
-          <motion.ul
-            variants={listVariants}
-            className='flex flex-col gap-0 text-6xl leading-none tracking-tighter'
+          {/* Menu Panel */}
+          <motion.div
+            initial="closed"
+            animate="open"
+            exit="closed"
+            variants={menuVariants}
+            className="fixed top-0 left-0 right-0 w-full h-max z-[100] bg-[var(--secondary)] text-[var(--branding)]"
           >
-            {navLinks.map(({ name, href }) => (
-              <motion.li
-                key={name}
-                variants={itemVariants}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center w-max list-none"
-                whileHover={{
-                  color: "#8d89a3",
-                  transition: { duration: 0.3 },
-                }}
+            {/* Menu Header */}
+            <div className="absolute top-0 left-0 right-0 p-5 flex justify-between items-center">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Logo isLink={false} />
+              </motion.div>
+
+              <motion.button
+                onClick={toggle}
+                className="bg-transparent border-none cursor-pointer capitalize text-[var(--branding)] lg:text-xl"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
                 data-cursor="text"
               >
-                <button
-                  className="uppercase cursor-pointer"
-                  onClick={() => {
-                    toggle();
-                    setTimeout(() => {
-                      router.push(href);
-                    }, 300); // wait for menu-closing animation
-                  }}
+                close
+              </motion.button>
+            </div>
+
+            {/* Menu Content */}
+            <div className="h-full flex items-center lg:justify-end p-5 pt-[100px] lg:pt-[68px]">
+              <div className="flex flex-col gap-[80px] justify-center w-full lg:max-w-[40%] pl-auto">
+                <motion.ul
+                  variants={listVariants}
+                  initial="closed"
+                  animate="open"
+                  exit="closed"
+                  className='flex flex-col gap-2 text-5xl sm:text-6xl leading-none tracking-tighter'
                 >
-                  {name}
-                </button>
-              </motion.li>
-            ))}
-          </motion.ul>
+                  {navLinks.map(({ name, href }) => (
+                    <li
+                      key={name}
+                      className="overflow-hidden list-none"
+                    >
+                      <motion.div
+                        variants={itemVariants}
+                        whileTap={{ scale: 0.95 }}
+                        className="flex items-center w-max uppercase cursor-pointer"
+                        data-cursor="text"
+                      >
+                        <TransitionLink href={href}>{name}</TransitionLink>
+                      </motion.div>
+                    </li>
+                  ))}
+                </motion.ul>
 
-          <motion.div variants={contactVariants}>
-            <ContactLinks />
+                <motion.div variants={contactVariants}>
+                  <ContactLinks />
+                </motion.div>
+              </div>
+            </div>
           </motion.div>
-        </div>
-
-        <MenuToggle text="close" />
-
-      </motion.div>
-    </>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
 

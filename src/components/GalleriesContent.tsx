@@ -50,7 +50,7 @@ const GalleriesContent = () => {
                         initial={{ opacity: 0, y: 40 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: index * 0.1 }}
-                        viewport={{ once: true }}
+                        viewport={{ once: true, margin: "0px 0px -10% 0px" }}
                       >
                         <div
                           className="w-full h-full absolute inset-0 group"
