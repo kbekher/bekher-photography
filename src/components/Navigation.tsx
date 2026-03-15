@@ -104,7 +104,7 @@ const Navigation = () => {
             animate="open"
             exit="closed"
             variants={menuVariants}
-            className="fixed top-0 left-0 right-0 w-full h-max z-[100] bg-[var(--secondary)] text-[var(--branding)]"
+            className="fixed top-0 left-0 right-0 w-full z-[100] bg-[var(--secondary)] text-[var(--branding)]"
           >
             {/* Menu Header */}
             <div className="absolute top-0 left-0 right-0 p-5 flex justify-between items-center">
