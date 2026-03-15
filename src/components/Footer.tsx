@@ -8,12 +8,12 @@ import { motion } from 'framer-motion';
 import { useMediaQuery } from 'react-responsive';
 
 const Footer = () => {
-  const [isMobile, setIsMobile] = useState(false);
-  const mediaQuery = useMediaQuery({ maxWidth: 767 });
+  const [isMounted, setIsMounted] = useState(false);
+  const isMobile = useMediaQuery({ maxWidth: 767 });
 
   useEffect(() => {
-    setIsMobile(mediaQuery);
-  }, [mediaQuery]);
+    setIsMounted(true);
+  }, []);
 
 
   return (
@@ -44,15 +44,24 @@ const Footer = () => {
           <ContactLinks isFooter={true} />
         </div>
 
-        <motion.div
-          className="col-span-full row-start-1 md:row-start-2 md:pt-4"
-          initial={{ opacity: 1, y: isMobile ? 0 : 50, x: isMobile ? -50 : 0 }}
-          whileInView={{ opacity: 1, y: 0, x: 0 }}
-          transition={{ duration: 0.3 }}
-          viewport={{ amount: 0.3 }}
-        >
-          <p className="uppercase bold leading-[100%] custom-text" data-cursor="text">RUN. SHOOT. DEVELOP.</p>
-        </motion.div>
+        <div className="col-span-full row-start-1 md:row-start-2 md:pt-4 overflow-hidden">
+          {isMounted && (
+            <motion.div
+              initial={isMobile ? { y: 0 } : { y: 100 }}
+              whileInView={{ y: 0 }}
+              transition={isMobile ? { duration: 0 } : {
+                duration: 0.3,
+                ease: [0.33, 1, 0.68, 1]
+              }}
+              viewport={{ once: true, amount: 0.1 }}
+            >
+              <p className="uppercase bold leading-[100%] custom-text" data-cursor="text">RUN. SHOOT. DEVELOP.</p>
+            </motion.div>
+          )}
+          {!isMounted && (
+            <p className="uppercase bold leading-[100%] custom-text" data-cursor="text">RUN. SHOOT. DEVELOP.</p>
+          )}
+        </div>
       </div>
     </footer>
   );
