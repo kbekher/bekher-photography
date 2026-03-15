@@ -11,7 +11,7 @@ const NextGallery = ({ nextGallery }: { nextGallery: Gallery }) => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full aspect-[4/3] md:aspect-square">
       <TransitionLink href={`/galleries/${nextGallery.id}`} className="cursor-none block w-full h-full group" dataCursor="view">
         <div className={`relative w-full h-full overflow-hidden transition-colors duration-500 ${!isLoaded ? 'image-placeholder' : ''}`}>
           <motion.div

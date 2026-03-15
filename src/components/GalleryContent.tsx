@@ -59,7 +59,7 @@ const GalleryContent = ({ galleryName }: { galleryName: string }) => {
         <h1 className="text-4xl md:text-8xl text-center max-w-max uppercase mb-8 mx-auto font-bold" data-cursor="text">
           {activeGallery.name}
         </h1>
-        <p className="md:ml-auto max-w-2xl text-sm md:text-xl text-[var(--secondary)] leading-relaxed" data-cursor="text">
+        <p className="md:ml-auto max-w-2xl text-sm md:text-xl text-[var(--secondary)] leading-tight" data-cursor="text">
           {activeGallery.description}
         </p>
       </div>
@@ -73,7 +73,7 @@ const GalleryContent = ({ galleryName }: { galleryName: string }) => {
               {/* Text side */}
               <div className={`${layout.text} flex flex-col gap-2 ${layout.textFirst ? 'order-2 md:order-1 md:items-end md:text-right' : 'order-2 md:items-start md:text-left'}`}>
                 {photo.description && (
-                  <p className="text-sm md:text-base text-white/80 leading-relaxed max-w-sm" data-cursor="text">
+                  <p className="text-sm md:text-base text-white/80 leading-tight max-w-sm" data-cursor="text">
                     &ldquo;{photo.description}&rdquo;
                   </p>
                 )}
@@ -99,7 +99,7 @@ const GalleryContent = ({ galleryName }: { galleryName: string }) => {
         <h3 className="text-3xl md:text-6xl uppercase mb-12 font-bold" data-cursor="text">
           More Galleries
         </h3>
-        <div className="grid md:grid-cols-2 gap-5 h-[400px] md:h-[600px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {nextGalleries.map((nextG) => (
             <NextGallery key={nextG.id} nextGallery={nextG} />
           ))}
