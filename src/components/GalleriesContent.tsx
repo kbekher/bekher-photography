@@ -4,11 +4,11 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { galleriesData } from '@/data';
+import { galleriesData, PhotoMetadata } from '@/data';
 import { getBestFitRow } from '@/utils/utils';
 import imageLoader from '@/utils/image-loader';
 
-const GalleryImage = ({ id, photo, isPriority }: { id: string; photo: any; isPriority: boolean }) => {
+const GalleryImage = ({ id, photo, isPriority }: { id: string; photo: PhotoMetadata; isPriority: boolean }) => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   return (
