@@ -2,10 +2,10 @@
 
 import { motion } from "framer-motion";
 import Logo from "./Logo";
-import { useMenu } from "@/contexts/MenuContext";
+import { useUI } from "@/contexts/MenuContext";
 
 const Header = () => {
-  const { toggle } = useMenu();
+  const { toggle } = useUI();
 
   return (
     <header className="fixed z-10 top-0 left-0 right-0 p-5 flex justify-between items-center mix-blend-difference">

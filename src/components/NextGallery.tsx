@@ -1,29 +1,19 @@
-import { DOMAIN } from "@/constants/constants";
 import { Gallery } from "@/data";
 import imageLoader from "@/utils/image-loader";
 import { motion, useInView } from "framer-motion";
 import Image from "next/image";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { TransitionLink } from "./TransitionLink";
 
-interface NextGallery {
-  nextGallery: Gallery;
-  isDesktop?: boolean;
-}
-
-const NextGallery = ({ nextGallery, isDesktop = false }: NextGallery) => {
+const NextGallery = ({ nextGallery }: { nextGallery: Gallery }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { margin: "0px 0px -100px 0px" });
-
-  // Determine object position classes
-  const objectPositionClass = isDesktop
-    ? isInView ? "object-center" : "object-left"
-    : isInView ? "object-center" : "object-top";
+  const isInView = useInView(ref, { margin: "0px 0px -100px 0px", once: true });
+  const [isLoaded, setIsLoaded] = useState(false);
 
   return (
-    <div className="w-full mt-[200px] xl:mt-0 xl:ml-[400px] xl:flex xl:justify-end">
-      <TransitionLink href={`/galleries/${nextGallery.id}`} dataCursor="view" className="cursor-none block xl:w-[25vw]" >
-        <div className="relative w-full h-[300px] xl:h-screen overflow-hidden">
+    <div className="w-full h-full">
+      <TransitionLink href={`/galleries/${nextGallery.id}`} className="cursor-none block w-full h-full group" dataCursor="view">
+        <div className={`relative w-full h-full overflow-hidden transition-colors duration-500 ${!isLoaded ? 'image-placeholder' : ''}`}>
           <motion.div
             ref={ref}
             initial={{ scale: 1.05, opacity: 0.7 }}
@@ -32,20 +22,19 @@ const NextGallery = ({ nextGallery, isDesktop = false }: NextGallery) => {
             className="w-full h-full"
           >
             <Image
-              src={`${DOMAIN}/galleries/${nextGallery.id}/${nextGallery.photos[0].path}`}
+              src={`/${nextGallery.id}/${nextGallery.photos[0].path}`}
               alt={`Preview of ${nextGallery.name}`}
-              width={300}
-              height={600}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 300px"
+              fill
+              sizes="(max-width: 768px) 100vw, 80vw"
               loader={imageLoader}
               loading="lazy"
-              className={`w-full h-full object-cover transition-[object-position] duration-[1200ms] ease-[cubic-bezier(0.4,0.0,0.2,1)] will-change-[object-position] ${objectPositionClass}`}
+              className={`w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:scale-105 ${isLoaded ? 'opacity-100 blur-0' : 'opacity-0 blur-1xl'}`}
+              onLoad={() => setIsLoaded(true)}
             />
           </motion.div>
 
-          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center">
-            <span className="text-white text-2xl mb-2 font-light">Next Collection</span>
-            <span className="text-white text-3xl uppercase">{nextGallery.name}</span>
+          <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-4 transition-colors group-hover:bg-black/20">
+            <span className="text-white text-2xl md:text-4xl uppercase font-bold tracking-tighter group-hover:scale-105 transition-transform">{nextGallery.name}</span>
           </div>
         </div>
       </TransitionLink>

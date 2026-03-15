@@ -73,7 +73,7 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
               {activeGallery.photos.map((photo, index) => (
                 <div key={photo.path}>
                   <motion.div
-                    className={`shrink-0 relative flex items-center justify-center h-screen ${photo.styles}`}
+                    className={`shrink-0 relative flex items-center justify-center h-screen`}
                     initial={index === 0 ? false : { opacity: 0, x: 100 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}
@@ -97,7 +97,7 @@ const GalleryDesktop = ({ activeGallery, nextGallery }: GalleryView) => {
 
               {/* Next Gallery Preview */}
               <div className="">
-                <NextGallery nextGallery={nextGallery} isDesktop={true} />
+                <NextGallery nextGallery={nextGallery} />
               </div>
 
             </motion.div>

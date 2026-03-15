@@ -3,23 +3,22 @@ interface Props {
 }
 
 const CONTACTS = [
-  { name: 'GitHub', href: 'https://github.com/kbekher' },
   { name: 'Behance', href: 'https://www.behance.net/kristinabekher' },
-  // { name: 'LinkedIn', href: 'https://www.linkedin.com/in/kristina-bekher' },
   { name: 'Instagram', href: 'https://instagram.com/ninjagexly' },
+  { name: 'Linkedin', href: 'https://www.linkedin.com/in/kristina-bekher' },
 ];
 
 const ContactLinks = ({ isFooter = false }: Props) => {
 
   return (
-    <div className={`flex ${isFooter ? "flex-col" : "flex-row gap-5"} w-[50%]`}>
+    <div className={`flex ${isFooter ? "flex-col" : "flex-row gap-5"} w-full`}>
       {CONTACTS.map(({ name, href }) => (
         <a
           key={name}
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className='w-max custom-transition'
+          className='w-max custom-transition hover:text-[var(--accent)]'
           aria-label={`Visit ${name}`}
           data-cursor="text"
         >
