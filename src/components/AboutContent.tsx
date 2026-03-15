@@ -53,13 +53,9 @@ const AboutContent = () => {
       {/* Intro & Portrait */}
       <div className="flex flex-col-reverse lg:flex-row gap-10 items-center mb-16 md:mb-[140px]">
         <div data-cursor="text" className="flex-1 text-sm md:text-2xl xl:text-3xl leading-tight space-y-4 lg:pt-5 lg:sticky lg:top-54 lg:self-start">
-          <p>Hi, I&apos;m Kristina Bekher, Ukrainian photographer and software engineer based in Germany.</p>
-          <p>
-            I always say my shots work about 10% of the time, and those are the frames I&apos;m proud to share here.
-          </p>
-          <p>
-            When I&apos;m not behind the camera, I work as a developer or prepare to another marathon.
-          </p>
+          <p>Hi, I&apos;m Kristina Bekher, a Ukrainian photographer and software engineer based in Germany.</p>
+          <p>I always say my shots work about 10% of the time, and those are the frames I&apos;m proud to share here.</p>
+          <p>When I&apos;m not behind the camera, I&apos;m building software or training for another marathon.</p>
         </div>
 
         <div className={`w-full h-full lg:max-w-[50vw] lg:translate-x-5 relative overflow-hidden transition-colors duration-500 ${!heroLoaded ? 'image-placeholder' : ''}`}>
