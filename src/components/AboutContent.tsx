@@ -55,10 +55,10 @@ const AboutContent = () => {
         <div data-cursor="text" className="flex-1 text-sm md:text-2xl xl:text-3xl leading-tight space-y-4 lg:pt-5 lg:sticky lg:top-54 lg:self-start">
           <p>Hi, I&apos;m Kristina Bekher, Ukrainian photographer and software engineer based in Germany.</p>
           <p>
-            I always say my shots work about 10% of the time, and those are the frames I&apos;m proud to share here. I&apos;m constantly learning and experimenting with different cameras and light.
+            I always say my shots work about 10% of the time, and those are the frames I&apos;m proud to share here.
           </p>
           <p>
-            When I&apos;m not behind the camera, I work as a developer, driving on-site experimentation at Douglas.
+            When I&apos;m not behind the camera, I work as a developer or prepare to another marathon.
           </p>
         </div>
 
