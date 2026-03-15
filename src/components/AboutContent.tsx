@@ -1,44 +1,47 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import Link from 'next/link';
 import { galleriesData, horizontal } from '@/data';
 import imageLoader from '@/utils/image-loader';
-import { DOMAIN } from '@/constants/constants';
 
 const gearItems = [
   ['2025', 'Canon AE-1'],
   ['2024', 'Pentax 17'],
   ['2022', 'Minolta SR-1s'],
   ['2021', 'ZENIT 11'],
+  ['2020', 'Polariod OneStep+'],
   ['2019', 'FED 5'],
 ]
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
     transition: {
-      delay: i * 0.2,
-      duration: 0.4,
-      ease: 'easeOut',
+      delay: i * 0.1,
+      duration: 0.5,
+      ease: [0.25, 0.1, 0.25, 1.0],
     },
   }),
 }
 
 const AboutContent = () => {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [heroLoaded, setHeroLoaded] = useState(false);
+  const [previewsLoaded, setPreviewsLoaded] = useState<Record<string, boolean>>({});
 
-  const previewPhotos = Object.values(galleriesData)
-    .slice(3, 7)
-    .map((gallery) => ({
-      id: gallery.id,
-      name: gallery.name,
-      photo: gallery.photos.find(photo => photo.aspectRatio === horizontal) || gallery.photos[0], // first photo
-    }));
+  const handlePreviewLoad = (path: string) => {
+    setPreviewsLoaded(prev => ({ ...prev, [path]: true }));
+  };
+
+  const allCollections = useMemo(() => Object.values(galleriesData).map((gallery) => ({
+    id: gallery.id,
+    name: gallery.name,
+    photo: gallery.photos.find(photo => photo.aspectRatio === horizontal) || gallery.photos[2],
+  })), []);
 
   return (
     <section className='relative pt-[120px] lg:pt-0'>
@@ -50,63 +53,75 @@ const AboutContent = () => {
       {/* Intro & Portrait */}
       <div className="flex flex-col-reverse lg:flex-row gap-10 items-center mb-16 md:mb-[140px]">
         <div data-cursor="text" className="flex-1 text-sm md:text-2xl xl:text-3xl leading-tight space-y-4 lg:pt-5 lg:sticky lg:top-54 lg:self-start">
-          <p>Hey, I&apos;m Kristina Bekher, and I love film photography.</p>
+          <p>Hi, I&apos;m Kristina Bekher, Ukrainian photographer and software engineer based in Germany.</p>
           <p>
-            Whether it&apos;s a certain light, a place or an ordinary object — if you see it in my frame, it means the moment was too special to resist shooting.
+            My subjects often include architecture, the quiet of nature, the lines of vintage cars, or just simple flowers... basically, whatever catches my eye.
           </p>
           <p>
-            When I&apos;m not behind the camera, I&apos;m working as a software developer, driving on-site experimentation at Douglas.
+            I always say my shots work about 10% of the time, and those are the frames I&apos;m proud to share here. I&apos;m constantly learning and experimenting with different cameras and light.
+          </p>
+          <p>
+            When I&apos;m not behind the camera, I work as a developer, driving on-site experimentation at Douglas.
           </p>
         </div>
 
-        <div className="w-full h-full lg:max-w-[50vw] lg:translate-x-5 relative overflow-hidden">
-          {!isLoaded && (
-            <div className="absolute min-h-[80vh] inset-0 aspect-[3/4]" />
-          )}
-          
+        <div className={`w-full h-full lg:max-w-[50vw] lg:translate-x-5 relative overflow-hidden transition-colors duration-500 ${!heroLoaded ? 'image-placeholder' : ''}`}>
           <Image
-            src={`${DOMAIN}/hero.jpg`}
+            src="/hero.jpg"
             alt="Kristina Bekher portrait"
             width={600}
             height={800}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className={`w-full h-auto object-cover transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
-            onLoad={() => setIsLoaded(true)}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 80vw"
+            className={`w-full h-auto object-cover transition-all duration-1000 ease-in-out ${heroLoaded ? 'opacity-100 blur-0' : 'opacity-0 blur-1xl'}`}
+            onLoad={() => setHeroLoaded(true)}
             loader={imageLoader}
             priority
           />
         </div>
       </div>
 
-      {/* Selected Galleries */}
-      <div className=' mb-16 md:mb-24'>
-        {/* <h2 className="text-3xl md:text-6xl mb-6">Selected Galleries</h2> */}
-        <div className="w-full h-px bg-[var(--secondary)] mb-6" />
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          {previewPhotos.map(({ id, name, photo }) => (
-            <Link
-              key={`${id}-${photo.path}`}
-              href={`/galleries/${id}`}
-              aria-label={`Go to ${name} gallery`}
-              className="group"
-              data-cursor="view"
-            >
-              <div className="relative aspect-[3/2] overflow-hidden">
-                <Image
-                  src={`https://d14lj85n4pdzvr.cloudfront.net/galleries/${id}/${photo.path}`}
-                  alt={`Preview of ${name}`}
-                  fill
-                  className="object-cover w-full h-full transition-transform duration-500 ease-in-out group-hover:scale-105"
-                  loader={imageLoader}
-                  sizes="(max-width: 500x) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  draggable={false}
-                />
-              </div>
-              <div className="mt-2 text-sm font-semibold select-none">{name}</div>
-            </Link>
-          ))}
+      {/* Collections Marquee Slider */}
+      <div className='mb-16 md:mb-24 overflow-hidden relative'>
+        <div className="w-full h-px bg-[var(--secondary)] mb-12" />
+
+        <div className="relative w-full">
+          <motion.div
+            className="flex gap-4 w-max"
+            animate={{ x: ["0%", "-50%"] }}
+            transition={{
+              duration: 60,
+              ease: "linear",
+              repeat: Infinity,
+            }}
+          >
+            {[...allCollections, ...allCollections].map(({ id, name, photo }, index) => (
+              <Link
+                key={`${id}-${index}`}
+                href={`/galleries/${id}`}
+                aria-label={`Go to ${name} gallery`}
+                className="group w-[300px] md:w-[450px] shrink-0"
+                data-cursor="view"
+              >
+                <div className={`relative aspect-[3/2] overflow-hidden transition-colors duration-500 ${!previewsLoaded[photo.path] ? 'image-placeholder' : ''}`}>
+                  <Image
+                    src={`/${id}/${photo.path}`}
+                    alt={`Preview of ${name}`}
+                    fill
+                    className={`object-cover w-full h-full transition-all duration-1000 ease-in-out group-hover:scale-105 ${previewsLoaded[photo.path] ? 'opacity-100 blur-0' : 'opacity-0 blur-1xl'}`}
+                    sizes="(max-width: 500px) 100vw, (max-width: 1200px) 50vw, 40vw"
+                    draggable={false}
+                    loader={imageLoader}
+                    quality={90}
+                    onLoad={() => handlePreviewLoad(photo.path)}
+                  />
+                </div>
+                <div className="mt-2 text-sm font-semibold select-none">{name}</div>
+              </Link>
+            ))}
+          </motion.div>
         </div>
-        <div className="w-full h-px bg-[var(--secondary)] mt-4" />
+
+        <div className="w-full h-px bg-[var(--secondary)] mt-12" />
 
         <p className='text-[12px] md:text-sm mt-4'>
           Note: All images were developed and scanned by <Link
@@ -129,12 +144,9 @@ const AboutContent = () => {
         </p>
       </div>
 
-
       {/* Gear Timeline */}
       <div className="md:mb-24">
         <div className="flex flex-col-reverse lg:grid lg:grid-cols-2 gap-10 text-sm md:text-xl">
-
-          {/* Animated, Sticky Timeline */}
           <div className="space-y-2 font-mono lg:sticky lg:top-14 lg:self-start lg:pt-12 pb-5">
             {gearItems.map(([year, model], index) => (
               <motion.div
@@ -150,21 +162,13 @@ const AboutContent = () => {
                   <span className="min-w-[6ch] shrink-0">{year}</span>
                   <span className="w-full">{model}</span>
                 </div>
-
-                {/* Underlines */}
-                <div
-                  className={`absolute -bottom-1 h-px bg-[var(--secondary)] ${
-                    index === 0 ? 'left-0 right-0' : 'left-[6ch] right-0'
-                    }`}
-                />
+                <div className={`absolute -bottom-1 h-px bg-[var(--secondary)] ${index === 0 ? 'left-0 right-0' : 'left-[6ch] right-0'}`} />
               </motion.div>
             ))}
           </div>
 
-          {/* Gear Story */}
           <div className="leading-relaxed space-y-4 pb-2">
             <h2 className="text-3xl md:text-6xl mb-6">Gear</h2>
-
             <p>
               My first film camera was an old rangefinder, the FED 5. I started with the hard artillery, so to speak, slowly switching to SLRs, which I found easier to use.
             </p>
@@ -175,13 +179,14 @@ const AboutContent = () => {
               When Pentax 17 finally came out, I soon found myself unboxing my first-ever brand-new film camera. Even though I prefer full manual control, Pentax still gives me plenty of room to experiment through its exposure steps and various modes. Switching from half-frame back to standard 35mm feels almost like stepping into medium format, which I haven&apos;t tried yet.
             </p>
             <p>
-              Canon AE-1 with a 50mm f/1.8 FD S.C. lens, is the most recent addition to my kit. Its shutter-priority auto exposure helps me worry less about missing a moment. My next goal is to try different (zoom) lenses for this camera, and see what comes out of it.
+              Canon AE-1 with a 50mm f/1.8 FD S.C. lens, is the most recent addition to my kit. Its shutter-priority auto exposure helps me worry less about missing moments.
             </p>
-
+            <p>
+              While SLRs have undeniably made my life easier, I&apos;ve realized that the rangefinder is where I truly belong. I&apos;ve never been one for the easy path, so I guess it&apos;s time to go back to where it all started.
+            </p>
           </div>
         </div>
       </div>
-
     </section>
   );
 };

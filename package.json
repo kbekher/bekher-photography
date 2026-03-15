@@ -9,12 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "framer-motion": "12.5.0",
-    "next": "15.2.8",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "react-responsive": "10.0.1",
-    "react-use-scroll-position": "2.0.0"
+    "framer-motion": "^12.5.0",
+    "next": "^16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-responsive": "^10.0.1",
+    "react-use-scroll-position": "^2.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3",

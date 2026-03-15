@@ -23,13 +23,16 @@
 ::-webkit-scrollbar {
   width: 1px;
 }
+
 ::-webkit-scrollbar-track {
   background: var(--background);
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--secondary);
   border-radius: 10px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--secondary);
 }
@@ -70,27 +73,33 @@ section {
 }
 
 
-/* Add to your globals.css */
-.image-loading {
+/* Image loading skeleton/placeholder */
+.image-placeholder {
+  background-color: #1a1a1a;
+  position: relative;
   overflow: hidden;
 }
 
-.image-loading::before {
+.image-placeholder::after {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: -1;;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  animation: loading 1.5s infinite;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.05),
+      transparent);
+  animation: shimmer 2s infinite;
 }
 
-@keyframes loading {
-  0% {
-    transform: translateX(-100%);
-  }
+@keyframes shimmer {
   100% {
     transform: translateX(100%);
   }
+}
+
+.blur-1xl {
+  filter: blur(40px);
 }
 
 

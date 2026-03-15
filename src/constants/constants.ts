@@ -1,4 +1,5 @@
-export const DOMAIN = "https://d14lj85n4pdzvr.cloudfront.net";
+export const DOMAIN = '';
+export const LAMBDA_IMG_BASE = 'https://tojp4f5baeta7girwrpqvogul40oddhk.lambda-url.eu-central-1.on.aws/img/film-gallery';
 
 export const navLinks = [
   { name: "Home", href: "/" },

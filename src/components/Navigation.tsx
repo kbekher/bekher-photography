@@ -1,13 +1,13 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import ContactLinks from "./ContactLinks";
-import { useMenu } from "@/contexts/MenuContext";
+import { useUI } from "@/contexts/MenuContext";
 import { navLinks } from "@/constants/constants";
 import Logo from "./Logo";
 import { TransitionLink } from "./TransitionLink";
 
-const overlayVariants = {
+const overlayVariants: Variants = {
   open: {
     opacity: 1,
     transition: {
@@ -25,7 +25,7 @@ const overlayVariants = {
   },
 };
 
-const menuVariants = {
+const menuVariants: Variants = {
   open: {
     y: 0,
     transition: {
@@ -42,7 +42,7 @@ const menuVariants = {
   },
 };
 
-const listVariants = {
+const listVariants: Variants = {
   open: {
     transition: { staggerChildren: 0.07, delayChildren: 0.3 },
   },
@@ -51,7 +51,7 @@ const listVariants = {
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   open: {
     y: 0,
     opacity: 1,
@@ -70,7 +70,7 @@ const itemVariants = {
   }
 };
 
-const contactVariants = {
+const contactVariants: Variants = {
   open: {
     opacity: 1,
     transition: { delay: 0.8, duration: 0.3 },
@@ -82,7 +82,7 @@ const contactVariants = {
 };
 
 const Navigation = () => {
-  const { toggle, isOpen } = useMenu();
+  const { toggle, isOpen } = useUI();
 
   return (
     <AnimatePresence>

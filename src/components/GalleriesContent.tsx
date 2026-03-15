@@ -1,12 +1,32 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { galleriesData } from '@/data';
+import { galleriesData, PhotoMetadata } from '@/data';
 import { getBestFitRow } from '@/utils/utils';
 import imageLoader from '@/utils/image-loader';
-import { DOMAIN } from '@/constants/constants';
+
+const GalleryImage = ({ id, photo, isPriority }: { id: string; photo: PhotoMetadata; isPriority: boolean }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  return (
+    <div className={`w-full h-full absolute inset-0 group transition-colors duration-500 ${!isLoaded && !isPriority ? 'image-placeholder' : ''}`}>
+      <Image
+        src={`/${id}/${photo.path}`}
+        alt={`Picture of photo`}
+        fill
+        draggable={false}
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
+        className={`w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:scale-105 ${isPriority ? 'opacity-100' : (isLoaded ? 'opacity-100 blur-0' : 'opacity-0 blur-1xl')}`}
+        loader={imageLoader}
+        priority={isPriority}
+        onLoad={() => setIsLoaded(true)}
+      />
+    </div>
+  );
+};
 
 const GalleriesContent = () => {
   return (
@@ -16,12 +36,18 @@ const GalleriesContent = () => {
       </h1>
 
       <ul className="flex flex-col gap-4 md:gap-10">
-        {Object.values(galleriesData).map((gallery) => {
+        {Object.values(galleriesData).map((gallery, galleryIndex) => {
           const { id, name, photos } = gallery;
           const bestFitPhotos = getBestFitRow(photos);
+          const isPriorityGallery = galleryIndex < 2;
 
           return (
-            <li key={id}>
+            <motion.li
+              key={id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: galleryIndex * 0.15 }}
+            >
               <Link
                 href={`/galleries/${id}`}
                 aria-label={`Go to ${name} gallery page`}
@@ -36,41 +62,29 @@ const GalleriesContent = () => {
 
                 {/* Gallery Row */}
                 <div className='grid grid-cols-8 md:grid-cols-12 gap-x-2 md:gap-x-5 overflow-hidden'>
-                  {bestFitPhotos.map(({ photo, index, colSpan }, imgIndex) => {
+                  {bestFitPhotos.map(({ photo, colSpan }, imgIndex) => {
                     // Default to col-span-2 on mobile (8 cols), conditionally override for desktop
                     const colSpanClass = colSpan === 3
                       ? 'col-span-2 md:col-span-3'
                       : 'col-span-2';
 
                     return (
-                      <motion.div
+                      <div
                         key={`${name}-${photo.path}`}
                         className={`overflow-hidden relative ${colSpanClass} ${imgIndex > 3 ? 'hidden md:block' : ''}`}
                         style={{ aspectRatio: photo.aspectRatio }}
-                        initial={{ opacity: 0, y: 40 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: index * 0.1 }}
-                        viewport={{ once: true, margin: "0px 0px -10% 0px" }}
                       >
-                        <div
-                          className="w-full h-full absolute inset-0 group"
-                        >
-                          <Image
-                            src={`${DOMAIN}/galleries/${id}/${photo.path}`}
-                            alt={`Picture of ${name}`}
-                            fill
-                            draggable={false}
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
-                            loader={imageLoader}
-                          />
-                        </div>
-                      </motion.div>
+                        <GalleryImage
+                          id={id}
+                          photo={photo}
+                          isPriority={isPriorityGallery}
+                        />
+                      </div>
                     )
                   })}
                 </div>
               </Link>
-            </li>
+            </motion.li>
           )
         })}
       </ul>

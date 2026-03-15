@@ -3,28 +3,28 @@ import { galleriesData } from "@/data";
 import { TransitionLink } from "./TransitionLink";
 
 const galleryLayout = [
-  { id: "europeanfeel", styles: "h-max col-start-2 col-span-3", photoIndex: 0 },
-  { id: "noiretblanc", styles: "h-max col-start-8 col-span-4 md:translate-y-[-80px]", photoIndex: 0 },
-  { id: "momentsofstillness", styles: "h-max row-start-2 col-start-4 col-span-6", photoIndex: 1 },
-  { id: "jazzyblues", styles: "h-max row-start-3 col-start-8 col-span-5", photoIndex: 4 },
-  { id: "grainofukraine", styles: "h-max row-start-3 col-start-1 col-span-5 md:pt-50", photoIndex: 3 },
-  { id: "alpineescape", styles: "h-max row-start-4 col-start-3 col-span-8", photoIndex: 6 },
-  { id: "facesandplaces", styles: "h-max row-start-5 col-start-2 col-span-3 md:pt-20", photoIndex: 3 },
-  { id: "pentax17", styles: "h-max row-start-5 col-start-8 col-span-4", photoIndex: 0 },
+  { id: "european-feel", styles: "h-max col-start-2 col-span-3", photoIndex: 0 },
+  { id: "noir-et-blanc", styles: "h-max col-start-8 col-span-4 md:translate-y-[-80px]", photoIndex: 0 },
+  { id: "moments-of-stillness", styles: "h-max row-start-2 col-start-4 col-span-6", photoIndex: 1 },
+  { id: "jazzy-blues", styles: "h-max row-start-3 col-start-8 col-span-5", photoIndex: 4 },
+  { id: "grain-of-ukraine", styles: "h-max row-start-3 col-start-1 col-span-5 md:pt-50", photoIndex: 3 },
+  { id: "alpine-escape", styles: "h-max row-start-4 col-start-3 col-span-8", photoIndex: 0 },
+  { id: "faces-and-places", styles: "h-max row-start-5 col-start-2 col-span-3 md:pt-20", photoIndex: 0 },
+  { id: "pentax-17", styles: "h-max row-start-5 col-start-8 col-span-4", photoIndex: 0 },
 ];
 
 const HomeContent = () => {
   return (
     <div className="w-auto min-h-full h-auto mx-5 md:mx-[60px] pb-[140px] pt-16">
       <div className="flex flex-col md:grid grid-cols-12 gap-x-5 gap-y-10">
-        {galleryLayout.map(({ id, styles, photoIndex }) => {
+        {galleryLayout.map(({ id, styles, photoIndex }, index) => {
           const gallery = galleriesData[id as keyof typeof galleriesData];
           if (!gallery) return null;
 
           return (
             <div key={id} className={styles}>
-              <TransitionLink href={`/galleries/${id}`} dataCursor="view">
-                <MotionImage galleryName={id} photo={gallery.photos[photoIndex]} />
+              <TransitionLink href={`/galleries/${id}`} dataCursor="view" className="flex flex-col">
+                <MotionImage galleryName={id} photo={gallery.photos[photoIndex]} priority={index < 2} />
                 <span className="pt-2">{gallery.name}</span>
               </TransitionLink>
             </div>

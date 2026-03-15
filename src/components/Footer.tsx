@@ -1,18 +1,20 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import Link from 'next/link';
 import ContactLinks from './ContactLinks';
 import { navLinks } from "@/constants/constants";
-import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useMediaQuery } from 'react-responsive';
 
 const Footer = () => {
-  const pathname = usePathname();
+  const [isMobile, setIsMobile] = useState(false);
+  const mediaQuery = useMediaQuery({ maxWidth: 767 });
 
-  const isMobile = useMediaQuery({ maxWidth: 767 });
+  useEffect(() => {
+    setIsMobile(mediaQuery);
+  }, [mediaQuery]);
 
-  if (pathname.startsWith('/galleries/')) return null;
 
   return (
     <footer
@@ -23,7 +25,7 @@ const Footer = () => {
 
         <div className="row-start-3 md:row-start-1 col-span-full md:col-span-2">
           <p className='text-sm md:text-2xl w-max' data-cursor="text">
-            ©2025 Kristina Bekher
+            ©2026 Kristina Bekher
           </p>
         </div>
 
@@ -45,7 +47,7 @@ const Footer = () => {
         <motion.div
           className="col-span-full row-start-1 md:row-start-2 md:pt-4"
           initial={{ opacity: 1, y: isMobile ? 0 : 50, x: isMobile ? -50 : 0 }}
-          whileInView={{ opacity: 1, y: 0, x: 0}}
+          whileInView={{ opacity: 1, y: 0, x: 0 }}
           transition={{ duration: 0.3 }}
           viewport={{ amount: 0.3 }}
         >

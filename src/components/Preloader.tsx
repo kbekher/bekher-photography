@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef } from "react";
 import ApertureLogo from "./ApertureLogo";
 
 interface PreloaderProps {
@@ -9,97 +8,64 @@ interface PreloaderProps {
 }
 
 const Preloader = ({ onComplete }: PreloaderProps) => {
-  const REQUIRED_IMAGES = 2;
-  const MIN_LOADING_TIME = 2000; // 2 seconds minimum
+  const hasFinished = useRef(false);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    
-    let loadCount = 0;
-    let imagesLoaded = false;
-    let minTimeElapsed = false;
 
-    const checkIfComplete = () => {
-      if (imagesLoaded && minTimeElapsed) {
+    // Min time the loader should be visible
+    const MIN_TIME = 2000;
+    const MAX_TIME = 5000;
+
+    const startTime = Date.now();
+
+    const finish = () => {
+      if (hasFinished.current) return;
+      hasFinished.current = true;
+
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, MIN_TIME - elapsed);
+
+      setTimeout(() => {
         document.body.style.overflow = '';
-        window.scrollTo(0, 0);
         onComplete();
+      }, remaining);
+    };
+
+    // We can try to wait for images, but for now let's use a solid timer approach 
+    // that feels right for the animation.
+    const timeoutId = setTimeout(finish, MAX_TIME);
+
+    // If we want to be smarter, we could check for first few images
+    const checkReady = () => {
+      const images = Array.from(document.images);
+      const loadedCount = images.filter(img => img.complete).length;
+      if (loadedCount >= 2) {
+        finish();
+      } else {
+        setTimeout(checkReady, 200);
       }
     };
 
-    const handleImageLoad = () => {
-      loadCount++;
-      
-      if (loadCount >= REQUIRED_IMAGES) {
-        imagesLoaded = true;
-        checkIfComplete();
-      }
-    };
-
-    // Minimum loading time
-    const minTimer = setTimeout(() => {
-      minTimeElapsed = true;
-      checkIfComplete();
-    }, MIN_LOADING_TIME);
-
-    // Wait for DOM to be ready
-    const domTimer = setTimeout(() => {
-      const images = document.querySelectorAll('img');
-      const imagesToTrack = Array.from(images).slice(0, REQUIRED_IMAGES);
-      
-      if (imagesToTrack.length === 0) {
-        // No images, still wait for minimum time
-        return;
-      }
-
-      imagesToTrack.forEach(img => {
-        if (img.complete) {
-          handleImageLoad();
-        } else {
-          img.addEventListener('load', handleImageLoad);
-          img.addEventListener('error', handleImageLoad);
-        }
-      });
-    }, 100);
+    const readyTimer = setTimeout(checkReady, 500);
 
     return () => {
-      clearTimeout(domTimer);
-      clearTimeout(minTimer);
+      clearTimeout(timeoutId);
+      clearTimeout(readyTimer);
       document.body.style.overflow = '';
     };
   }, [onComplete]);
 
   return (
-    <motion.div
-      initial={{ opacity: 1 }}
-      exit={{
-        opacity: 0,
-        transition: { 
-          duration: 0.5,
-          delay: 0.3,
-          ease: "easeOut" 
-        }
-      }}
-      className="fixed inset-0 z-40 flex items-center justify-center bg-[var(--background)]"
-    >
-      <motion.div 
-        className="text-l sm:text-xl md:text-2xl flex items-center gap-1" 
-        data-cursor="text"
-        exit={{
-          opacity: 0,
-          transition: {
-            duration: 0.3,
-            ease: "easeOut"
-          }
-        }}
-      >
+    <div className="fixed inset-0 z-50 flex h-screen w-full items-center justify-center bg-[var(--background)]">
+      <div className="text-l sm:text-xl md:text-2xl flex items-center gap-1" data-cursor="text">
         N
         <div className="animate-spin">
           <ApertureLogo color="#cbcbcf" />
         </div>
         thing Beats Film Photography
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
 

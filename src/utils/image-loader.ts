@@ -1,23 +1,20 @@
-import { DOMAIN } from '@/constants/constants';
-import { ImageLoader } from 'next/image';
+import { LAMBDA_IMG_BASE } from "@/constants/constants";
+import { ImageLoaderProps } from "next/image";
 
-const ALLOWED_WIDTHS = [256, 384, 640, 828, 1080, 1200];
+export default function imageLoader({ src, width, quality }: ImageLoaderProps) {
+  const q = quality ?? 75;
 
-const imageLoader: ImageLoader = ({ src, width }) => {
-  // Extract the path from the full URL
-  const url = new URL(src);
-  const path = url.pathname;
-
-  // Find the closest allowed width that is >= requested width
-  const suitableWidth = ALLOWED_WIDTHS.find(w => w >= width);
-
-  if (suitableWidth) {
-    const baseName = path.replace(/\.\w+$/, ''); // remove extension
-    return `${DOMAIN}${baseName}-${suitableWidth}.jpg`;
+  // Normalize src -> must become an S3 key path like /projects/seen-1.jpg
+  // If src is a full URL, extract its pathname.
+  let path;
+  if (src.startsWith("http")) {
+    const url = new URL(src);
+    path = url.pathname;
+  } else {
+    path = src.startsWith("/") ? src : `/${src}`;
   }
 
-  // If requested width is greater than all allowed sizes, return original (full-size) image
-  return `${DOMAIN}${path}`;
-};
-
-export default imageLoader;
+  // Build: <lambda>/img/<path>?w=...&q=...&f=...
+  // Your Lambda expects /img/<s3-key>, so we append the path directly after /img
+  return `${LAMBDA_IMG_BASE}${path}?w=${width}&q=${q}&f=webp`;
+}
