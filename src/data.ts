@@ -33,7 +33,7 @@ export const galleriesData: Record<string, Gallery> = {
   'alpine-escape': {
     id: 'alpine-escape',
     name: "Alpine Escape",
-    description: "Series of photos captured in 2024 during a trip with friends to Lauterbrunnen region, Switzerland. These images hold memories and impressions from an unforgettable 26 km hike up Mount Schilthorn (2,970 meters) and surroundings.",
+    description: "26 kilometers, 2,970 meters, and memories to last a lifetime. This collection documents a 2024 trip through the Lauterbrunnen Valley with friends, centered around the incredible hike up Mount Schilthorn.",
     photos: [
       { aspectRatio: horizontal, path: "wooden-houses-in-alps.jpg", place: "Lauterbrunnen, Switzerland", year: "2024", description: "" },
       { aspectRatio: vertical, path: "duck-on-fallen-tree-thun-lake.jpg", place: "Lake Thun, Switzerland", year: "2024", description: "Lonely duck." },
@@ -65,7 +65,7 @@ export const galleriesData: Record<string, Gallery> = {
     'mind-the-gap': {
     id: 'mind-the-gap',
     name: "Mind the Gap",
-    description: "A collection of photos from the trips to United Kingdom in 2025.",
+    description: "A collection of photographs from multiple journeys across the United Kingdom, exploring the architecture, landscapes, and daily life of the British Isles.",
     photos: [
       { aspectRatio: vertical, path: "china-town-london.jpg", place: "Chinatown, London", year: "2025", description: "" },
       { aspectRatio: vertical, path: "bath-market-uk.jpg", place: "Bath Guildhall Market", year: "2025", description: "Belts cut to size" },
@@ -108,7 +108,7 @@ export const galleriesData: Record<string, Gallery> = {
   'moments-of-stillness': {
     id: 'moments-of-stillness',
     name: "Moments of Stillness",
-    description: "If you look closely, you'll find images captured across the changing seasons. My personal favourite: three flowers hanging in jars, still blooming in winter's cold and glowing in the golden hour light. This collection is dedicated to the nature and quiet life around us.",
+    description: "Capturing the shifting seasons and moments in between. My personal favourite: three flowers hanging in jars, still blooming in winter's cold and glowing in the golden hour light. This collection is dedicated to the nature and quiet life around us.",
     photos: [
       { aspectRatio: vertical, path: "braun-leaves-lake-water-backdrop.jpg", place: "Möhnesee, Germany", year: "2025", description: "" },
       { aspectRatio: horizontal, path: "cat-on-the-beach-malaga.jpg", place: "Malaga, Spain", year: "2023", description: "A cat on the beach" },
@@ -125,7 +125,7 @@ export const galleriesData: Record<string, Gallery> = {
   'grain-of-ukraine': {
     id: 'grain-of-ukraine',
     name: "Grain of Ukraine",
-    description: "A collection from Ukraine, captured on film. Looking back, I realize I didn't shoot nearly as much as I should have when I lived there. These images, taken both before and during the full-scale invasion, include my life as a local and my many trips back home . After years abroad, returning to these well-known places gave me a completely different perspective...",
+    description: "Ukraine on film. Looking back, I realize I didn't shoot nearly as much as I should have when I lived there. These images, taken both before and during the full-scale invasion, include my life as a local and many trips back home. After years abroad, returning to these well-known places gave me a completely different perspective...",
     photos: [
       { aspectRatio: vertical, path: "podil-kyiv-sunrise.jpg", place: "Podil, Kyiv", year: "2025", description: "View on Kontraktova Square at sunrise" },
       { aspectRatio: horizontal, path: "kyiv-velotrek-mural.jpg", place: "Kyiv Cycle Track", year: "2020", description: "" },
