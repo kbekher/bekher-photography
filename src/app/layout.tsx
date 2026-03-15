@@ -3,10 +3,10 @@ import "./globals.css";
 import ClientLayout from "@/components/ClientLayout";
 
 export const metadata: Metadata = {
-  title: "Kristina Bekher | Ukrainian Photographer and Software Developer",
+  title: "Kristina Bekher",
   description: "Kristina Bekher is a Ukrainian photographer and software developer based in Germany. The website is a portfolio of her photography work.",
   openGraph: {
-    title: "Kristina Bekher | Ukrainian Photographer and Software Developer",
+    title: "Kristina Bekher",
     description: "Kristina Bekher is a Ukrainian photographer and software developer based in Germany. The website is a portfolio of her photography work.",
     images: [
       {
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Kristina Bekher | Ukrainian Photographer and Software Developer",
+    title: "Kristina Bekher",
     description: "Kristina Bekher is a Ukrainian photographer and software developer based in Germany. The website is a portfolio of her photography work.",
     images: ["https://d14lj85n4pdzvr.cloudfront.net/hero-256.jpg"],
   },
