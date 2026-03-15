@@ -55,9 +55,6 @@ const AboutContent = () => {
         <div data-cursor="text" className="flex-1 text-sm md:text-2xl xl:text-3xl leading-tight space-y-4 lg:pt-5 lg:sticky lg:top-54 lg:self-start">
           <p>Hi, I&apos;m Kristina Bekher, Ukrainian photographer and software engineer based in Germany.</p>
           <p>
-            My subjects often include architecture, the quiet of nature, the lines of vintage cars, or just simple flowers... basically, whatever catches my eye.
-          </p>
-          <p>
             I always say my shots work about 10% of the time, and those are the frames I&apos;m proud to share here. I&apos;m constantly learning and experimenting with different cameras and light.
           </p>
           <p>
