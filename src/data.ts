@@ -62,9 +62,9 @@ export const galleriesData: Record<string, Gallery> = {
       { aspectRatio: horizontal, path: "plain-sky-harman.jpg", place: "Above Birmingham, UK", year: "2025", description: "" },
     ],
   },
-    'mind-the-gap-son': {
-    id: 'mind-the-gap-son',
-    name: "Mind the Gap, Son",
+    'mind-the-gap': {
+    id: 'mind-the-gap',
+    name: "Mind the Gap",
     description: "A collection of photos from the trips to United Kingdom in 2025.",
     photos: [
       { aspectRatio: vertical, path: "china-town-london.jpg", place: "Chinatown, London", year: "2025", description: "" },
@@ -151,8 +151,8 @@ export const galleriesData: Record<string, Gallery> = {
       { aspectRatio: horizontal, path: "lady-smelling-roses.jpg", place: "Unna, Germany", year: "2024", description: "" },
       { aspectRatio: horizontal, path: "flowers-in-focus-jazzy-blues.jpg", place: "Unna, Germany", year: "2023", description: "In focus" },
       { aspectRatio: vertical, path: "flower-in-sunlight.jpg", place: "Dortmund, Germany", year: "2023", description: "" },
-      { aspectRatio: horizontal, path: "rolls-roys-car.jpg", place: "Unna, Germany", year: "2023", description: "" },
-      { aspectRatio: horizontal, path: "rolls-roys-car-mirror.jpg", place: "Unna, Germany", year: "2023", description: "" },
+      { aspectRatio: horizontal, path: "rolls-roys-car.jpg", place: "Düsseldorf, Germany", year: "2023", description: "" },
+      { aspectRatio: horizontal, path: "rolls-roys-car-mirror.jpg", place: "Düsseldorf, Germany", year: "2023", description: "" },
     ],
   },
   'pentax-17': {
