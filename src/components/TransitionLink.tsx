@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Link, { LinkProps } from "next/link";
 import React from "react";
 import { useMenu } from "@/contexts/MenuContext";
@@ -30,8 +31,13 @@ export const TransitionLink: React.FC<TransitionLinkProps> = ({
   };
 
   return (
-    <Link {...props} href={href} onClick={handleClick} className={className} data-cursor={dataCursor} aria-label={ariaLabel}>
-      {children}
+    <Link {...props} href={href} onClick={handleClick} data-cursor={dataCursor} aria-label={ariaLabel}>
+      <motion.div
+        whileTap={{ scale: 0.98 }}
+        className={className}
+      >
+        {children}
+      </motion.div>
     </Link>
   );
 };

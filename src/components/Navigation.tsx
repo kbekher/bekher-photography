@@ -38,6 +38,7 @@ const menuVariants: Variants = {
     transition: {
       duration: 0.5,
       ease: [0.76, 0, 0.24, 1],
+      delay: 0.1,
     },
   },
 };
@@ -47,7 +48,7 @@ const listVariants: Variants = {
     transition: { staggerChildren: 0.07, delayChildren: 0.3 },
   },
   closed: {
-    transition: { staggerChildren: 0.05, staggerDirection: -1 },
+    transition: { staggerChildren: 0 },
   },
 };
 
@@ -118,6 +119,7 @@ const Navigation = () => {
 
               <motion.button
                 onClick={toggle}
+                whileTap={{ scale: 0.95 }}
                 className="bg-transparent border-none cursor-pointer capitalize text-[var(--branding)] lg:text-xl"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

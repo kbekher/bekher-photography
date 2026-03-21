@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from 'next/link';
+import { TransitionLink } from "./TransitionLink";
 import ContactLinks from './ContactLinks';
 import { navLinks } from "@/constants/constants";
 import { motion } from 'framer-motion';
@@ -32,12 +32,12 @@ const Footer = () => {
         <div className='flex gap-4 md:gap-20 md:col-span-2 md:row-start-1'>
           <div className="flex flex-col w-[50%]">
             {navLinks.map(({ name, href }) => (
-              <Link
+              <TransitionLink
                 key={name}
                 href={href}
                 className='w-max custom-transition'
-                data-cursor="text"
-              >{name}</Link>
+                dataCursor="text"
+              >{name}</TransitionLink>
             ))}
           </div>
 

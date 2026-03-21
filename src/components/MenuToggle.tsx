@@ -13,6 +13,7 @@ const MenuToggle = ({ text }: Props) => {
     <div className={`fixed p-5 top-0 right-0`}>
       <motion.button
         onClick={toggle}
+        whileTap={{ scale: 0.95 }}
         className="bg-transparent border-none cursor-pointer capitalize text-white lg:text-xl"
       >
         <motion.span

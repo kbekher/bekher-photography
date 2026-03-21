@@ -6,6 +6,7 @@ import { motion, Variants } from 'framer-motion';
 import Link from 'next/link';
 import { galleriesData, horizontal } from '@/data';
 import imageLoader from '@/utils/image-loader';
+import { TransitionLink } from './TransitionLink';
 
 const gearItems = [
   ['2025', 'Canon AE-1'],
@@ -88,12 +89,12 @@ const AboutContent = () => {
             }}
           >
             {[...allCollections, ...allCollections].map(({ id, name, photo }, index) => (
-              <Link
+              <TransitionLink
                 key={`${id}-${index}`}
                 href={`/galleries/${id}`}
-                aria-label={`Go to ${name} gallery`}
+                ariaLabel={`Go to ${name} gallery`}
                 className="group w-[300px] md:w-[450px] shrink-0"
-                data-cursor="view"
+                dataCursor="view"
               >
                 <div className={`relative aspect-[3/2] overflow-hidden transition-colors duration-500 ${!previewsLoaded[photo.path] ? 'image-placeholder' : ''}`}>
                   <Image
@@ -109,7 +110,7 @@ const AboutContent = () => {
                   />
                 </div>
                 <div className="mt-2 text-sm font-semibold select-none">{name}</div>
-              </Link>
+              </TransitionLink>
             ))}
           </motion.div>
         </div>
@@ -117,23 +118,25 @@ const AboutContent = () => {
         <div className="w-full h-px bg-[var(--secondary)] mt-12" />
 
         <p className='text-[12px] md:text-sm mt-4'>
-          Note: All images were developed and scanned by <Link
+          Note: All images were developed and scanned by <motion.a
             href="https://fotovramci.com/?srsltid=AfmBOopLTn3khuFhn_KLyzZV3vapYgKymv51BY5a4aphVes0bVGFeqq5"
             aria-label="Visit Foto v Ramci — a film developing and scanning lab"
+            whileTap={{ scale: 0.95 }}
             className="font-mono custom-transition hover:text-[var(--accent)]"
             target="_blank"
             data-cursor="text"
           >
             Fotovramci
-          </Link> and <Link
+          </motion.a> and <motion.a
             href="https://filmspeedlab.com/?srsltid=AfmBOop1F_0ZJmwpr82_93Ie-vRs8FcVmjtJMhgRESK4FCWs0t4_tkCg"
             aria-label="Visit Film Speed Lab — a film developing and scanning lab"
+            whileTap={{ scale: 0.95 }}
             className="font-mono custom-transition uppercase hover:text-[var(--accent)]"
             target="_blank"
             data-cursor="text"
           >
             Film Speed Lab
-          </Link>.
+          </motion.a>.
         </p>
       </div>
 

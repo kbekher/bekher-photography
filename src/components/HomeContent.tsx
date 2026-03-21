@@ -5,11 +5,11 @@ import { TransitionLink } from "./TransitionLink";
 const galleryLayout = [
   { id: "european-feel", styles: "h-max col-start-2 col-span-3", photoIndex: 0 },
   { id: "noir-et-blanc", styles: "h-max col-start-8 col-span-4 md:translate-y-[-80px]", photoIndex: 0 },
-  { id: "moments-of-stillness", styles: "h-max row-start-2 col-start-4 col-span-6", photoIndex: 1 },
-  { id: "jazzy-blues", styles: "h-max row-start-3 col-start-8 col-span-5", photoIndex: 4 },
-  { id: "grain-of-ukraine", styles: "h-max row-start-3 col-start-1 col-span-5 md:pt-50", photoIndex: 3 },
-  { id: "alpine-escape", styles: "h-max row-start-4 col-start-3 col-span-8", photoIndex: 0 },
-  { id: "faces-and-places", styles: "h-max row-start-5 col-start-2 col-span-3 md:pt-20", photoIndex: 0 },
+  { id: "harman-phoenix", styles: "h-max row-start-2 col-start-4 col-span-6", photoIndex: 0 },
+  { id: "moments-of-stillness", styles: "h-max row-start-3 col-start-8 col-span-5", photoIndex: 0 },
+  { id: "jazzy-blues", styles: "h-max row-start-3 col-start-1 col-span-5 md:pt-50", photoIndex: 4 },
+  { id: "alpine-escape", styles: "h-max row-start-4 col-start-3 col-span-8", photoIndex: 7 },
+  { id: "mind-the-gap", styles: "h-max row-start-5 col-start-2 col-span-3 md:pt-20", photoIndex: 8 },
   { id: "pentax-17", styles: "h-max row-start-5 col-start-8 col-span-4", photoIndex: 0 },
 ];
 
