@@ -2,11 +2,10 @@
 
 > A minimalistic portfolio site showcasing my film photography 🎞️
 
-## ✨ Live Preview
+## 📸 Preview
 
 **Website:** [https://bekher.photography](https://www.kristinabekher.com/)
 
-## 📸 Preview
 ![image](https://github.com/user-attachments/assets/dac13ba6-22a3-434b-a261-6371dba3eb63)
 ---
 
