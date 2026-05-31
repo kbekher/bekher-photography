@@ -4,19 +4,10 @@
 
 ## ✨ Live Preview
 
-**Website:** [https://bekher.photography](https://bekher.photography)  
+**Website:** [https://bekher.photography](https://www.kristinabekher.com/)
 
 ## 📸 Preview
-![image](https://github.com/user-attachments/assets/6bd8481e-599e-465e-833a-6dd2483fbfd4)
-
 ![image](https://github.com/user-attachments/assets/dac13ba6-22a3-434b-a261-6371dba3eb63)
-
-![image](https://github.com/user-attachments/assets/2c820b4b-45ae-4f99-b99d-5e62e8324590)
-
-![image](https://github.com/user-attachments/assets/7bfb07a4-950e-4d2c-8881-c1c61b8961d7)
-
-![image](https://github.com/user-attachments/assets/7d45e884-edc8-4f3e-9ac5-97aae6018576)
-
 ---
 
 ## 🛠️ Tech Stack
