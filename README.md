@@ -4,7 +4,7 @@
 
 ## 📸 Preview
 
-**Website:** [www.kristinabekher.com](https://www.kristinabekher.com/)
+[www.kristinabekher.com](https://www.kristinabekher.com/)
 
 ![image](https://github.com/user-attachments/assets/dac13ba6-22a3-434b-a261-6371dba3eb63)
 ---
