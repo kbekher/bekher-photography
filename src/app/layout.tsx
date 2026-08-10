@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 import "./globals.css";
-import ClientLayout from "@/components/ClientLayout";
+
+const switzer = localFont({
+  src: "../../public/fonts/Switzer-Variable.woff2",
+  variable: "--font-switzer",
+  display: "swap",
+  weight: "100 900",
+  adjustFontFallback: "Arial",
+});
 
 export const metadata: Metadata = {
   title: "Kristina Bekher",
@@ -27,10 +35,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning>
-        <ClientLayout>{children}</ClientLayout>
-      </body>
+    <html lang="en" className={switzer.variable} suppressHydrationWarning>
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }

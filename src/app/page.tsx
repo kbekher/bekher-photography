@@ -1,7 +1,12 @@
-import HomeContent from "@/components/HomeContent";
+import PageShell from "@/components/ui/PageShell";
+import OverviewFeed from "@/components/OverviewFeed";
 
-const Home = () => {
-  return <main><HomeContent /></main>;
+export default function Home() {
+  return (
+    <PageShell>
+      <div className="w-full pt-[138px]">
+        <OverviewFeed />
+      </div>
+    </PageShell>
+  );
 }
-
-export default Home;

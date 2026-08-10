@@ -1,5 +1,21 @@
 import type { NextConfig } from "next";
 
+const RETIRED_SLUGS = [
+  "mind-the-gap",
+  "moments-of-stillness",
+  "grain-of-ukraine",
+  "pentax-17",
+  "faces-and-places",
+];
+
+const KEPT_SLUGS = [
+  "noir-et-blanc",
+  "alpine-escape",
+  "harman-phoenix",
+  "european-feel",
+  "jazzy-blues",
+];
+
 const nextConfig: NextConfig = {
   images: {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 2600, 3000, 3840],
@@ -7,6 +23,25 @@ const nextConfig: NextConfig = {
     loader: 'custom',
     loaderFile: './src/utils/image-loader.ts',
     qualities: [75, 90],
+  },
+  async redirects() {
+    return [
+      {
+        source: "/galleries",
+        destination: "/index",
+        permanent: true,
+      },
+      ...KEPT_SLUGS.map((slug) => ({
+        source: `/galleries/${slug}`,
+        destination: `/index/${slug}`,
+        permanent: true,
+      })),
+      ...RETIRED_SLUGS.map((slug) => ({
+        source: `/galleries/${slug}`,
+        destination: "/index",
+        permanent: true,
+      })),
+    ];
   },
 };
 
