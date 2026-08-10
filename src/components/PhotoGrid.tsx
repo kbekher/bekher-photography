@@ -69,6 +69,11 @@ export default function PhotoGrid({
 }: PhotoGridProps) {
   return (
     <div
+      // Stable hook for page-enter reveals to target the tiles precisely.
+      // Do not remove: a positional selector here would also match sibling
+      // elements a provider renders alongside the grid (e.g. the lightbox
+      // overlay), applying the reveal to them too.
+      data-photo-grid=""
       className={[
         "mx-auto grid w-fit items-center justify-center",
         // Column gutter must exceed the horizontal tile's total overhang, or
