@@ -1,5 +1,6 @@
 import PhotoGrid from "@/components/PhotoGrid";
 import PillButton from "@/components/ui/PillButton";
+import LightboxProvider from "@/components/lightbox/LightboxProvider";
 import type { Gallery } from "@/data";
 
 export interface CollectionContentProps {
@@ -14,11 +15,16 @@ export interface CollectionContentProps {
 
 /**
  * Collection detail content (spec §4.3): name, description, photo grid, then
- * a prev/next collection pair. Purely presentational — the only client code
- * involved is PillButton's `<Link>` and PhotoGrid's PhotoTile (image
- * load/fade), neither of which this component owns — so it stays a plain
- * server component. No enter animation here; a later agent owns
- * page-transition motion (spec §5), this just leaves clean markup for it.
+ * a prev/next collection pair. The grid is wrapped in `<LightboxProvider>`
+ * exactly as `OverviewFeed` wraps the home feed — same `photos` array is
+ * passed to both the provider and `PhotoGrid`, so a tile's index in the grid
+ * is always the same index `?photo=<n>` and the lightbox use, with no
+ * separate pagination to keep in sync (a collection page shows every photo
+ * at once, unlike Overview's paginated feed). `LightboxProvider` is a client
+ * component, but it accepts a plain serializable prop, so this component
+ * itself stays a server component — only the provider/grid subtree below it
+ * hydrates. No enter animation here; a later agent owns page-transition
+ * motion (spec §5), this just leaves clean markup for it.
  */
 export default function CollectionContent({
   gallery,
@@ -42,7 +48,9 @@ export default function CollectionContent({
       </div>
 
       <div className="mt-48 w-full">
-        <PhotoGrid photos={photos} priorityCount={4} />
+        <LightboxProvider photos={photos}>
+          <PhotoGrid photos={photos} priorityCount={4} />
+        </LightboxProvider>
       </div>
 
       <div className="mt-64 flex items-center justify-center gap-[40px]">
