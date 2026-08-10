@@ -43,6 +43,17 @@ const DURATIONS: Record<Exclude<IntroPhase, "idle" | "done">, number> = {
   dealOut: 750,
 };
 
+// Preloader (Figma `First_screen`, node 31:997 — a blank white page with the
+// wordmark centred). That frame IS this intro's `wordmark` phase, so the
+// preloader isn't separate UI: it's a hold on that phase until the first
+// photos have actually decoded. Without it the sequence runs on a pure timer
+// and can deal the grid out onto empty placeholder boxes on a slow
+// connection, which is exactly what a preloader exists to prevent.
+const PRELOAD_COUNT = 4; // the priority-loaded first row
+// Hard ceiling so a slow or dead connection can never trap someone on the
+// logo screen — we show the page regardless once this elapses.
+const MAX_PRELOAD_WAIT = 2500;
+
 const NEXT_PHASE: Record<Exclude<IntroPhase, "idle" | "done">, IntroPhase> = {
   wordmark: "nav",
   nav: "photo",
@@ -85,6 +96,7 @@ export function useIntroPhase(): IntroPhase {
  */
 export default function IntroProvider({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<IntroPhase>("idle");
+  const [assetsReady, setAssetsReady] = useState(false);
   const reducedMotion = useReducedMotion();
   const decided = useRef(false);
 
@@ -119,12 +131,62 @@ export default function IntroProvider({ children }: { children: ReactNode }) {
     setPhase(skip ? "done" : "wordmark");
   }, [reducedMotion]);
 
+  // Preloader: while the wordmark sits centred, wait for the first row of
+  // photos to decode. The real grid is already server-rendered underneath the
+  // opaque overlay, so its <img>s are genuinely downloading during this hold —
+  // we just watch them rather than re-fetching anything.
+  useEffect(() => {
+    if (phase !== "wordmark") return;
+
+    const ac = new AbortController();
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      setAssetsReady(true);
+    };
+
+    const cap = window.setTimeout(finish, MAX_PRELOAD_WAIT);
+
+    const images = Array.from(
+      document.querySelectorAll<HTMLImageElement>("[data-index] img")
+    ).slice(0, PRELOAD_COUNT);
+
+    if (images.length === 0) {
+      finish();
+    } else {
+      let remaining = images.length;
+      const settleOne = () => {
+        remaining -= 1;
+        if (remaining <= 0) finish();
+      };
+      for (const img of images) {
+        // `complete` covers images already cached on a repeat visit.
+        if (img.complete) {
+          settleOne();
+          continue;
+        }
+        // "error" settles too — a broken image must never stall the intro.
+        img.addEventListener("load", settleOne, { once: true, signal: ac.signal });
+        img.addEventListener("error", settleOne, { once: true, signal: ac.signal });
+      }
+    }
+
+    return () => {
+      ac.abort();
+      window.clearTimeout(cap);
+    };
+  }, [phase]);
+
   // Walk the phases on a timer.
   useEffect(() => {
     if (phase === "idle" || phase === "done") return;
+    // The preloader gate: hold on the centred wordmark (Figma `First_screen`)
+    // until the first photos are ready. Every other phase is purely timed.
+    if (phase === "wordmark" && !assetsReady) return;
     const t = setTimeout(() => setPhase(NEXT_PHASE[phase]), DURATIONS[phase]);
     return () => clearTimeout(t);
-  }, [phase]);
+  }, [phase, assetsReady]);
 
   return <IntroContext.Provider value={{ phase }}>{children}</IntroContext.Provider>;
 }
