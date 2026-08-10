@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import PhotoGrid from "./PhotoGrid";
 import PillButton from "@/components/ui/PillButton";
 import LightboxProvider from "./lightbox/LightboxProvider";
+import { useDealOut } from "./intro/useDealOut";
 import { homeFeed } from "@/data";
 
 const PAGE_SIZE = 20;
@@ -18,6 +19,12 @@ const PRIORITY_COUNT = 4;
 export default function OverviewFeed() {
   const [count, setCount] = useState(Math.min(PAGE_SIZE, homeFeed.length));
   const endRef = useRef<HTMLDivElement>(null);
+  // Grid wrapper ref — the intro's "deal out from centre" (spec §5.1 steps
+  // 3-4) reads tile positions off this subtree via PhotoTile's `data-index`
+  // attribute and nudges them imperatively. See useDealOut for why that's
+  // done from outside rather than by touching PhotoGrid/PhotoTile.
+  const gridRef = useRef<HTMLDivElement>(null);
+  useDealOut(gridRef);
   const hasMore = count < homeFeed.length;
   const visible = homeFeed.slice(0, count);
 
@@ -42,7 +49,7 @@ export default function OverviewFeed() {
     // photo 80 still resolves on first load. `visible` is a prefix slice of
     // `homeFeed`, so a tile's grid index already equals its feed index.
     <LightboxProvider photos={homeFeed}>
-      <div className="flex w-full flex-col items-center">
+      <div ref={gridRef} className="flex w-full flex-col items-center">
         <PhotoGrid photos={visible} priorityCount={PRIORITY_COUNT} />
 
         {/* Polite announcement so screen reader users hear the feed grow. */}
