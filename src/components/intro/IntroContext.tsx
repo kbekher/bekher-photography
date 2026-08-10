@@ -33,14 +33,23 @@ import { hasPlayedIntro, markIntroPlayed } from "./introSession";
  */
 export type IntroPhase = "idle" | "wordmark" | "nav" | "photo" | "dealOut" | "done";
 
-// Per-phase duration in ms. wordmark 650 + nav 560 + photo 450 + dealOut 750
-// = 2410ms total — comfortably under the spec's ~2.5s ceiling so the intro
-// reads as a flourish, never a loading gate.
+// Per-phase duration in ms. wordmark 650 + nav 560 + photo 450 + dealOut 1300
+// = 2960ms total — under the spec's ~3s ceiling.
+//
+// `dealOut`'s 1300ms is not a single beat: useDealOut sequences two beats
+// inside it (the other visible tiles settle first, staggered up to 180ms +
+// their own 480ms transform = 660ms; THEN, only once that's finished, the
+// anchor tile gets its own deliberate 550ms move into its grid slot —
+// 660 + 550 = 1210ms). This phase's duration must stay >= that inner total;
+// 1300 gives a ~90ms cushion against setTimeout jitter, or the `done`
+// cleanup below could fire while the anchor is still mid-transition and
+// snap it to its resting transform, which reads as a visible cut. See
+// useDealOut.ts for the full breakdown.
 const DURATIONS: Record<Exclude<IntroPhase, "idle" | "done">, number> = {
   wordmark: 650,
   nav: 560,
   photo: 450,
-  dealOut: 750,
+  dealOut: 1300,
 };
 
 // Preloader (Figma `First_screen`, node 31:997 — a blank white page with the
@@ -116,17 +125,39 @@ export default function IntroProvider({ children }: { children: ReactNode }) {
     // `useSearchParams()` on purpose: this must not influence render (see
     // "Hydration safety" above), and it avoids forcing a Suspense boundary
     // around the whole home page.
-    const isPhotoDeepLink =
-      typeof window !== "undefined" &&
-      new URLSearchParams(window.location.search).has("photo");
+    const params =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search)
+        : null;
+    const isPhotoDeepLink = params?.has("photo") ?? false;
+    // Dev/QA escape hatch: `?intro=1` forces a replay regardless of the
+    // sessionStorage flag, so iterating on the design doesn't require a new
+    // tab (or clearing storage) for every reload. Read the same
+    // hydration-safe way as `isPhotoDeepLink` above — inside this effect,
+    // never during render.
+    const forceReplay = params?.get("intro") === "1";
 
-    const skip = reducedMotion !== false || hasPlayedIntro() || isPhotoDeepLink;
+    // `useReducedMotion()` can genuinely return `null` (its type is
+    // `boolean | null`) — e.g. before `initPrefersReducedMotion()` has ever
+    // run in this environment, or if `window.matchMedia` doesn't exist.
+    // Treating "not `false`" as "skip" (the previous check) means an
+    // *unknown* reading silently disables the intro for everyone; only an
+    // affirmative `true` — the user has actually opted into reduced motion —
+    // should skip it.
+    const prefersReducedMotion = reducedMotion === true;
+    const alreadyPlayed = hasPlayedIntro() && !forceReplay;
 
-    // Mark the session as "seen" regardless of *why* we're skipping, so a
-    // reduced-motion user who later disables that setting mid-session still
-    // doesn't get the intro on their next in-app navigation — one intro
-    // opportunity per session, full stop.
-    markIntroPlayed();
+    const skip = prefersReducedMotion || alreadyPlayed || isPhotoDeepLink;
+
+    // Mark the session as "seen" so a reduced-motion user who later disables
+    // that setting mid-session still doesn't get the intro on their next
+    // in-app navigation — one intro opportunity per session, full stop.
+    // EXCEPT for a `?photo=` deep link: that path never actually played
+    // anything (the lightbox took over instead), so it must not burn the
+    // session's one shot at the intro on a later plain visit.
+    if (!isPhotoDeepLink) {
+      markIntroPlayed();
+    }
 
     setPhase(skip ? "done" : "wordmark");
   }, [reducedMotion]);
