@@ -11,6 +11,9 @@ export const metadata: Metadata = {
 export default function About() {
   return (
     <PageShell>
+      {/* AboutContent's visible "About"/"Contact"/"Download images on" labels
+          are h2s; this gives them a parent so the hierarchy isn't broken. */}
+      <h1 className="sr-only">About Kristina Bekher</h1>
       <AboutContent />
     </PageShell>
   );

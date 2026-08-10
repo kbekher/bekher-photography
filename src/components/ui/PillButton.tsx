@@ -46,7 +46,10 @@ export default function PillButton(props: PillButtonProps) {
   const classes = `${BASE} ${activeClass} ${className}`.trim();
 
   if (props.as === "button") {
+    // `as` is a discriminator for this component only — strip it so it never
+    // reaches the DOM as an unknown attribute.
     const { as: _as, ...buttonRest } = rest as ButtonProps;
+    void _as;
     return (
       <button
         type="button"

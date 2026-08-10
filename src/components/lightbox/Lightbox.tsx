@@ -221,7 +221,7 @@ function LightboxOverlay({ photos, index, close, next, prev, goTo }: OverlayProp
     const focusable = getFocusable(container);
     (focusable[0] ?? container).focus();
     // Intentionally run once on mount only.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   // Lock body scroll while open; restore the exact scroll position on close.
@@ -299,9 +299,14 @@ function LightboxOverlay({ photos, index, close, next, prev, goTo }: OverlayProp
             <GridFrame frame={false}>
               <div
                 className={
+                  // GridFrame only switches 4 -> 12 columns at `lg:` (1024px),
+                  // so these placements MUST use `lg:` too. With `sm:` (640px)
+                  // the child asked for columns 4-9 / 5-8 while the frame was
+                  // still a 4-column track, breaking every viewport between
+                  // 640px and 1023px (iPad portrait, landscape phones).
                   isHorizontal
-                    ? "col-span-4 aspect-[580/388] sm:col-start-4 sm:col-span-6"
-                    : "col-span-4 aspect-[374/540] sm:col-start-5 sm:col-span-4"
+                    ? "col-span-4 aspect-[580/388] lg:col-start-4 lg:col-span-6"
+                    : "col-span-4 aspect-[374/540] lg:col-start-5 lg:col-span-4"
                 }
               >
                 <AnimatePresence mode="popLayout" custom={switchMode} initial={false}>
@@ -327,7 +332,17 @@ function LightboxOverlay({ photos, index, close, next, prev, goTo }: OverlayProp
                       fill
                       priority
                       quality={90}
-                      sizes="(max-width: 639px) 92vw, 580px"
+                      // Orientation matters here: a horizontal photo renders
+                      // at a 6-column span (580px) but a vertical one only at
+                      // 4 columns (374px). Quoting 580px for both made every
+                      // vertical — about half the catalogue — fetch ~2.4x the
+                      // pixel area it displays, on the largest image on the
+                      // site.
+                      sizes={
+                        isHorizontal
+                          ? "(max-width: 1023px) 92vw, 580px"
+                          : "(max-width: 1023px) 92vw, 374px"
+                      }
                       className="object-cover"
                       draggable={false}
                     />

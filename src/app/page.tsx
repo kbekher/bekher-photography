@@ -14,6 +14,9 @@ export default function Home() {
     <IntroProvider>
       <IntroOverlay />
       <PageShell>
+        {/* Overview is a bare grid with no visible title, so the h1 is
+            visually hidden — the page still needs one. */}
+        <h1 className="sr-only">Kristina Bekher — photography overview</h1>
         <div className="w-full pt-[138px]">
           <OverviewFeed />
         </div>

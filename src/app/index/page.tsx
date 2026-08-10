@@ -10,6 +10,9 @@ export const metadata: Metadata = {
 export default function IndexPage() {
   return (
     <PageShell>
+      {/* The design shows no visible page title, but every route still needs
+          an h1 so screen-reader users get a valid heading hierarchy. */}
+      <h1 className="sr-only">Index — photography collections</h1>
       <IndexList />
     </PageShell>
   );
