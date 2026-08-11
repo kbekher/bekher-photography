@@ -32,23 +32,40 @@ import { markIntroPlayed } from "./introSession";
  */
 export type IntroPhase = "idle" | "wordmark" | "nav" | "photo" | "dealOut" | "done";
 
-// Per-phase duration in ms. wordmark 650 + nav 560 + photo 450 + dealOut 1300
-// = 2960ms total — under the spec's ~3s ceiling.
+// Per-phase duration in ms. wordmark 3400 + nav 1450 + photo 1450 +
+// dealOut 2000 = 8300ms total. Each number is load-bearing for a specific
+// beat rather than an arbitrary budget split, so none of them can be
+// retuned in isolation:
 //
-// `dealOut`'s 1300ms is not a single beat: useDealOut sequences two beats
-// inside it (the other visible tiles settle first, staggered up to 180ms +
-// their own 480ms transform = 660ms; THEN, only once that's finished, the
-// anchor tile gets its own deliberate 550ms move into its grid slot —
-// 660 + 550 = 1210ms). This phase's duration must stay >= that inner total;
-// 1300 gives a ~90ms cushion against setTimeout jitter, or the `done`
-// cleanup below could fire while the anchor is still mid-transition and
-// snap it to its resting transform, which reads as a visible cut. See
-// useDealOut.ts for the full breakdown.
+// - wordmark (3400ms): the full K+B -> "Kristina Bekher" morph
+//   (IntroOverlay) lives entirely inside this window — monogram pose, hold,
+//   K/B spreading apart to their natural positions, then every other
+//   character fading in left-to-right — and finishes with a ~350ms hold
+//   before advancing. See IntroOverlay's own timeline comment for the
+//   beat-by-beat breakdown; this number must stay in sync with its
+//   REMAINING_WINDOW_END_MS.
+// - nav (1450ms): NOT a single fade. The wordmark spends the first 1000ms
+//   travelling from centre-stage up into its header position; only once
+//   that's fully settled does the navbar echo start its own 450ms fade-in
+//   (IntroOverlay gives it a matching 1000ms transition-delay). The nav must
+//   never appear to move alongside — or worse, ahead of — the wordmark
+//   still in transit.
+// - photo (1450ms): the overlay dissolves (~450ms) to reveal the feed's
+//   first photo alone, centred, with every other photo stacked behind it
+//   (OverviewFeed) — then there's a deliberate ~1000ms hold on that single
+//   centred image before the deck deals out. That hold is what makes the
+//   reveal read as intentional rather than a blip on the way to the grid.
+// - dealOut (2000ms): owned by useDealOut, which sequences its own overlapping
+//   beats inside this window (the stacked tiles peel off staggered, and the
+//   anchor — starting mid-flight — lands last at 1800ms; see useDealOut.ts's
+//   DEAL_BUDGET_MS, which this must stay equal to). If this ever drops below
+//   useDealOut's inner total, the `done` cleanup below fires mid-transition
+//   and snaps the anchor to its resting transform — a visible cut.
 const DURATIONS: Record<Exclude<IntroPhase, "idle" | "done">, number> = {
-  wordmark: 650,
-  nav: 560,
-  photo: 450,
-  dealOut: 1300,
+  wordmark: 3400,
+  nav: 1450,
+  photo: 1450,
+  dealOut: 2000,
 };
 
 // Preloader (Figma `First_screen`, node 31:997 — a blank white page with the
@@ -59,8 +76,15 @@ const DURATIONS: Record<Exclude<IntroPhase, "idle" | "done">, number> = {
 // connection, which is exactly what a preloader exists to prevent.
 const PRELOAD_COUNT = 4; // the priority-loaded first row
 // Hard ceiling so a slow or dead connection can never trap someone on the
-// logo screen — we show the page regardless once this elapses.
-const MAX_PRELOAD_WAIT = 2500;
+// logo screen — we show the page regardless once this elapses. Deliberately
+// equal to DURATIONS.wordmark: that 3400ms is a choreographed animation that
+// must start the instant the phase is entered (see the phase-walk effect
+// below — its timer is never delayed by this gate), so the preload wait can
+// only ever run CONCURRENTLY with the animation, never stack in front of or
+// after it. Capping it at the same 3400ms means the asset gate can, at
+// worst, hold the phase open for a few extra ms of setTimeout jitter past
+// the animation's natural end — never a second multi-second wait.
+const MAX_PRELOAD_WAIT = 3400;
 
 const NEXT_PHASE: Record<Exclude<IntroPhase, "idle" | "done">, IntroPhase> = {
   wordmark: "nav",
@@ -126,6 +150,12 @@ export function useIntroPhase(): IntroPhase {
 export default function IntroProvider({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<IntroPhase>("idle");
   const [assetsReady, setAssetsReady] = useState(false);
+  // Flips true once `wordmark`'s 5000ms animation timer has elapsed. Kept
+  // separate from `assetsReady` on purpose — see the phase-walk effect
+  // below, which requires BOTH before leaving `wordmark`, so a fast
+  // connection never truncates the animation and a slow one only ever
+  // extends the hold past 5000ms instead of stacking a wait in front of it.
+  const [wordmarkTimeUp, setWordmarkTimeUp] = useState(false);
   const decided = useRef(false);
 
   // Decide once, after mount, whether to play at all.
@@ -226,15 +256,39 @@ export default function IntroProvider({ children }: { children: ReactNode }) {
     };
   }, [phase]);
 
-  // Walk the phases on a timer.
+  // Walk the phases on a timer. Every phase's timer starts the INSTANT the
+  // phase is entered — this matters most for `wordmark`, whose 5000ms IS the
+  // K+B -> wordmark choreography (IntroOverlay): that animation must never
+  // be delayed by the asset-preload gate below, or the gate would stack an
+  // extra wait in FRONT of the animation instead of only ever extending it.
+  //
+  // `wordmark` is the one phase this timer doesn't advance directly — it
+  // just flips `wordmarkTimeUp`, and the effect after this one is what
+  // actually calls `setPhase`, once BOTH that flag and `assetsReady` are
+  // true. Every other phase is purely timed and advances straight away.
   useEffect(() => {
     if (phase === "idle" || phase === "done") return;
-    // The preloader gate: hold on the centred wordmark (Figma `First_screen`)
-    // until the first photos are ready. Every other phase is purely timed.
-    if (phase === "wordmark" && !assetsReady) return;
-    const t = setTimeout(() => setPhase(NEXT_PHASE[phase]), DURATIONS[phase]);
+    const t = setTimeout(() => {
+      if (phase === "wordmark") {
+        setWordmarkTimeUp(true);
+      } else {
+        setPhase(NEXT_PHASE[phase]);
+      }
+    }, DURATIONS[phase]);
     return () => clearTimeout(t);
-  }, [phase, assetsReady]);
+  }, [phase]);
+
+  // Leave `wordmark` only once its animation has actually finished AND the
+  // first row of photos has decoded — see the timer effect above (animation
+  // clock) and the preloader effect above it (asset clock). Splitting this
+  // into its own effect, keyed off both flags, is what lets a fast
+  // connection wait out the full 5000ms unbothered while a slow one holds
+  // a little longer without ever truncating the animation.
+  useEffect(() => {
+    if (phase === "wordmark" && wordmarkTimeUp && assetsReady) {
+      setPhase("nav");
+    }
+  }, [phase, wordmarkTimeUp, assetsReady]);
 
   return <IntroContext.Provider value={{ phase }}>{children}</IntroContext.Provider>;
 }

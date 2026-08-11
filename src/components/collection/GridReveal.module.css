@@ -1,72 +1,44 @@
 /*
- * Page-enter reveal for the collection photo grid (spec §5.2's "cascade"
- * shape, adapted to a grid). Pure CSS, deliberately NOT framer-motion:
+ * Visibility gate for the collection page's deal-out grid wrapper (see
+ * useCollectionDealOut.ts). That hook's `gather` step snaps the first photo
+ * to a centred, enlarged pose and every other tile to hidden/scaled-down —
+ * but it does that on the REAL grid DOM, and unlike the home page there is
+ * no opaque IntroOverlay sitting on top to hide the snap. This class is
+ * what hides it instead: the wrapper starts at `opacity: 0` in the
+ * server-rendered HTML (a static class, not conditional on any client-only
+ * check, so there is no hydration mismatch), and useCollectionDealOut flips
+ * `data-visible="true"` on it — via a plain DOM attribute, not React state,
+ * same "don't re-render the grid for this" reasoning as the rest of that
+ * hook — only once `gather` has already been applied. By the time the
+ * wrapper fades in, the only thing that becomes visible is the already-
+ * repositioned, centred first photo.
  *
- * `PhotoGrid`/`PhotoTile` render each tile as `<button>`/`<div>` with a
- * `motion.div layoutId={`photo-${src}`}` immediately inside it (see
- * PhotoTile.tsx) — the shared-element seam the lightbox open/close morph
- * (spec §5.5) depends on. Wrapping each tile in its OWN framer motion
- * component to get a stagger would put another animated node between that
- * layoutId element and the rest of the tree, which framer's shared-layout
- * projection is not guaranteed to compose cleanly with, per the task's own
- * warning. So instead this targets the tile elements directly with a plain
- * CSS keyframe animation that only ever touches `opacity` — never
- * `transform`/size — because opacity has no effect on `getBoundingClientRect`
- * or the transform matrix framer's FLIP measurement relies on. It is
- * provably inert with respect to the layoutId morph, at the cost of only
- * being able to animate opacity (no per-tile rise/scale).
- *
- * Selector shape: this class goes on a wrapper around
- * `<LightboxProvider><PhotoGrid/></LightboxProvider>`, and targets the grid
- * via PhotoGrid's `data-photo-grid` attribute. It must NOT use a positional
- * selector like `> div > *`: LightboxProvider renders `{children}` AND
- * `<Lightbox />` as siblings, and the open lightbox's root is itself a
- * `<motion.div role="dialog" class="fixed inset-0">`. A positional selector
- * therefore also matched the overlay, starting all of its contents at
- * `opacity: 0` and fading them in with up to 0.45s of stagger delay every
- * time a photo was opened.
- *
- * The stagger is capped at 6 tiles (a collection's first 1-2 rows) so a long
- * collection doesn't push the reveal past the spec's ~1.2s budget; every
- * tile after that shares the 6th tile's delay.
+ * `opacity: 0` must never be a TERMINAL state — a grid that simply never
+ * appears is far worse than one that skips its intro animation. Two escape
+ * hatches guarantee that:
+ *  - `@media (prefers-reduced-motion: reduce)`: forces the gate open
+ *    unconditionally. Belt-and-suspenders alongside useCollectionDealOut's
+ *    own `enabled` check (which independently skips ever touching the
+ *    tiles' transforms for reduced motion) — even if that JS path were
+ *    somehow bypassed, this CSS rule alone still reveals the grid.
+ *  - `<noscript>`: if JS never runs at all, `data-visible` is never set by
+ *    anything. CollectionContent.tsx's `<noscript>` block injects a
+ *    stylesheet forcing this class visible — `<noscript>` content only ever
+ *    reaches the DOM when scripting is disabled, so it can never fight the
+ *    JS-driven path when JS *is* available.
  */
 
-.reveal [data-photo-grid] > * {
+.gate {
   opacity: 0;
-  animation: tile-in 0.35s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 
-.reveal [data-photo-grid] > *:nth-child(1) {
-  animation-delay: 0.3s;
-}
-.reveal [data-photo-grid] > *:nth-child(2) {
-  animation-delay: 0.33s;
-}
-.reveal [data-photo-grid] > *:nth-child(3) {
-  animation-delay: 0.36s;
-}
-.reveal [data-photo-grid] > *:nth-child(4) {
-  animation-delay: 0.39s;
-}
-.reveal [data-photo-grid] > *:nth-child(5) {
-  animation-delay: 0.42s;
-}
-.reveal [data-photo-grid] > *:nth-child(n + 6) {
-  animation-delay: 0.45s;
-}
-
-@keyframes tile-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.gate[data-visible="true"] {
+  opacity: 1;
+  transition: opacity 350ms cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal [data-photo-grid] > * {
-    animation: none;
+  .gate {
     opacity: 1;
   }
 }
