@@ -76,14 +76,14 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
   return (
     <PageShell
       navTrailing={
-        <PillButton href="/index">Back</PillButton>
+        <PillButton href="/collections">Back</PillButton>
       }
     >
       <CollectionContent
         gallery={gallery}
         slug={slug}
-        prevHref={`/index/${prevSlug}`}
-        nextHref={`/index/${nextSlug}`}
+        prevHref={`/collections/${prevSlug}`}
+        nextHref={`/collections/${nextSlug}`}
       />
     </PageShell>
   );

@@ -103,7 +103,7 @@ export default function IndexList() {
           {collections.map((c, i) => (
             <motion.li key={c.slug} className="flex justify-center" variants={nameVariants} custom={i}>
               <PillButton
-                href={`/index/${c.slug}`}
+                href={`/collections/${c.slug}`}
                 className={activeIndex === i ? "!bg-surface" : ""}
                 onMouseEnter={() => setActiveIndex(i)}
                 onMouseLeave={() => setActiveIndex(null)}

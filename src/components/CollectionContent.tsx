@@ -11,9 +11,9 @@ export interface CollectionContentProps {
   gallery: Gallery;
   /** Collection slug — needed to build each photo's S3 key (`<slug>/<path>`). */
   slug: string;
-  /** `/index/<prevSlug>` — the previous collection in `keptCollectionSlugs`. */
+  /** `/collections/<prevSlug>` — the previous collection in `keptCollectionSlugs`. */
   prevHref: string;
-  /** `/index/<nextSlug>` — the next collection in `keptCollectionSlugs`. */
+  /** `/collections/<nextSlug>` — the next collection in `keptCollectionSlugs`. */
   nextHref: string;
 }
 

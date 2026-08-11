@@ -103,7 +103,7 @@ export const galleriesData: Record<string, Gallery> = {
   },
 };
 
-/** Slugs of the 5 collections that remain browsable under `/index`. */
+/** Slugs of the 5 collections that remain browsable under `/collections`. */
 export const keptCollectionSlugs = ['noir-et-blanc', 'alpine-escape', 'harman-phoenix', 'european-feel', 'jazzy-blues'] as const;
 export type CollectionSlug = typeof keptCollectionSlugs[number];
 

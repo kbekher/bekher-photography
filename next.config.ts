@@ -28,19 +28,29 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/galleries",
-        destination: "/index",
+        destination: "/collections",
         permanent: true,
       },
       ...KEPT_SLUGS.map((slug) => ({
         source: `/galleries/${slug}`,
-        destination: `/index/${slug}`,
+        destination: `/collections/${slug}`,
         permanent: true,
       })),
       ...RETIRED_SLUGS.map((slug) => ({
         source: `/galleries/${slug}`,
-        destination: "/index",
+        destination: "/collections",
         permanent: true,
       })),
+      {
+        source: "/index",
+        destination: "/collections",
+        permanent: true,
+      },
+      {
+        source: "/index/:slug",
+        destination: "/collections/:slug",
+        permanent: true,
+      },
     ];
   },
 };

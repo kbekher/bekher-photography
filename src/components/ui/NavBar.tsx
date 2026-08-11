@@ -6,7 +6,7 @@ import PillButton from "./PillButton";
 
 const NAV_ITEMS = [
   { label: "Overview", href: "/" },
-  { label: "Index", href: "/index" },
+  { label: "Index", href: "/collections" },
   { label: "About", href: "/about" },
 ] as const;
 
