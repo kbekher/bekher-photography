@@ -16,8 +16,20 @@ const NAV_LABELS = ["Overview", "Index", "About"];
 const WORDMARK = "Kristina Bekher";
 const CHARS = [...WORDMARK];
 const K_INDEX = 0;
-const B_INDEX = WORDMARK.indexOf("Bekher"); // 9 — first glyph of "Bekher"
+// Derived from the space's position rather than a hardcoded "Bekher"
+// substring search, so an edit to WORDMARK can never desync B_INDEX from
+// where the second word actually starts. The guard below is what makes that
+// safe rather than just quieter: `String.indexOf` returns -1 on no match,
+// and WORD2_INDICES' `i > B_INDEX` filter would happily treat a stray -1 as
+// "everything is word 2" — silent corruption, not a visible error — if
+// WORDMARK were ever edited to drop the space entirely.
 const SPACE_INDEX = WORDMARK.indexOf(" "); // 8 — the one glyph in neither word
+if (SPACE_INDEX === -1) {
+  throw new Error(
+    `IntroOverlay: WORDMARK ("${WORDMARK}") must contain exactly one space separating the two words it morphs between.`
+  );
+}
+const B_INDEX = SPACE_INDEX + 1; // 9 — first glyph of the second word ("Bekher")
 // The two words' remaining glyphs (everything but their own leading K/B),
 // each its own left-to-right reveal order — "ristina" and "ekher" type
 // SIMULTANEOUSLY, not as one flat left-to-right sweep across the whole
@@ -94,6 +106,45 @@ interface WordmarkMetrics {
 const INITIAL_METRICS: WordmarkMetrics = { ready: false, kX: 0, bX: 0, plusLeft: 0 };
 
 /**
+ * Pure measurement pass over the live glyph elements: computes the monogram
+ * pose's translateX offsets (kX/bX) and the "+"'s left offset. Module-scope
+ * (not a closure inside either effect below) so the mount-time measurement
+ * and the resize-time re-measurement call the exact same logic — two
+ * independently maintained copies is exactly how they'd eventually drift
+ * out of sync with each other.
+ */
+function measureWordmark(
+  container: HTMLElement,
+  kEl: HTMLElement,
+  bEl: HTMLElement,
+  plusEl: HTMLElement
+): WordmarkMetrics {
+  // The gap is a fraction of the CONTAINER's computed font-size, not a
+  // hardcoded px value — see MONOGRAM_GAP_EM above.
+  const fontSize = parseFloat(getComputedStyle(container).fontSize) || 16;
+  const gap = fontSize * MONOGRAM_GAP_EM;
+
+  const W = container.offsetWidth;
+  const kLeft = kEl.offsetLeft;
+  const kW = kEl.offsetWidth;
+  const bLeft = bEl.offsetLeft;
+  const bW = bEl.offsetWidth;
+  const plusW = plusEl.offsetWidth;
+
+  // The centred "K+B" group's total width, then where it starts so it's
+  // centred within the wordmark's natural full width W.
+  const monoW = kW + gap + plusW + gap + bW;
+  const monoStart = (W - monoW) / 2;
+
+  return {
+    ready: true,
+    kX: monoStart - kLeft,
+    bX: monoStart + kW + gap + plusW + gap - bLeft,
+    plusLeft: monoStart + kW + gap,
+  };
+}
+
+/**
  * Steps 1-2 of the intro (spec §5.1): a fixed, opaque white sheet that shows
  * a K+B monogram morphing into the "Kristina Bekher" wordmark, then carries
  * it up into its real header position while a decorative navbar echo fades
@@ -145,7 +196,7 @@ const INITIAL_METRICS: WordmarkMetrics = { ready: false, kX: 0, bX: 0, plusLeft:
  * puts its top edge at viewport-middle, and `-50%` (a percentage of the
  * element's *own* box, per the CSS transform spec) pulls it up by half its
  * own height, landing it dead-centre regardless of viewport size. That
- * translateY now takes TRAVEL_MS (1500ms), not an instant snap — see the
+ * translateY now takes TRAVEL_MS (1000ms), not an instant snap — see the
  * timeline constants above — and the nav echo is held back by a matching
  * transition-delay so it never appears to move alongside a still-travelling
  * wordmark.
@@ -188,6 +239,13 @@ export default function IntroOverlay() {
   const plusRef = useRef<HTMLSpanElement>(null);
 
   const [metrics, setMetrics] = useState<WordmarkMetrics>(INITIAL_METRICS);
+  // True for the one commit that applies a resize-triggered re-measurement
+  // (see the resize effect below) — folded into `noTransition` so that
+  // commit renders with `transition: none` instead of genuinely animating
+  // K/B sideways to the new monogram position. Cleared on the next frame,
+  // once that snapped position has painted — see the effect that owns this
+  // flag, further down, for why a single rAF is enough.
+  const [suppressTransition, setSuppressTransition] = useState(false);
   // `monoIn`/`spread`/`revealedWord1`/`revealedWord2` drive the wordmark's
   // own internal choreography — see the timeline constants above. They're
   // only ever written by the timer effect below, while `phase ===
@@ -213,48 +271,75 @@ export default function IntroOverlay() {
   const mounted =
     phase === "idle" || phase === "wordmark" || phase === "nav" || phase === "photo";
 
-  // Measure the live glyph layout once on mount, and again on resize (font
-  // metrics don't change, but the container's available width can). Runs
-  // BEFORE paint (useLayoutEffect), so the very first thing ever painted
-  // already has correct monogram positions — see `metrics.ready` in the
-  // render below for the one-frame fallback while this hasn't landed yet.
+  // Whether a glyph re-measurement can still matter. Once `nav`/`photo` pin
+  // `effectiveSpread`/translateX(0) regardless of `metrics` (see below), and
+  // once `dealOut`/`done` stop this component rendering at all (`mounted`
+  // above), per-glyph offsets are moot — see the resize effect below, which
+  // is what this actually gates.
+  const canResize = phase === "idle" || phase === "wordmark";
+
+  // Measure the live glyph layout once on mount. Runs BEFORE paint
+  // (useLayoutEffect), so the very first thing ever painted already has
+  // correct monogram positions — see `metrics.ready` in the render below for
+  // the one-frame fallback while this hasn't landed yet.
   useLayoutEffect(() => {
-    function measure() {
+    const container = containerRef.current;
+    const kEl = charRefs.current[K_INDEX];
+    const bEl = charRefs.current[B_INDEX];
+    const plusEl = plusRef.current;
+    if (!container || !kEl || !bEl || !plusEl) return;
+    setMetrics(measureWordmark(container, kEl, bEl, plusEl));
+  }, []);
+
+  // Re-measure on resize (font metrics don't change, but the container's
+  // available width can) — but ONLY while `canResize`, i.e. while the
+  // monogram/wordmark pose can still be shown. Without this guard the
+  // listener would live for the rest of the page's session: `mounted` above
+  // only short-circuits this component's OWN render, not its effects, and
+  // IntroOverlay never unmounts — so every resize for the rest of the visit
+  // would otherwise force a getComputedStyle + offsetWidth/offsetLeft read
+  // and a `setMetrics` re-render for a component that will never render the
+  // wordmark again.
+  //
+  // ## Why a resize here must never animate
+  // This can fire well after `metrics.ready` is already true — e.g. mid-hold
+  // during `wordmark`, before `spread` flips (Safari's address-bar collapse
+  // fires `resize` on load settle; so does a live desktop resize or a
+  // dev-tools toggle). `noTransition` only guards the FIRST, un-measured
+  // commit (`!metrics.ready`); by the time a resize can fire, that guard is
+  // already off, and `setMetrics` alone would let the browser genuinely
+  // animate K/B to the new position over their live transition.
+  // `setSuppressTransition(true)` in the SAME handler forces `noTransition`
+  // back on for exactly this one commit (React 18 batches both state
+  // updates together), so the new position snaps in instead — then the
+  // effect below releases it next frame.
+  useLayoutEffect(() => {
+    if (!canResize) return;
+
+    function handleResize() {
       const container = containerRef.current;
       const kEl = charRefs.current[K_INDEX];
       const bEl = charRefs.current[B_INDEX];
       const plusEl = plusRef.current;
       if (!container || !kEl || !bEl || !plusEl) return;
-
-      // The gap is a fraction of the CONTAINER's computed font-size, not a
-      // hardcoded px value — see MONOGRAM_GAP_EM above.
-      const fontSize = parseFloat(getComputedStyle(container).fontSize) || 16;
-      const gap = fontSize * MONOGRAM_GAP_EM;
-
-      const W = container.offsetWidth;
-      const kLeft = kEl.offsetLeft;
-      const kW = kEl.offsetWidth;
-      const bLeft = bEl.offsetLeft;
-      const bW = bEl.offsetWidth;
-      const plusW = plusEl.offsetWidth;
-
-      // The centred "K+B" group's total width, then where it starts so it's
-      // centred within the wordmark's natural full width W.
-      const monoW = kW + gap + plusW + gap + bW;
-      const monoStart = (W - monoW) / 2;
-
-      setMetrics({
-        ready: true,
-        kX: monoStart - kLeft,
-        bX: monoStart + kW + gap + plusW + gap - bLeft,
-        plusLeft: monoStart + kW + gap,
-      });
+      setSuppressTransition(true);
+      setMetrics(measureWordmark(container, kEl, bEl, plusEl));
     }
 
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, []);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [canResize]);
+
+  // Releases `suppressTransition` one frame after a resize-triggered
+  // re-measure has committed and painted — i.e. after the snap (not a
+  // transition) has actually landed on screen — so a LATER, genuinely
+  // animated update (e.g. the monogram-hold -> spread beat) isn't
+  // accidentally born with transitions still forced off.
+  useEffect(() => {
+    if (!suppressTransition) return;
+    const raf = requestAnimationFrame(() => setSuppressTransition(false));
+    return () => cancelAnimationFrame(raf);
+  }, [suppressTransition]);
 
   // Drive the wordmark's internal timeline. Only runs for `wordmark` itself
   // — once the phase has moved on, `settled` (below, in render) takes over
@@ -351,8 +436,13 @@ export default function IntroOverlay() {
   // and for a subtler reason — see the timer effect's "Why this waits on
   // metrics.ready" note: without it, the un-measured `translateX(0px)` the
   // spans first render at becomes a transition start point, and K visibly
-  // slides into the monogram before the animation begins.
-  const noTransition = isIdle || Boolean(reducedMotion) || !metrics.ready;
+  // slides into the monogram before the animation begins. `suppressTransition`
+  // covers the same hazard for a LATER re-measurement — a window resize
+  // during the monogram hold — see the resize effect above for why that
+  // needs its own guard rather than reusing `!metrics.ready` (which is
+  // already `true` by the time a resize can fire).
+  const noTransition =
+    isIdle || Boolean(reducedMotion) || !metrics.ready || suppressTransition;
 
   function kbStyle(targetX: number): CSSProperties {
     return {

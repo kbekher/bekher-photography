@@ -68,6 +68,14 @@ export function useCollectionDealOut(
   // `gather`/`deal` already applied.
   const startedRef = useRef(false);
 
+  // `fadeContainer` is deliberately left off (the default) — this page's
+  // wrapper already has its own CSS-class-driven gate (GridReveal.module.css's
+  // `.gate`, released via `data-visible` below on this hook's own
+  // GATE_DELAY_MS schedule). Turning useDealOutSequence's own container fade
+  // on here too would fight that: an inline `style.opacity` always beats a
+  // stylesheet rule, so it would hijack the gate's timing instead of
+  // composing with it. See useDealOut.ts's `useDealOut` for the sibling
+  // caller that DOES need this (home has no gate of its own).
   useDealOutSequence(containerRef, step);
 
   useIsomorphicLayoutEffect(() => {

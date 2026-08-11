@@ -99,6 +99,39 @@ export interface IntroContextValue {
 
 const IntroContext = createContext<IntroContextValue>({ phase: "idle" });
 
+// Set to true the instant a decide-once effect (below) actually calls
+// markIntroPlayed() — i.e. the moment THIS JS realm burns the session's one
+// intro opportunity for real. Deliberately module scope, not component state
+// (not even a ref): a ref lives and dies with its component instance, and a
+// client-side nav away from `/` before `phase` reaches `"done"` unmounts
+// IntroProvider (see the cleanup effect below — it only clears
+// `data-intro="play"` on `done`, which an interrupted intro never reaches)
+// without ever burning the flag down. A nav back to `/` then mounts a BRAND
+// NEW IntroProvider with a fresh `decided` ref, which would happily read the
+// still-stale "play" attribute and replay the whole intro — even though
+// sessionStorage was already marked in step one. A module-scope variable, by
+// contrast, survives for exactly as long as the attribute can possibly stay
+// stale (both live only within one JS realm, i.e. until an actual page
+// reload — see layout.tsx's head script, which is what sets the attribute in
+// the first place and only ever runs once per real load), so it can never
+// disagree with it.
+//
+// This intentionally does NOT track "has any decision been made" — only
+// "has markIntroPlayed() been called". That distinction is what preserves
+// the `?photo=` deep-link exception just below: a deep-link mount decides
+// (usually "don't play") without burning the shot, so a LATER mount in the
+// same realm (e.g. the lightbox closes client-side, or the user navigates
+// elsewhere and back to `/` without a full reload) is still free to make its
+// own fresh decision, exactly as before this fix. It's also why this can't
+// simply be `hasPlayedIntro()` re-checked here: that would also correctly
+// catch the interrupted-replay bug, but it can't distinguish "burned by an
+// earlier mount in THIS realm" from "burned in an earlier real session, now
+// legitimately overridden by a `?intro=1` forced replay on a fresh reload" —
+// the latter must still be allowed to play, and a fresh reload always starts
+// a fresh JS realm, so this flag (unlike sessionStorage) correctly resets
+// for it.
+let burnedThisPageLoad = false;
+
 /** Read the current intro phase. Safe to call anywhere — the default (inert)
  * context value is `idle`, i.e. "nothing playing, render normally". */
 export function useIntroPhase(): IntroPhase {
@@ -178,6 +211,18 @@ export default function IntroProvider({ children }: { children: ReactNode }) {
         : null;
     const isPhotoDeepLink = params?.has("photo") ?? false;
 
+    // If THIS realm already burned the session's one shot — an earlier
+    // IntroProvider mount, earlier in this same page load, already called
+    // markIntroPlayed() — no later mount may play again, full stop, even
+    // though `data-intro="play"` may still be sitting stale on <html> (see
+    // `burnedThisPageLoad`'s doc comment above for why the attribute alone
+    // can't be trusted here, and why this check has to come BEFORE the
+    // attribute is ever read below).
+    if (burnedThisPageLoad) {
+      setPhase("done");
+      return;
+    }
+
     // The inline head script (layout.tsx) already made this exact call —
     // session flag, `?intro=1` replay, prefers-reduced-motion, `?photo=`
     // deep link — before the first paint. Reading its result back here
@@ -193,6 +238,7 @@ export default function IntroProvider({ children }: { children: ReactNode }) {
     // session's one shot at the intro on a later plain visit.
     if (!isPhotoDeepLink) {
       markIntroPlayed();
+      burnedThisPageLoad = true;
     }
 
     setPhase(willPlay ? "wordmark" : "done");
@@ -208,6 +254,19 @@ export default function IntroProvider({ children }: { children: ReactNode }) {
       document.documentElement.removeAttribute("data-intro");
     }
   }, [phase]);
+
+  // Belt-and-braces: also clear the attribute if IntroProvider unmounts
+  // before ever reaching `done` — exactly the interrupted-navigation
+  // scenario `burnedThisPageLoad` above is designed around. This is NOT what
+  // makes that scenario safe, though — an unmount cleanup firing before the
+  // next mount's effect runs is a React scheduling detail, not a guarantee,
+  // so the actual decision above never depends on it. This just means one
+  // less stale attribute sitting on <html> in the meantime.
+  useEffect(() => {
+    return () => {
+      document.documentElement.removeAttribute("data-intro");
+    };
+  }, []);
 
   // Preloader: while the wordmark sits centred, wait for the first row of
   // photos to decode. The real grid is already server-rendered underneath the
