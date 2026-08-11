@@ -41,7 +41,17 @@ export default function IntroOverlay() {
   const phase = useIntroPhase();
   const [stage, setStage] = useState<"in" | "enter" | "morph">("in");
 
-  const mounted = phase === "wordmark" || phase === "nav" || phase === "photo";
+  // `idle` is included (not just wordmark/nav/photo) so this renders on the
+  // very first client render too — `phase` starts as `"idle"` identically on
+  // server and client (see IntroContext's hydration-safety note), so this
+  // stays byte-identical across the hydration boundary. That's what lets the
+  // overlay's markup exist in the prerendered HTML at all: the CSS gate in
+  // globals.css (`[data-intro="play"] .intro-overlay`) is what actually
+  // decides whether it's visible before hydration ever runs, not this flag.
+  // `dealOut`/`done` are excluded same as before — once the anchor tile has
+  // taken over (see useDealOut.ts), this sheet must be gone for good.
+  const mounted =
+    phase === "idle" || phase === "wordmark" || phase === "nav" || phase === "photo";
 
   useEffect(() => {
     if (phase !== "wordmark") {
@@ -58,7 +68,12 @@ export default function IntroOverlay() {
 
   if (!mounted) return null;
 
-  const centered = phase === "wordmark";
+  // Idle rests in the SAME centred pose as `wordmark` (not the header
+  // position `nav`/`photo` use) so there's no visible jump/slide the
+  // instant hydration flips the phase from `idle` straight to `wordmark` —
+  // it's already sitting where the Figma `First_screen` preloader frame
+  // wants it, opaque and centred, before any JS has run at all.
+  const centered = phase === "wordmark" || phase === "idle";
   const fadingOut = phase === "photo";
   const showNav = phase === "nav" || phase === "photo";
 
@@ -68,7 +83,7 @@ export default function IntroOverlay() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-[100] bg-white"
+      className="intro-overlay pointer-events-none fixed inset-0 z-[100] bg-white"
       style={{
         opacity: fadingOut ? 0 : 1,
         transition: `opacity 0.3s ${EASE}`,

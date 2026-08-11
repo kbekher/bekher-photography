@@ -90,3 +90,25 @@ img {
     scroll-behavior: auto !important;
   }
 }
+
+/* First-load intro preloader anti-FOUC gate. See the inline script in
+ * src/app/layout.tsx's <head>: it runs before first paint and decides,
+ * using the same rules IntroContext uses, whether the intro should play —
+ * if so it sets `data-intro="play"` on <html>. Visibility of the overlay
+ * (src/components/intro/IntroOverlay.tsx) is driven purely by that
+ * attribute, never by React state, so it can be opaque from the very first
+ * painted frame instead of appearing after hydration.
+ *
+ * Default is HIDDEN — if the attribute is absent (script disabled, threw,
+ * or simply decided to skip), the real page renders normally and is never
+ * blocked. Higher specificity than `.intro-overlay` alone (via the
+ * `html[...]` prefix) means it always wins regardless of source order,
+ * without needing `!important`.
+ */
+.intro-overlay {
+  display: none;
+}
+
+html[data-intro="play"] .intro-overlay {
+  display: block;
+}

@@ -8,8 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useReducedMotion } from "framer-motion";
-import { hasPlayedIntro, markIntroPlayed } from "./introSession";
+import { markIntroPlayed } from "./introSession";
 
 /**
  * The first-load intro's state machine (spec §5.1):
@@ -96,17 +95,37 @@ export function useIntroPhase(): IntroPhase {
  * nothing here for React to warn about mismatching.
  *
  * The actual decision — has this session already seen the intro? does the
- * user prefer reduced motion? — only happens inside a `useEffect`, which by
- * definition never runs during SSR and never runs during the render that
- * produces the hydration output; it runs strictly *after* the DOM has
- * committed. So the very first thing a user (or a hydration diff) ever sees
- * is guaranteed to be the plain, static page — the intro is layered on top
- * a moment later, client-side only.
+ * user prefer reduced motion? — is made TWICE, deliberately, by two layers
+ * that must never be allowed to disagree:
+ *
+ *  1. An inline, synchronous `<script>` in `layout.tsx`'s `<head>` (see
+ *     that file) runs before the body is even parsed, using the same
+ *     rules as below, and sets `data-intro="play"` on `<html>` if the
+ *     intro should play. `globals.css` keys the overlay's visibility
+ *     purely off that attribute, so the preloader can be visible from the
+ *     very first painted frame — no React state can do that, because a
+ *     `useState` initial value only reaches the DOM once hydration runs,
+ *     which is already after first paint.
+ *  2. This component's `useEffect` below, which — instead of recomputing
+ *     the decision from `sessionStorage`/`matchMedia` a second time and
+ *     risking a different answer — simply reads back the attribute the
+ *     script already set. It runs strictly *after* the DOM has committed,
+ *     by which point the CSS gate has already been doing its job for
+ *     however long hydration took; this just hands off from "CSS is
+ *     holding a static frame" to "React is animating a phase machine".
+ *
+ * `phase` itself is still seeded with `useState<IntroPhase>("idle")` — a
+ * plain literal, not something computed from `sessionStorage`/`matchMedia`
+ * — so the server render and the client's first render (before hydration
+ * reconciles) stay byte-for-byte identical, and IntroOverlay's rendered
+ * markup/props are identical on both sides too (see IntroOverlay's
+ * `mounted` check, which includes `idle`). There is nothing here for React
+ * to warn about mismatching; only the *visibility* of that identical markup
+ * differs pre-hydration, and that's decided in CSS, not React.
  */
 export default function IntroProvider({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<IntroPhase>("idle");
   const [assetsReady, setAssetsReady] = useState(false);
-  const reducedMotion = useReducedMotion();
   const decided = useRef(false);
 
   // Decide once, after mount, whether to play at all.
@@ -114,14 +133,12 @@ export default function IntroProvider({ children }: { children: ReactNode }) {
     if (decided.current) return;
     decided.current = true;
 
-    // `useReducedMotion` resolves synchronously on the client (it reads
-    // `matchMedia` eagerly), but we still never let its value influence the
-    // render that produced this component's first paint — only this effect,
-    // which necessarily runs after that paint has already committed.
     // A `?photo=n` deep link opens the lightbox immediately on load. Playing
     // the intro underneath it would run two full-screen animations at once
     // and deal the grid out behind an already-open overlay, so a deep link
-    // wins outright. Read from `window.location` rather than
+    // wins outright. The head script already folds this into its play/skip
+    // decision too; it's re-read here only for the `markIntroPlayed`
+    // exception below. Read from `window.location` rather than
     // `useSearchParams()` on purpose: this must not influence render (see
     // "Hydration safety" above), and it avoids forcing a Suspense boundary
     // around the whole home page.
@@ -130,24 +147,13 @@ export default function IntroProvider({ children }: { children: ReactNode }) {
         ? new URLSearchParams(window.location.search)
         : null;
     const isPhotoDeepLink = params?.has("photo") ?? false;
-    // Dev/QA escape hatch: `?intro=1` forces a replay regardless of the
-    // sessionStorage flag, so iterating on the design doesn't require a new
-    // tab (or clearing storage) for every reload. Read the same
-    // hydration-safe way as `isPhotoDeepLink` above — inside this effect,
-    // never during render.
-    const forceReplay = params?.get("intro") === "1";
 
-    // `useReducedMotion()` can genuinely return `null` (its type is
-    // `boolean | null`) — e.g. before `initPrefersReducedMotion()` has ever
-    // run in this environment, or if `window.matchMedia` doesn't exist.
-    // Treating "not `false`" as "skip" (the previous check) means an
-    // *unknown* reading silently disables the intro for everyone; only an
-    // affirmative `true` — the user has actually opted into reduced motion —
-    // should skip it.
-    const prefersReducedMotion = reducedMotion === true;
-    const alreadyPlayed = hasPlayedIntro() && !forceReplay;
-
-    const skip = prefersReducedMotion || alreadyPlayed || isPhotoDeepLink;
+    // The inline head script (layout.tsx) already made this exact call —
+    // session flag, `?intro=1` replay, prefers-reduced-motion, `?photo=`
+    // deep link — before the first paint. Reading its result back here
+    // rather than recomputing it means these two decisions can never
+    // disagree with each other.
+    const willPlay = document.documentElement.dataset.intro === "play";
 
     // Mark the session as "seen" so a reduced-motion user who later disables
     // that setting mid-session still doesn't get the intro on their next
@@ -159,8 +165,19 @@ export default function IntroProvider({ children }: { children: ReactNode }) {
       markIntroPlayed();
     }
 
-    setPhase(skip ? "done" : "wordmark");
-  }, [reducedMotion]);
+    setPhase(willPlay ? "wordmark" : "done");
+  }, []);
+
+  // The head script's `data-intro="play"` attribute is only meant to hold
+  // through the pre-hydration window; once the intro machine has actually
+  // reached its resting state (played to completion OR was skipped above),
+  // clear it so nothing — a later client-side nav back to `/`, a stray CSS
+  // rule — can key off a stale "play" value for the rest of the session.
+  useEffect(() => {
+    if (phase === "done") {
+      document.documentElement.removeAttribute("data-intro");
+    }
+  }, [phase]);
 
   // Preloader: while the wordmark sits centred, wait for the first row of
   // photos to decode. The real grid is already server-rendered underneath the
