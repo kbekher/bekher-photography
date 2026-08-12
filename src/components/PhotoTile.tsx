@@ -2,7 +2,6 @@
 
 import { useState, type MouseEvent } from "react";
 import Image from "next/image";
-import { motion, useReducedMotion } from "framer-motion";
 import imageLoader from "@/utils/image-loader";
 import { horizontal } from "@/data";
 import { useLightbox } from "./lightbox/LightboxProvider";
@@ -44,34 +43,31 @@ export interface PhotoTileProps {
   className?: string;
 }
 
-// Tiles render at roughly 166-210 CSS px on desktop (see PhotoGrid §3
-// geometry) and scale down at narrower breakpoints. Keep this tight — it's
-// the single biggest perf lever on the grid pages.
-//
-// PhotoGrid only has two tiers (GridFrame switches 4-col -> 12-col at
-// 1024px, not 640px — see GridFrame's doc). Below 1024px it's a uniform
-// 2-up layout, no inset: tile = (viewport - 80 [frame padding] - 40 [one
-// gutter]) / 2 = 50vw - 60px, EXACTLY (verified against the same formula
-// PhotoGrid's nested grid uses) rather than an approximated vw figure.
-// `calc()` here also sidesteps a Next.js quirk: its srcset-width filter
-// looks for a bare "Nvw" token in `sizes` to decide which small candidate
-// widths to keep, and a raw "50vw" would make it drop the (correct, still
-// useful) 256px candidate — writing the exact calc() expression avoids
-// that false signal and lets the browser's own layout do the picking.
-// At >=1024px the tile is capped by the fixed 1280px frame at 166.67px, so
-// a flat 210px is a safe, simple constant rather than a second calc() tier.
-// Tiles are now fixed-size (PhotoGrid pins them to the Figma dimensions and
-// never scales them up), so `sizes` is just the widest tile at each tier:
-// 180px horizontal on phone, 215px horizontal on desktop. Being exact here
-// is the biggest perf lever on the grid pages — it keeps the browser from
-// pulling multi-thousand-pixel scans for a 215px box.
-const SIZES = "(max-width: 1023px) 180px, 215px";
+/**
+ * Per-orientation, because the two tile shapes are genuinely different widths
+ * (PhotoGrid's `--tile-v-w` / `--tile-h-w`) and a single shared value has to
+ * be the larger of the two — which silently over-fetched every vertical tile,
+ * and verticals are most of the feed.
+ *
+ * These are px, not vw, on purpose: the tracks are a fixed pixel width at
+ * each breakpoint (see PhotoGrid's note on why they don't stretch), so a vw
+ * value would be a worse description of the same box. See next.config's
+ * `imageSizes` for the candidate widths these resolve against.
+ */
+const SIZES = {
+  vertical: "(max-width: 1023px) 141px, 166px",
+  horizontal: "(max-width: 1023px) 180px, 215px",
+} as const;
 
 /**
  * Renders a single photo. Sizing/placement is entirely the caller's job
  * (PhotoGrid's grid engine, or later the lightbox) via `className` — this
  * component just fills whatever box it is given with a cover-fit image,
- * plus a shimmer placeholder and fade-in on load.
+ * plus a shimmer placeholder on load.
+ *
+ * Lightbox open/close morph is handled imperatively by `lightboxMorph.ts`
+ * (GSAP FLIP from this tile's screen rect) — no framer-motion layoutIds here,
+ * so intro deal-out transforms on the same node never fight the morph.
  */
 export default function PhotoTile({
   src,
@@ -84,17 +80,8 @@ export default function PhotoTile({
   className = "",
 }: PhotoTileProps) {
   const [loaded, setLoaded] = useState(false);
-  const reduceMotion = useReducedMotion();
   const lightbox = useLightbox();
   const orientation = aspectRatio === horizontal ? "horizontal" : "vertical";
-
-  // Is the lightbox currently showing *this* photo?
-  const isActive = lightbox.isOpen && index !== undefined && lightbox.index === index;
-
-  // Spec §5.5: while the lightbox is open, the clicked tile grows into it and
-  // every other tile fades away. The active tile hands its position to the
-  // overlay via the shared `layoutId`, so it must not also stay painted.
-  const dimmed = lightbox.isOpen && !isActive;
 
   const image = (
     <Image
@@ -104,29 +91,10 @@ export default function PhotoTile({
       fill
       draggable={false}
       priority={priority}
-      sizes={SIZES}
+      sizes={SIZES[orientation]}
       onLoad={() => setLoaded(true)}
-      className={`object-cover transition-opacity duration-500 ease-out ${
-        loaded ? "opacity-100" : "opacity-0"
-      }`}
+      className={`object-cover ${loaded ? "opacity-100" : "opacity-0"}`}
     />
-  );
-
-  // The shared-element seam (spec §5.5). The overlay renders the same
-  // `layoutId`, so framer-motion morphs the tile's on-screen rect into the
-  // lightbox rect. We DROP the id on the active tile while the lightbox is
-  // open so only one element ever claims a given layoutId at a time —
-  // framer still animates from this tile's last recorded position, and two
-  // live claimants would fight over the projection.
-  const inner = (
-    <motion.div
-      layoutId={isActive ? undefined : `photo-${src}`}
-      className="absolute inset-0"
-      animate={{ opacity: isActive ? 0 : dimmed ? 0 : 1 }}
-      transition={reduceMotion ? { duration: 0 } : { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-    >
-      {image}
-    </motion.div>
   );
 
   const boxClassName = `relative block overflow-hidden ${
@@ -148,14 +116,14 @@ export default function PhotoTile({
         className={`${boxClassName} cursor-zoom-in appearance-none border-0 bg-transparent p-0 text-left`}
         aria-label={`Open photo: ${alt}`}
       >
-        {inner}
+        <div className="absolute inset-0">{image}</div>
       </button>
     );
   }
 
   return (
     <div className={boxClassName} data-index={index} data-orientation={orientation}>
-      {inner}
+      <div className="absolute inset-0">{image}</div>
     </div>
   );
 }

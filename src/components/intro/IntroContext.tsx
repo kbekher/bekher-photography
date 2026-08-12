@@ -9,6 +9,13 @@ import {
   type ReactNode,
 } from "react";
 import { markIntroPlayed } from "./introSession";
+import {
+  DEAL_BUDGET_MS,
+  MAX_PRELOAD_WAIT,
+  NAV_DURATION_MS,
+  PHOTO_DURATION_MS,
+  WORDMARK_DURATION_MS,
+} from "./introTimings";
 
 /**
  * The first-load intro's state machine (spec §5.1):
@@ -32,40 +39,39 @@ import { markIntroPlayed } from "./introSession";
  */
 export type IntroPhase = "idle" | "wordmark" | "nav" | "photo" | "dealOut" | "done";
 
-// Per-phase duration in ms. wordmark 3400 + nav 1450 + photo 1450 +
-// dealOut 2000 = 8300ms total. Each number is load-bearing for a specific
-// beat rather than an arbitrary budget split, so none of them can be
-// retuned in isolation:
+// Per-phase duration in ms — every one of them imported, never written here,
+// because each is DERIVED in introTimings.ts from the beats the components
+// actually animate. That's the invariant this table exists to preserve: a
+// phase is only ever a window held open for a specific animation, so a phase
+// duration retuned independently of that animation is always a bug (either a
+// truncated beat or dead air). See introTimings.ts for the end-to-end
+// timeline; what each window is for:
 //
-// - wordmark (3400ms): the full K+B -> "Kristina Bekher" morph
-//   (IntroOverlay) lives entirely inside this window — monogram pose, hold,
-//   K/B spreading apart to their natural positions, then every other
-//   character fading in left-to-right — and finishes with a ~350ms hold
-//   before advancing. See IntroOverlay's own timeline comment for the
-//   beat-by-beat breakdown; this number must stay in sync with its
-//   REMAINING_WINDOW_END_MS.
-// - nav (1450ms): NOT a single fade. The wordmark spends the first 1000ms
-//   travelling from centre-stage up into its header position; only once
-//   that's fully settled does the navbar echo start its own 450ms fade-in
-//   (IntroOverlay gives it a matching 1000ms transition-delay). The nav must
-//   never appear to move alongside — or worse, ahead of — the wordmark
+// - wordmark: the full K+B -> "Kristina Bekher" morph (IntroOverlay) —
+//   monogram pose, hold, `+` out, K/B spreading to their natural positions,
+//   both words typing in parallel — plus a short hold before advancing.
+//   Runs CONCURRENTLY with the first-row asset preload below, never after it.
+// - nav: NOT a single fade. The wordmark travels from centre-stage up into
+//   its header position; only once that's settled does the navbar echo start
+//   its own fade-in (IntroOverlay gives it a matching transition-delay). The
+//   nav must never appear to move alongside — or worse, ahead of — a wordmark
 //   still in transit.
-// - photo (1450ms): the overlay dissolves (~450ms) to reveal the feed's
-//   first photo alone, centred, with every other photo stacked behind it
-//   (OverviewFeed) — then there's a deliberate ~1000ms hold on that single
-//   centred image before the deck deals out. That hold is what makes the
-//   reveal read as intentional rather than a blip on the way to the grid.
-// - dealOut (2000ms): owned by useDealOut, which sequences its own overlapping
-//   beats inside this window (the stacked tiles peel off staggered, and the
-//   anchor — starting mid-flight — lands last at 1800ms; see useDealOut.ts's
-//   DEAL_BUDGET_MS, which this must stay equal to). If this ever drops below
-//   useDealOut's inner total, the `done` cleanup below fires mid-transition
-//   and snaps the anchor to its resting transform — a visible cut.
+// - photo: the overlay dissolves to reveal the feed's first photo alone,
+//   centred, with every other photo stacked behind it (OverviewFeed) — then a
+//   deliberate hold on that single centred image before the deck deals out.
+//   That hold is what makes the reveal read as intentional rather than a blip
+//   on the way to the grid.
+// - dealOut: owned by useDealOut, which sequences its own overlapping beats
+//   inside this window (tiles peel off staggered; the anchor leaves on the
+//   same frame as the rest but flies longer, so it lands last). DEAL_BUDGET_MS is derived to sit just past DEAL_LANDING_MS
+//   for exactly this reason — if the phase ever ended first, the `done`
+//   cleanup would fire mid-flight and snap the anchor to its resting
+//   transform, a visible cut.
 const DURATIONS: Record<Exclude<IntroPhase, "idle" | "done">, number> = {
-  wordmark: 3400,
-  nav: 1450,
-  photo: 1450,
-  dealOut: 2000,
+  wordmark: WORDMARK_DURATION_MS,
+  nav: NAV_DURATION_MS,
+  photo: PHOTO_DURATION_MS,
+  dealOut: DEAL_BUDGET_MS,
 };
 
 // Preloader (Figma `First_screen`, node 31:997 — a blank white page with the
@@ -77,14 +83,12 @@ const DURATIONS: Record<Exclude<IntroPhase, "idle" | "done">, number> = {
 const PRELOAD_COUNT = 4; // the priority-loaded first row
 // Hard ceiling so a slow or dead connection can never trap someone on the
 // logo screen — we show the page regardless once this elapses. Deliberately
-// equal to DURATIONS.wordmark: that 3400ms is a choreographed animation that
-// must start the instant the phase is entered (see the phase-walk effect
-// below — its timer is never delayed by this gate), so the preload wait can
-// only ever run CONCURRENTLY with the animation, never stack in front of or
-// after it. Capping it at the same 3400ms means the asset gate can, at
-// worst, hold the phase open for a few extra ms of setTimeout jitter past
-// the animation's natural end — never a second multi-second wait.
-const MAX_PRELOAD_WAIT = 3400;
+// LONGER than DURATIONS.wordmark — see MAX_PRELOAD_WAIT in
+// introTimings.ts for why an equal cap made the gate a no-op. The wordmark's
+// animation still starts the instant the phase is entered (see the
+// phase-walk effect below — its timer is never delayed by this gate), so the
+// preload wait only ever runs CONCURRENTLY with it and can extend the hold,
+// never stack a wait in front of it.
 
 const NEXT_PHASE: Record<Exclude<IntroPhase, "idle" | "done">, IntroPhase> = {
   wordmark: "nav",
@@ -104,9 +108,7 @@ const IntroContext = createContext<IntroContextValue>({ phase: "idle" });
 // intro opportunity for real. Deliberately module scope, not component state
 // (not even a ref): a ref lives and dies with its component instance, and a
 // client-side nav away from `/` before `phase` reaches `"done"` unmounts
-// IntroProvider (see the cleanup effect below — it only clears
-// `data-intro="play"` on `done`, which an interrupted intro never reaches)
-// without ever burning the flag down. A nav back to `/` then mounts a BRAND
+// IntroProvider before it ever reaches `done` without burning the flag down. A nav back to `/` then mounts a BRAND
 // NEW IntroProvider with a fresh `decided` ref, which would happily read the
 // still-stale "play" attribute and replay the whole intro — even though
 // sessionStorage was already marked in step one. A module-scope variable, by
@@ -183,11 +185,11 @@ export function useIntroPhase(): IntroPhase {
 export default function IntroProvider({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<IntroPhase>("idle");
   const [assetsReady, setAssetsReady] = useState(false);
-  // Flips true once `wordmark`'s 5000ms animation timer has elapsed. Kept
+  // Flips true once `wordmark`'s animation timer has elapsed. Kept
   // separate from `assetsReady` on purpose — see the phase-walk effect
   // below, which requires BOTH before leaving `wordmark`, so a fast
   // connection never truncates the animation and a slow one only ever
-  // extends the hold past 5000ms instead of stacking a wait in front of it.
+  // extends the hold past it instead of stacking a wait in front of it.
   const [wordmarkTimeUp, setWordmarkTimeUp] = useState(false);
   const decided = useRef(false);
 
@@ -219,6 +221,16 @@ export default function IntroProvider({ children }: { children: ReactNode }) {
     // can't be trusted here, and why this check has to come BEFORE the
     // attribute is ever read below).
     if (burnedThisPageLoad) {
+      // Clear the attribute HERE, not just in the phase effect below. This is
+      // the "navigated away mid-intro, then came back to `/`" path: the
+      // attribute is still sitting on <html> from the first visit, and this
+      // component renders IntroOverlay for `idle` as well as the playing
+      // phases — so between this mount and the `done` commit there is a
+      // window where a stale "play" makes the opaque white sheet visible
+      // again over a page that is not running an intro. Removing it before
+      // `setPhase` closes that window in the same commit rather than relying
+      // on React to flush the two closely enough that it never paints.
+      document.documentElement.removeAttribute("data-intro");
       setPhase("done");
       return;
     }
@@ -244,29 +256,38 @@ export default function IntroProvider({ children }: { children: ReactNode }) {
     setPhase(willPlay ? "wordmark" : "done");
   }, []);
 
-  // The head script's `data-intro="play"` attribute is only meant to hold
-  // through the pre-hydration window; once the intro machine has actually
-  // reached its resting state (played to completion OR was skipped above),
-  // clear it so nothing — a later client-side nav back to `/`, a stray CSS
-  // rule — can key off a stale "play" value for the rest of the session.
+  // Own the `data-intro` attribute for the whole life of the intro, in ONE
+  // place, and re-assert it on every phase the intro is still mid-flight on.
+  //
+  // ## Why re-assert instead of just setting it once in the head script
+  // This effect used to have a sibling whose only job was an unmount cleanup
+  // that removed the attribute — and that cleanup is what made the preloader
+  // vanish. React StrictMode (on by default for the app router in dev) mounts
+  // every component, immediately unmounts it, and mounts it again. The
+  // simulated unmount fired that cleanup mid-intro, `globals.css`'s default
+  // `.intro-overlay { display: none }` took over, and the whole white sheet
+  // disappeared after the pre-hydration K+B frame had already painted — the
+  // "K+B shows for a moment, then nothing moves up" symptom. The phase
+  // machine kept running underneath, invisibly, which is also why the grid
+  // still dealt itself out "after a delay with no preloader".
+  //
+  // Re-asserting makes that class of bug structurally impossible rather than
+  // just fixed: it no longer matters who removed the attribute or when
+  // (StrictMode, a stray remount, a client-side nav back to `/`) — the very
+  // next commit of a non-resting phase puts it back. `setAttribute` with an
+  // unchanged value is a no-op for the style engine, so this costs nothing on
+  // the phases where it changes nothing.
+  //
+  // The attribute is still cleared on `done`, which is the one state where a
+  // stale "play" could matter: it must not be sitting on <html> for the rest
+  // of the session where a later navigation could key off it.
   useEffect(() => {
     if (phase === "done") {
       document.documentElement.removeAttribute("data-intro");
+    } else if (phase !== "idle") {
+      document.documentElement.dataset.intro = "play";
     }
   }, [phase]);
-
-  // Belt-and-braces: also clear the attribute if IntroProvider unmounts
-  // before ever reaching `done` — exactly the interrupted-navigation
-  // scenario `burnedThisPageLoad` above is designed around. This is NOT what
-  // makes that scenario safe, though — an unmount cleanup firing before the
-  // next mount's effect runs is a React scheduling detail, not a guarantee,
-  // so the actual decision above never depends on it. This just means one
-  // less stale attribute sitting on <html> in the meantime.
-  useEffect(() => {
-    return () => {
-      document.documentElement.removeAttribute("data-intro");
-    };
-  }, []);
 
   // Preloader: while the wordmark sits centred, wait for the first row of
   // photos to decode. The real grid is already server-rendered underneath the
@@ -316,7 +337,7 @@ export default function IntroProvider({ children }: { children: ReactNode }) {
   }, [phase]);
 
   // Walk the phases on a timer. Every phase's timer starts the INSTANT the
-  // phase is entered — this matters most for `wordmark`, whose 5000ms IS the
+  // phase is entered — this matters most for `wordmark`, whose duration IS the
   // K+B -> wordmark choreography (IntroOverlay): that animation must never
   // be delayed by the asset-preload gate below, or the gate would stack an
   // extra wait in FRONT of the animation instead of only ever extending it.
@@ -341,7 +362,7 @@ export default function IntroProvider({ children }: { children: ReactNode }) {
   // first row of photos has decoded — see the timer effect above (animation
   // clock) and the preloader effect above it (asset clock). Splitting this
   // into its own effect, keyed off both flags, is what lets a fast
-  // connection wait out the full 5000ms unbothered while a slow one holds
+  // connection wait out the full animation unbothered while a slow one holds
   // a little longer without ever truncating the animation.
   useEffect(() => {
     if (phase === "wordmark" && wordmarkTimeUp && assetsReady) {

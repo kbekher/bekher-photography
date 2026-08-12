@@ -1,203 +1,77 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
+import gsap from "gsap";
 import { useIntroPhase } from "./IntroContext";
+import {
+  ANCHOR_MOVE_MS,
+  ANCHOR_START_MS,
+  CONTAINER_FADE_MS,
+  DEAL_BUDGET_MS,
+  DEAL_LANDING_MS,
+  GSAP_EASE,
+  MAX_STAGGER_MS,
+  SETTLE_TRANSFORM_MS,
+  STAGGER_PER_INDEX_MS,
+  TRAVEL_MS,
+} from "./introTimings";
 
-const EASE = "cubic-bezier(0.25, 0.1, 0.25, 1)";
+export { DEAL_BUDGET_MS, DEAL_LANDING_MS };
 
-// The OTHER visible tiles settle into their grid slots, staggered by index.
-const STAGGER_PER_INDEX_MS = 45;
-const MAX_STAGGER_MS = 600;
-const SETTLE_TRANSFORM_MS = 850;
-// Last "other" tile finishes at MAX_STAGGER_MS + SETTLE_TRANSFORM_MS = 1450ms.
-
-// ## The "deck of cards" pose (`gather`)
-// Every photo starts stacked directly BEHIND the first one, and they peel
-// off that stack one at a time — nothing ever fades. This is a deliberate
-// constraint, not an omission: opacity was the old implementation and it
-// read as "photos materialise out of nothing" rather than "photos were
-// always there, hidden behind this one". Two things make the illusion hold:
-//
-//  - ANCHOR_SCALE keeps the front card at (essentially) its natural grid
-//    size rather than blowing it up into a hero. A scaled-up anchor would
-//    force every card behind it to be scaled up too just to stay covered,
-//    and their flight out would then read as a shrink instead of the
-//    growth the reference calls for.
-//  - STACK_FIT scales each hidden card to fit ENTIRELY INSIDE the anchor's
-//    box, rather than by some fixed fraction. That distinction matters
-//    because this grid mixes 2:3 and 3:2 tiles: a horizontal card behind a
-//    vertical anchor scaled by a flat 0.55 would still poke out at the
-//    sides. Fitting to `min(w-ratio, h-ratio)` is what makes the occlusion
-//    exact for every orientation pairing; the sub-1 factor is a subpixel
-//    margin so no edge peeks out at fractional device pixel ratios.
 const ANCHOR_SCALE = 1;
 const STACK_FIT = 0.96;
-
-// The anchor's own move. It starts at the SAME instant as everything else —
-// zero delay, deliberately — expressed as a CSS `transition-delay` on the
-// anchor's `transform`, written in the SAME batch of style writes as every
-// other card and released in the SAME `requestAnimationFrame` (see the
-// `deal` branch below). There is deliberately no `setTimeout` anywhere in
-// this: a timer between "others start" and "anchor starts" is exactly the
-// kind of jitter that would make `ANCHOR_START_MS = 0` mean "one clock tick
-// later" instead of "the same frame". "Last to take its place" is achieved
-// purely by giving the anchor a longer duration than any other card (1800ms
-// vs the last other's 1450ms), never by holding it back: any start delay at
-// all reads as the front card being stuck, which is exactly the stall this
-// is tuned to avoid. Keep ANCHOR_START_MS at 0 unless that changes.
-const ANCHOR_START_MS = 0;
-const ANCHOR_MOVE_MS = 1800;
-// Anchor lands at ANCHOR_START_MS + ANCHOR_MOVE_MS = 1800ms — 350ms after
-// the last other card (1450ms), so it is unambiguously the last to arrive.
-export const DEAL_LANDING_MS = ANCHOR_START_MS + ANCHOR_MOVE_MS;
-// The budget every consumer of this choreography sizes its own timing
-// against: IntroContext's `dealOut` phase duration (see that file's
-// DURATIONS — not edited here) and useCollectionDealOut's own timers below.
-// DEAL_LANDING_MS (1800ms) leaves a 200ms cushion inside it against
-// THOSE callers' own `setTimeout`-driven phase-advance jitter, so cleanup
-// never fires while the anchor is still mid-transition (which would snap it
-// to its resting transform — a visible cut). The anchor's own start, now a
-// CSS `transition-delay` rather than a timer, is no longer a source of that
-// jitter itself.
-export const DEAL_BUDGET_MS = 2000;
-
-// "The first ~3 rows" (spec) isn't a fixed tile count — the grid is 2
-// columns on phone, 4 on desktop, and a taller viewport simply fits more
-// rows before the fold. So instead of hardcoding a row/column count, a tile
-// is dealt with if any part of its box is inside the viewport at the moment
-// the anchor snaps to centre (still in identity layout at that instant, so
-// this is a true "is it visible right now" read). MAX_DEAL_TILES is just a
-// safety valve for a pathological case (e.g. a very short, very wide
-// viewport showing many partial rows) so this can never balloon into
-// animating the whole feed.
 const MAX_DEAL_TILES = 24;
 
-/**
- * `useLayoutEffect` is a no-op (with a console warning) during SSR, since
- * there's no DOM to measure/mutate synchronously before a paint that isn't
- * happening. This falls back to `useEffect` there and only becomes the real
- * synchronous, pre-paint version once running in the browser — the standard
- * "isomorphic layout effect" shim. Both hooks below need the real thing on
- * the client: `useDealOutSequence`'s `gather` step must snap tiles into
- * their centred/hidden pose before the browser paints, or the snap itself
- * flashes on screen for a frame.
- */
 export const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-/** The low-level, phase-agnostic state machine every "deal out from centre"
- * animation on the site is built from — see the module doc comment below. */
 export type DealOutStep = "idle" | "gather" | "deal" | "done";
 
-/**
- * Steps 3-5 of the intro (spec §5.1, client-authoritative wording), and the
- * collection page's equivalent open animation, choreographed as a deck of
- * cards being dealt:
- *
- *  - `gather`: the FIRST photo sits alone at viewport centre, at its natural
- *    grid size, with every OTHER photo currently in view stacked directly
- *    BEHIND it — scaled down just enough to be completely hidden by it, and
- *    fully opaque. On screen this is one photo, alone, on an empty page.
- *    This step is written to be safe to run more than once in a row against
- *    the same DOM (idempotent) — see the "why idempotent" note inside the
- *    `gather` branch itself for why that's not a theoretical concern.
- *  - `deal`: the cards peel off that stack one at a time, staggered by
- *    index, each travelling to its grid slot and growing to its real size on
- *    the way. The anchor starts its own move at the exact same instant as
- *    the others (a CSS `transition-delay`, not a timer — see
- *    ANCHOR_START_MS) and simply *finishes* last, purely because its own
- *    move takes longer, so there's no visible stall before it moves — just a
- *    controlled "last to arrive".
- *  - `done`: every inline style this hook touched is cleared.
- *
- * Nothing in this sequence animates a TILE's own `opacity`. That's the whole
- * point of the deck pose — a photo is never translucent, it's either hidden
- * behind another photo or it isn't; two 50%-opaque tiles stacked would each
- * be the other's window. See the ANCHOR_SCALE/STACK_FIT comment above for
- * the geometry that makes the occlusion exact across mixed 2:3 / 3:2 tiles.
- * The one exception is `DealOutSequenceOptions.fadeContainer`, a GROUP
- * opacity on the wrapping container element itself (never per-tile) that
- * `gather` can optionally drive — see that option's doc comment for why
- * compositing the whole subtree as one layer can't reintroduce the
- * see-through problem a per-tile fade would.
- *
- * This is intentionally NOT implemented by changing PhotoGrid/PhotoTile (out
- * of scope — see task file-ownership rules) — it works entirely from
- * outside, by grabbing the already-rendered tile elements via the
- * `data-index` attribute PhotoTile already puts on its root node, and
- * nudging their `transform`/`opacity` imperatively. React never manages a
- * `style` prop on that node, so these direct DOM writes are never
- * clobbered by PhotoTile's own re-renders (e.g. its `loaded` state flipping
- * on image load), and every inline style this hook sets is cleared exactly
- * once `step` reaches `done` — that matters because `PhotoTile` wraps its
- * image in a `layoutId` element for the lightbox's shared-element morph, and
- * a leftover inline `transform` would make that morph start from a
- * corrupted rect. Both callers below (`useDealOut` for the home page,
- * `useCollectionDealOut` in `src/components/collection/` for collection
- * pages) must preserve this discipline exactly — it's the one hard
- * invariant this file cannot break.
- *
- * ## Why plain DOM mutation instead of state/framer here
- * The grid can hold up to 20+ tiles on first paint; driving this from React
- * state would mean re-rendering all of them every frame. A one-shot
- * "snap to a computed offset, then transition to identity" (the classic
- * FLIP technique) is imperceptibly different for the user and far cheaper.
- *
- * ## `useDealOutSequence` — the shared core
- * Phase-agnostic: it only reacts to `step` changing between `idle`, `gather`,
- * `deal` and `done`, and has no idea what's driving that. Two callers drive
- * it differently:
- *  - `useDealOut(containerRef)` maps `IntroContext`'s phase onto `step`
- *    (`photo` -> `gather`, `dealOut` -> `deal`, `done` -> `done`, everything
- *    else -> `idle`), keeping its own call signature unchanged so
- *    `OverviewFeed` needs no changes. The `gather` snap is invisible there
- *    because `IntroOverlay` is still opaque at the instant `photo` starts —
- *    see that component for how its fade is sequenced against this. It ALSO
- *    opts into `fadeContainer` (below) as a second, independent guard
- *    against the same "other cards visible behind the first" defect — belt
- *    and suspenders alongside `IntroOverlay`, not a replacement for it, in
- *    case a future change to that component's timing ever lets daylight
- *    through before `gather` has finished posing the tiles.
- *  - `useCollectionDealOut(containerRef, { enabled })` walks the same steps
- *    off its own `setTimeout`s, with no overlay to hide behind — see that
- *    file for how it solves visibility instead (a CSS opacity gate on the
- *    grid wrapper, released only once `gather` has already been applied).
- *    It leaves `fadeContainer` off: turning it on there too would fight its
- *    own gate, since an inline `style.opacity` always wins over a stylesheet
- *    rule regardless of specificity — this hook's fade would hijack the
- *    gate's carefully-tuned release delay instead of composing with it.
- */
 export interface DealOutSequenceOptions {
-  /**
-   * Whether `gather` should also fade the CONTAINER itself in from
-   * `opacity: 0` (transition none -> released on the next frame with a
-   * ~300ms fade), so the very first paint of this subtree can never show
-   * the stacked-but-unposed tiles for even a frame. This is a GROUP opacity
-   * on one shared element, not per-tile: compositing the whole subtree as a
-   * single paint layer at `opacity: 0` hides every stacked tile as a unit,
-   * so there is no way for one to show through another the way per-tile
-   * opacity would allow (see the module doc comment's "two 50%-opaque tiles"
-   * note). It targets `containerRef`'s element specifically, never a
-   * `PhotoTile` root, so it can never touch the `layoutId` element the
-   * lightbox morph depends on. Defaults to `false` — see the two callers'
-   * doc comments above for why only `useDealOut` turns it on.
-   */
+  /** Fade the container in after `gather` (group opacity, not per-tile). */
   fadeContainer?: boolean;
+  /** Ms after `gather` before the container fade starts (home syncs with nav). */
+  fadeContainerDelay?: number;
 }
 
+/**
+ * Imperative "deal out from centre" sequence — the ONE implementation, shared
+ * verbatim by the home page's intro (`useDealOut` below) and by collection
+ * pages (`useCollectionDealOut`). The two differ only in what triggers each
+ * step: the home page is driven by IntroContext's phase machine, a collection
+ * page by its own mount timers. The choreography, the stagger and every
+ * duration come from `introTimings.ts` and are therefore identical on both.
+ *
+ * Uses GSAP rather than React state + CSS transitions because this is
+ * per-element transform choreography over up to 24 nodes, measured off live
+ * rects: timing stays precise without a re-render per tile, and teardown is
+ * one `clearProps` pass instead of unwinding state.
+ *
+ * ## The shape
+ *  - `gather` snaps every visible tile to the anchor's centre, scaled down to
+ *    fit behind it, z-ordered so the anchor sits on top. Nothing animates —
+ *    this is a hard set, hidden either behind IntroOverlay's opaque sheet
+ *    (home) or behind a CSS opacity gate (collection).
+ *  - `deal` releases them: each tile flies to its slot on a stagger derived
+ *    from its position in the deck, and the anchor leaves on the very first
+ *    frame alongside them but flies for longer, so it lands last.
+ *  - `done` clears every inline style GSAP wrote, returning the grid to plain
+ *    CSS-laid-out DOM.
+ */
 export function useDealOutSequence(
   containerRef: RefObject<HTMLElement | null>,
   step: DealOutStep,
-  { fadeContainer = false }: DealOutSequenceOptions = {}
+  { fadeContainer = false, fadeContainerDelay = 0 }: DealOutSequenceOptions = {}
 ) {
   const enteredRef = useRef(false);
-  // The exact set of elements this run touched (anchor + visible others),
-  // captured once in the `gather` step. `deal` and the `done` cleanup both
-  // act on this same snapshot rather than re-querying `[data-index]` live,
-  // so a mid-sequence pagination click (unlikely, but possible) can never
-  // sweep newly-mounted tiles into the cleanup pass or leave stragglers
-  // dangling.
   const dealtRef = useRef<HTMLElement[]>([]);
+  const fadeTimerRef = useRef<number | null>(null);
 
   useIsomorphicLayoutEffect(() => {
     const container = containerRef.current;
@@ -210,40 +84,20 @@ export function useDealOutSequence(
       const anchor = tiles.find((el) => el.dataset.index === "0");
       if (!anchor) return;
 
-      // ## Why `gather` must be idempotent
-      // This effect can run more than once against the SAME already-posed
-      // DOM without an intervening `done` cleanup in between — React
-      // StrictMode's dev-only mount -> cleanup -> mount effect replay is the
-      // most reliably reachable path (this project has no `reactStrictMode`
-      // override in next.config.ts, and Next's App Router defaults it to
-      // `true`), but Fast Refresh mid-edit and a router prefetch pre-mount
-      // can land in the same place. `getBoundingClientRect()` below reads
-      // the TRANSFORMED box, so a second pass that measures tiles still
-      // wearing a PREVIOUS pass's inline `transform` computes garbage —
-      // scale-of-a-scale, offset-from-an-offset — which is exactly the
-      // "mess of cards visible behind the first one" defect. The fix is to
-      // make every measurement below provably first-run: strip every
-      // candidate tile (and the container, if `fadeContainer` is in play)
-      // back to identity BEFORE reading a single rect.
+      gsap.killTweensOf([...tiles, container]);
+
       tiles.forEach((el) => {
-        el.style.transition = "none";
-        el.style.transform = "none";
-        el.style.opacity = "";
-        el.style.zIndex = "";
-        el.style.pointerEvents = "";
+        gsap.set(el, { clearProps: "all" });
       });
       if (fadeContainer) {
-        // Group opacity on the CONTAINER, never per-tile — see
-        // DealOutSequenceOptions.fadeContainer. `transition: none` here so
-        // the reset itself never animates; the fade-in is scheduled below,
-        // once the pose is actually computed.
+        // Hide the wrapper in the SAME layout effect that poses the deck, so
+        // the two land in one commit and the gather can never be painted.
+        // `transition: none` matters because this element may still be
+        // carrying a transition from a previous run.
+        gsap.set(container, { clearProps: "opacity,transition" });
         container.style.transition = "none";
         container.style.opacity = "0";
       }
-      // One forced layout flush commits every reset above (tiles AND the
-      // container) before anything below reads a rect — otherwise the
-      // browser is free to coalesce these writes with the next ones and
-      // hand back stale geometry, defeating the point of resetting first.
       void container.offsetHeight;
 
       const vw = window.innerWidth;
@@ -251,9 +105,6 @@ export function useDealOutSequence(
       const targetX = vw / 2;
       const targetY = vh / 2;
 
-      // Tiles are back in real, identity layout as of the reset above, so
-      // this is a genuine on-screen check — not corrupted by a prior run's
-      // transform the way it would have been without that reset.
       const visible = tiles.filter((el) => {
         const r = el.getBoundingClientRect();
         return r.bottom > 0 && r.top < vh;
@@ -265,58 +116,61 @@ export function useDealOutSequence(
       const anchorRect = anchor.getBoundingClientRect();
       const anchorCx = anchorRect.left + anchorRect.width / 2;
       const anchorCy = anchorRect.top + anchorRect.height / 2;
-      // The anchor's on-screen box once posed — what every card behind it
-      // has to fit inside of.
       const poseW = anchorRect.width * ANCHOR_SCALE;
       const poseH = anchorRect.height * ANCHOR_SCALE;
 
       dealt.forEach((el) => {
         el.style.willChange = "transform";
-        el.style.transition = "none";
-        el.style.transformOrigin = "50% 50%";
+        el.style.pointerEvents = el === anchor ? "" : "none";
 
         if (el === anchor) {
-          // Explicitly above every other card. Well under the lightbox
-          // overlay's own z-50, so a tile can never paint over it.
-          el.style.zIndex = String(MAX_DEAL_TILES + 1);
-          el.style.transform = `translate(${targetX - anchorCx}px, ${targetY - anchorCy}px) scale(${ANCHOR_SCALE})`;
+          gsap.set(el, {
+            x: targetX - anchorCx,
+            y: targetY - anchorCy,
+            scale: ANCHOR_SCALE,
+            zIndex: MAX_DEAL_TILES + 1,
+            transformOrigin: "50% 50%",
+          });
           return;
         }
 
         const r = el.getBoundingClientRect();
         const cx = r.left + r.width / 2;
         const cy = r.top + r.height / 2;
-        // A tile with no laid-out box (an aspect-ratio box whose image hasn't
-        // resolved yet, say) would make the ratio below Infinity/NaN and blow
-        // the transform out entirely — fall back to a safe small scale.
         const fit =
           r.width > 0 && r.height > 0
             ? Math.min(poseW / r.width, poseH / r.height) * STACK_FIT
             : 0.5;
-        // Descending z by index, so the deck peels off the TOP: the tile
-        // that leaves first (lowest index — see the stagger in `deal`) is
-        // the one sitting nearest the front, not buried at the back.
         const index = Number(el.dataset.index ?? 0);
-        el.style.zIndex = String(Math.max(1, MAX_DEAL_TILES - index));
-        el.style.transform = `translate(${targetX - cx}px, ${targetY - cy}px) scale(${fit})`;
-        el.style.pointerEvents = "none";
+        gsap.set(el, {
+          x: targetX - cx,
+          y: targetY - cy,
+          scale: fit,
+          zIndex: Math.max(1, MAX_DEAL_TILES - index),
+          transformOrigin: "50% 50%",
+        });
       });
 
-      // Release the container fade one frame after the pose above has been
-      // written, same "commit the snap, THEN transition" shape the `deal`
-      // branch uses for the tiles' own release below — without that frame
-      // gap the browser can collapse `opacity: 0` and `opacity: 1` into a
-      // single recalc and skip the fade outright.
-      let fadeRaf: number | null = null;
       if (fadeContainer) {
-        fadeRaf = requestAnimationFrame(() => {
-          container.style.transition = `opacity 300ms ${EASE}`;
-          container.style.opacity = "1";
-        });
+        if (fadeTimerRef.current !== null) {
+          window.clearTimeout(fadeTimerRef.current);
+        }
+        fadeTimerRef.current = window.setTimeout(() => {
+          fadeTimerRef.current = null;
+          gsap.to(container, {
+            opacity: 1,
+            duration: CONTAINER_FADE_MS / 1000,
+            ease: GSAP_EASE,
+            overwrite: true,
+          });
+        }, fadeContainerDelay);
       }
 
       return () => {
-        if (fadeRaf !== null) cancelAnimationFrame(fadeRaf);
+        if (fadeTimerRef.current !== null) {
+          window.clearTimeout(fadeTimerRef.current);
+          fadeTimerRef.current = null;
+        }
       };
     }
 
@@ -325,43 +179,46 @@ export function useDealOutSequence(
       const anchor = dealt.find((el) => el.dataset.index === "0") ?? null;
       const others = dealt.filter((el) => el !== anchor);
 
-      // Every OTHER visible tile peels off the deck and settles into its grid
-      // slot, staggered by index — growing from its stacked size to its real
-      // one as it travels. `transform` is the ONLY property in flight: no
-      // opacity, so a card is never translucent, it simply emerges from
-      // behind the one in front (see the deck-pose comment up top).
-      others.forEach((el) => {
-        const index = Number(el.dataset.index ?? 0);
-        const delay = Math.min(index * STAGGER_PER_INDEX_MS, MAX_STAGGER_MS);
-        el.style.transition = `transform ${SETTLE_TRANSFORM_MS}ms ${EASE} ${delay}ms`;
-      });
-      // The anchor's own move: same `transform` property, its own longer
-      // duration, and a `transition-delay` of ANCHOR_START_MS (see that
-      // constant's comment for why 0 here means genuinely simultaneous) —
-      // written in the SAME batch of style writes as every other card above,
-      // and released in the SAME requestAnimationFrame below. No timer
-      // involved, so there's no jitter between "others start" and "anchor
-      // starts" for the browser to introduce.
-      if (anchor) {
-        anchor.style.transition = `transform ${ANCHOR_MOVE_MS}ms ${EASE} ${ANCHOR_START_MS}ms`;
-      }
-      // Force a style flush so the browser commits every `transition` above
-      // before we change the target values below — otherwise it can coalesce
-      // both into a single recalc and skip the animation entirely.
-      void container.offsetHeight;
+      // The stagger counts POSITION IN THE DECK, not `data-index`. Those are
+      // not the same list: `dealt` is filtered to what's in the viewport and
+      // capped at MAX_DEAL_TILES, so keying off the raw grid index leaves
+      // holes in the ramp — a skipped tile becomes a skipped beat, and the
+      // cascade stutters. Sorting first is what makes "position" mean
+      // "reading order", which is the order the eye expects them to leave in.
+      const ordered = [...others].sort(
+        (a, b) => Number(a.dataset.index ?? 0) - Number(b.dataset.index ?? 0)
+      );
 
-      // `zIndex` is deliberately NOT reset here — the stacking order has to
-      // survive the whole flight, or a card mid-air would suddenly re-sort
-      // against the ones still in the deck. It's cleared in `done`.
-      const raf = requestAnimationFrame(() => {
-        others.forEach((el) => {
-          el.style.transform = "none";
-          el.style.pointerEvents = "";
+      ordered.forEach((el, position) => {
+        gsap.to(el, {
+          x: 0,
+          y: 0,
+          scale: 1,
+          duration: SETTLE_TRANSFORM_MS / 1000,
+          delay: Math.min(position * STAGGER_PER_INDEX_MS, MAX_STAGGER_MS) / 1000,
+          ease: GSAP_EASE,
+          overwrite: true,
+          onComplete: () => {
+            el.style.pointerEvents = "";
+          },
         });
-        if (anchor) anchor.style.transform = "none";
       });
 
-      return () => cancelAnimationFrame(raf);
+      if (anchor) {
+        // Leaves on the SAME frame as the first card — see ANCHOR_START_MS,
+        // which must stay 0. It arrives last only because ANCHOR_MOVE_MS
+        // outlasts every other card's delay-plus-flight, so it is in motion
+        // the entire time rather than waiting its turn.
+        gsap.to(anchor, {
+          x: 0,
+          y: 0,
+          scale: 1,
+          duration: ANCHOR_MOVE_MS / 1000,
+          delay: ANCHOR_START_MS / 1000,
+          ease: GSAP_EASE,
+          overwrite: true,
+        });
+      }
     }
 
     if (step === "done" && enteredRef.current) {
@@ -370,55 +227,69 @@ export function useDealOutSequence(
         dealtRef.current.length > 0
           ? dealtRef.current
           : Array.from(container.querySelectorAll<HTMLElement>("[data-index]"));
+
+      gsap.killTweensOf([...tiles, container]);
       tiles.forEach((el) => {
-        el.style.transition = "";
-        el.style.transform = "";
-        // `opacity` is no longer part of the per-tile choreography, but it's
-        // still cleared: a tile can carry one over from an earlier,
-        // interrupted run of this hook, and leaving it set would strand
-        // that tile.
-        el.style.opacity = "";
-        el.style.transformOrigin = "";
-        el.style.pointerEvents = "";
+        gsap.set(el, { clearProps: "all" });
         el.style.willChange = "";
-        el.style.zIndex = "";
+        el.style.pointerEvents = "";
       });
-      // Cleared unconditionally, not gated on `fadeContainer` — same reason
-      // a tile's `opacity` above is cleared unconditionally. An interrupted
-      // run (or a future caller flipping the option on/off) must never
-      // strand the container at `opacity: 0`; clearing an inline style that
-      // was never set is simply a no-op.
-      container.style.opacity = "";
+      gsap.set(container, { clearProps: "opacity" });
       container.style.transition = "";
       dealtRef.current = [];
     }
-  }, [step, containerRef, fadeContainer]);
+  }, [step, containerRef, fadeContainer, fadeContainerDelay]);
 }
 
-const PHASE_TO_STEP: Record<
-  "idle" | "wordmark" | "nav" | "photo" | "dealOut" | "done",
-  DealOutStep
-> = {
-  idle: "idle",
-  wordmark: "idle",
-  nav: "idle",
-  photo: "gather",
-  dealOut: "deal",
-  done: "done",
-};
-
 /**
- * Home-page entry point: drives `useDealOutSequence` off `IntroContext`'s
- * phase machine instead of its own timers. Call signature is unchanged from
- * before this file was split, so `OverviewFeed` needs no changes.
+ * Home-page entry point for the sequence above, driven by IntroContext's
+ * phase machine:
  *
- * `fadeContainer: true` — unlike the collection page, home has no CSS-class
- * gate of its own; its only cover is `IntroOverlay`'s opaque-then-dissolve
- * overlay. This adds an independent, cheap second guard directly on the
- * grid wrapper so "gather ran but the overlay somehow didn't fully cover
- * it" can never read as a mess of stacked cards.
+ *   nav + TRAVEL_MS  `gather` — the deck is posed and the wrapper faded in,
+ *                    all of it behind IntroOverlay's still-opaque sheet, so
+ *                    the snap is never seen. Timed to TRAVEL_MS so the first
+ *                    photo arrives on the same beat as the nav echo.
+ *   photo            the sheet dissolves, revealing the lone centred photo,
+ *                    then PHOTO_HOLD_MS of stillness on it.
+ *   dealOut          `deal`.
+ *   done             `done` — every inline style cleared.
+ *
+ * No CSS gate is involved on this page; see the comment in OverviewFeed for
+ * why the opaque overlay makes one unnecessary (and previously harmful).
  */
 export function useDealOut(containerRef: RefObject<HTMLElement | null>) {
   const phase = useIntroPhase();
-  useDealOutSequence(containerRef, PHASE_TO_STEP[phase], { fadeContainer: true });
+  const [step, setStep] = useState<DealOutStep>("idle");
+
+  useEffect(() => {
+    if (phase === "idle" || phase === "wordmark") {
+      setStep("idle");
+      return;
+    }
+
+    if (phase === "nav") {
+      setStep("idle");
+      const t = window.setTimeout(() => setStep("gather"), TRAVEL_MS);
+      return () => window.clearTimeout(t);
+    }
+
+    if (phase === "photo") {
+      setStep("gather");
+      return;
+    }
+
+    if (phase === "dealOut") {
+      setStep("deal");
+      return;
+    }
+
+    if (phase === "done") {
+      setStep("done");
+    }
+  }, [phase]);
+
+  useDealOutSequence(containerRef, step, {
+    fadeContainer: true,
+    fadeContainerDelay: 0,
+  });
 }

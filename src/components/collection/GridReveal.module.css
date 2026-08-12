@@ -34,7 +34,7 @@
 
 .gate[data-visible="true"] {
   opacity: 1;
-  transition: opacity 350ms cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: opacity 233ms cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {

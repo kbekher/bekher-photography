@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion, type Variants } from "framer-motion";
 import PhotoGrid from "@/components/PhotoGrid";
 import PillButton from "@/components/ui/PillButton";
+import Reveal from "@/components/ui/Reveal";
 import LightboxProvider from "@/components/lightbox/LightboxProvider";
 import { useCollectionDealOut } from "@/components/collection/useCollectionDealOut";
+import {
+  COLLECTION_DEAL_START_MS,
+  DEAL_BUDGET_MS,
+} from "@/components/intro/introTimings";
 import type { Gallery } from "@/data";
 import styles from "@/components/collection/GridReveal.module.css";
 
@@ -19,51 +23,45 @@ export interface CollectionContentProps {
   nextHref: string;
 }
 
-// Shared soft ease-out, per design spec §5.
-const EASE: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
-
 /**
  * Page-enter sequence, echoing §5.2's shape ("name settles first, the rest
  * cascades in behind it") adapted to a collection page: name -> description
- * -> grid deal-out -> prev/next pair.
+ * -> grid deal-out -> prev/next pair. Each text beat is a `Reveal` (fade +
+ * rise, GSAP, shared soft ease-out per design spec §5).
  *
- *   name          0.00 -> 0.45s  (fade + rise)
- *   description   0.10 -> 0.50s  (fade + rise, follows just behind)
- *   grid           ~0.35s        wrapper fades in (~0.35s), revealing ONLY
- *                                the centred first photo — every other photo
- *                                is stacked opaquely behind it (see
- *                                useCollectionDealOut.ts for the full
- *                                gather/deal timeline this kicks off)
- *   grid deal      ~1.00 -> 3.00s  the deck peels off card by card into the
- *                                grid, staggered; the first photo travels
- *                                into its own slot last — same choreography
- *                                as the intro's useDealOut
- *   prev/next     3.10 -> 3.50s  (fade + rise, after the grid has settled)
+ *   name          starts immediately
+ *   description   follows just behind it
+ *   grid          the wrapper's own gate fades in, revealing ONLY the centred
+ *                 first photo — every other photo is stacked opaquely behind
+ *                 it (see useCollectionDealOut.ts for the full gather/deal
+ *                 timeline this kicks off)
+ *   grid deal     the deck peels off card by card into the grid, staggered;
+ *                 the first photo travels into its own slot last — same
+ *                 choreography as the intro's useDealOut
+ *   prev/next     once the deal has fully landed (see BUTTONS_DELAY)
+ *
+ * Only the two text beats' numbers live here. Everything the grid does is
+ * owned by introTimings.ts, and the one beat that has to agree with it —
+ * the prev/next pair — is derived from those constants rather than restated,
+ * so retuning the deal-out can never leave this file quoting a stale figure.
  */
-const nameVariants: Variants = {
-  hidden: { opacity: 0, y: 14 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: EASE } },
-};
+const NAME_DURATION = 0.45;
+const NAME_Y = 14;
 
-const descriptionVariants: Variants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: EASE, delay: 0.1 },
-  },
-};
+const DESCRIPTION_DURATION = 0.4;
+const DESCRIPTION_DELAY = 0.1;
+const DESCRIPTION_Y = 10;
 
-// Delay is timed to land after the grid's deal-out has fully settled
-// (~3.0s — see useCollectionDealOut.ts), not in the middle of it.
-const buttonsVariants: Variants = {
-  hidden: { opacity: 0, y: 8 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: EASE, delay: 3.1 },
-  },
-};
+/**
+ * The prev/next pair must land AFTER the deal-out has fully settled, not in
+ * the middle of it: the deal's start plus its whole budget, plus a short beat
+ * so the two reads are separate gestures rather than one blur.
+ */
+const BUTTONS_SETTLE_BEAT_MS = 100;
+const BUTTONS_DELAY =
+  (COLLECTION_DEAL_START_MS + DEAL_BUDGET_MS + BUTTONS_SETTLE_BEAT_MS) / 1000;
+const BUTTONS_DURATION = 0.4;
+const BUTTONS_Y = 8;
 
 /**
  * Collection detail content (spec §4.3): name, description, photo grid, then
@@ -75,13 +73,13 @@ const buttonsVariants: Variants = {
  * at once, unlike Overview's paginated feed).
  *
  * This is a client component (was a server component before the page-enter
- * animation was added) so it can drive the enter sequence with framer-motion
- * and `useReducedMotion()`. The tradeoff: the whole subtree now hydrates on
- * the client instead of only the `LightboxProvider`/`PhotoGrid` island.
- * Nothing about the markup changes to make this true, though — name,
- * description and every photo `<img>` are plain server-rendered elements;
- * motion only ever sets their *initial* inline opacity/transform, so SSR
- * output and no-JS rendering are unaffected (same pattern as
+ * animation was added) so it can drive the enter sequence. The tradeoff: the
+ * whole subtree now hydrates on the client instead of only the
+ * `LightboxProvider`/`PhotoGrid` island. Nothing about the markup changes to
+ * make this true, though — name, description and every photo `<img>` are
+ * plain server-rendered elements; `Reveal` only adds a `.reveal` class whose
+ * hidden state has both a reduced-motion and a `<noscript>` escape hatch, so
+ * SSR output and no-JS rendering are unaffected (same pattern as
  * `AboutContent`/`IndexList`).
  *
  * ## The grid's reveal
@@ -93,10 +91,10 @@ const buttonsVariants: Variants = {
  * last. That hook works the same way `useDealOut` does: it nudges the
  * already-rendered tiles' `transform`/`opacity` imperatively via their
  * `data-index` attribute rather than wrapping each one in its own animated
- * component, because `PhotoTile` already wraps its image in a `layoutId`
- * shared-element for the lightbox morph (spec §5.5) — stacking another
- * animated ancestor around that isn't a risk worth taking, and it clears
- * every inline style it sets once the sequence reaches `done`.
+ * component. The lightbox's open/close morph (`lightboxMorph.ts`) measures
+ * and repositions those exact same nodes, so keeping them plain DOM means the
+ * two never fight over ownership of a tile's transform — and the deal-out
+ * clears every inline style it set once it reaches `done`.
  *
  * `gridRef` below is deliberately scoped to wrap only `<PhotoGrid>`, not
  * `<LightboxProvider>` itself — `LightboxProvider` also renders the
@@ -110,9 +108,6 @@ export default function CollectionContent({
   prevHref,
   nextHref,
 }: CollectionContentProps) {
-  const shouldReduceMotion = useReducedMotion();
-  const initial = shouldReduceMotion ? false : "hidden";
-
   const photos = gallery.photos.map((photo) => ({
     src: `${slug}/${photo.path}`,
     aspectRatio: photo.aspectRatio,
@@ -164,22 +159,18 @@ export default function CollectionContent({
   return (
     <div className="flex w-full flex-col items-center">
       <div className="mt-64 flex flex-col items-center gap-8 text-center">
-        <motion.h1
-          className="font-normal"
-          initial={initial}
-          animate="visible"
-          variants={nameVariants}
-        >
+        <Reveal as="h1" className="font-normal" duration={NAME_DURATION} y={NAME_Y}>
           {gallery.name}
-        </motion.h1>
-        <motion.p
+        </Reveal>
+        <Reveal
+          as="p"
           className="max-w-[506px]"
-          initial={initial}
-          animate="visible"
-          variants={descriptionVariants}
+          delay={DESCRIPTION_DELAY}
+          duration={DESCRIPTION_DURATION}
+          y={DESCRIPTION_Y}
         >
           {gallery.description}
-        </motion.p>
+        </Reveal>
       </div>
 
       {/*
@@ -199,15 +190,15 @@ export default function CollectionContent({
         </div>
       </LightboxProvider>
 
-      <motion.div
+      <Reveal
         className="mt-64 flex items-center justify-center gap-[40px]"
-        initial={initial}
-        animate="visible"
-        variants={buttonsVariants}
+        delay={BUTTONS_DELAY}
+        duration={BUTTONS_DURATION}
+        y={BUTTONS_Y}
       >
         <PillButton href={prevHref}>View previous</PillButton>
         <PillButton href={nextHref}>View next</PillButton>
-      </motion.div>
+      </Reveal>
     </div>
   );
 }

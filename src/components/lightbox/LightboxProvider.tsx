@@ -8,6 +8,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
   type ReactNode,
 } from "react";
 import { useLightboxRoute } from "./useLightboxRoute";
@@ -31,6 +32,8 @@ export interface LightboxContextValue {
   photos: LightboxPhoto[];
   isOpen: boolean;
   index: number;
+  /** True when the user clicked a tile (vs a `?photo=` deep link on load). */
+  morphFromClick: boolean;
   /** Open the lightbox at `index` — call this from a grid tile's onClick. */
   open: (index: number) => void;
   close: () => void;
@@ -54,6 +57,7 @@ const DEFAULT_CONTEXT: LightboxContextValue = {
   photos: [],
   isOpen: false,
   index: 0,
+  morphFromClick: false,
   open: noop,
   close: noop,
   next: noop,
@@ -82,14 +86,8 @@ export interface LightboxProviderProps {
 
 /**
  * Mounts the lightbox overlay + context around a page's photo grid.
- *
- * ⚠️ SEAM: for the shared-element open/close morph (spec §5.5) to work, the
- * grid's tile component must render its image inside a
- * `<motion.div layoutId={`photo-${photo.src}`}>` wrapper, using the exact
- * same `src` string as the matching `LightboxPhoto.src`. See the top of
- * `Lightbox.tsx` for the full explanation of how that id is used on this
- * side. Without it the lightbox still opens/closes correctly — it just
- * cross-fades instead of growing from the clicked tile's screen position.
+ * Open/close uses a GSAP FLIP morph from the clicked tile (see
+ * `lightboxMorph.ts`). Grid tiles stay plain DOM — no shared layoutIds.
  *
  * `useSearchParams` (used internally by `useLightboxRoute` for the
  * `?photo=` deep link) requires a `<Suspense>` ancestor during Next's
@@ -107,6 +105,7 @@ export default function LightboxProvider({ photos, children }: LightboxProviderP
 function LightboxRouteBridge({ photos, children }: LightboxProviderProps) {
   const route = useLightboxRoute(photos.length);
   const photosLength = photos.length;
+  const [morphFromClick, setMorphFromClick] = useState(false);
 
   // The element that had focus at the moment `open()` was called (i.e. the
   // grid tile that was clicked) — restored on close, per spec's a11y note.
@@ -115,6 +114,7 @@ function LightboxRouteBridge({ photos, children }: LightboxProviderProps) {
 
   const open = useCallback(
     (i: number) => {
+      setMorphFromClick(true);
       if (typeof document !== "undefined") {
         originRef.current = (document.activeElement as HTMLElement) ?? null;
       }
@@ -122,6 +122,12 @@ function LightboxRouteBridge({ photos, children }: LightboxProviderProps) {
     },
     [route.open]
   );
+
+  useEffect(() => {
+    if (!route.isOpen) {
+      setMorphFromClick(false);
+    }
+  }, [route.isOpen]);
 
   const next = useCallback(() => {
     if (!route.isOpen || photosLength === 0) return;
@@ -148,13 +154,14 @@ function LightboxRouteBridge({ photos, children }: LightboxProviderProps) {
       photos,
       isOpen: route.isOpen,
       index: route.index,
+      morphFromClick,
       open,
       close: route.close,
       next,
       prev,
       goTo: route.goTo,
     }),
-    [photos, route.isOpen, route.index, open, route.close, next, prev, route.goTo]
+    [photos, route.isOpen, route.index, morphFromClick, open, route.close, next, prev, route.goTo]
   );
 
   return (

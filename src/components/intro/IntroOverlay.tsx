@@ -1,10 +1,29 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
-import { useReducedMotion } from "framer-motion";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
+import { useReducedMotion } from "@/utils/useReducedMotion";
 import { useIntroPhase } from "./IntroContext";
-
-const EASE = "cubic-bezier(0.25, 0.1, 0.25, 1)";
+import {
+  EASE,
+  MONOGRAM_FADE_MS,
+  MONOGRAM_HOLD_MS,
+  NAV_FADE_MS,
+  OVERLAY_DISSOLVE_MS,
+  PLUS_FADE_MS,
+  REMAINING_FADE_MS,
+  REMAINING_START_MS,
+  REMAINING_WINDOW_END_MS,
+  SPREAD_MS,
+  SPREAD_START_MS,
+  TRAVEL_MS,
+} from "./introTimings";
 const NAV_LABELS = ["Overview", "Index", "About"];
 
 // The wordmark, split into individually-animatable characters. `K` and the
@@ -54,16 +73,23 @@ const WORD2_ORDER = new Map<number, number>(
 // glyph metrics (which are all measured in real px off the live DOM below).
 const MONOGRAM_GAP_EM = 0.18;
 
-// Timeline, all relative to the `wordmark` phase's start (see
-// IntroContext's DURATIONS.wordmark = 3400ms; these numbers must stay
-// inside that window with a little room to spare):
+// Timeline, all relative to the `wordmark` phase's start. Every number below
+// is imported from introTimings.ts, where WORDMARK_DURATION_MS is *derived*
+// from the last beat here — so this choreography can never overrun the phase
+// that exists to hold it open:
 //   t=0     monogram pose (K, +, B) fades in from opacity 0 / scale(0.96) —
 //           a short pop-in rather than a hard cut, over MONOGRAM_FADE_MS.
-//   t=700   MONOGRAM_HOLD_MS elapses: `+` fades out over PLUS_FADE_MS while
-//           K and B simultaneously glide from their monogram positions to
-//           their natural in-word positions over SPREAD_MS, on the slower
-//           EASE curve so the move reads as deliberate.
-//   t=1300  REMAINING_START_MS: "ristina" and "ekher" start typing in
+//   t=380   MONOGRAM_HOLD_MS elapses and `+` starts fading out over
+//           PLUS_FADE_MS. On its OWN beat: the brief is "the plus
+//           disappears, THEN K moves left", so the spread below does not
+//           start alongside it the way it used to.
+//   t=500   SPREAD_START_MS: K glides left and B glides right, from their
+//           monogram positions to their natural in-word positions, over
+//           SPREAD_MS on the slower EASE curve so the move reads as
+//           deliberate. This lands SPREAD_OVERLAP_MS before the `+` has
+//           fully gone, which is what keeps the two beats reading as one
+//           gesture instead of a stall between them.
+//   t=776   REMAINING_START_MS: "ristina" and "ekher" start typing in
 //           PARALLEL, each left to right, both starting on this same beat —
 //           not one flat left-to-right sweep across the whole string. Each
 //           word's per-character stagger is solved independently from its
@@ -75,23 +101,6 @@ const MONOGRAM_GAP_EM = 0.18;
 //           always visible, present only to hold its glyph's advance width
 //           for the layout measurement below. This leaves a short hold
 //           before the phase advances to `nav`.
-const MONOGRAM_FADE_MS = 180;
-const MONOGRAM_HOLD_MS = 700;
-const PLUS_FADE_MS = 220;
-const SPREAD_MS = 550;
-const REMAINING_START_MS = 1300;
-const REMAINING_FADE_MS = 260;
-const REMAINING_WINDOW_END_MS = 3050;
-
-// The wordmark's travel from centre-stage up into its header position, and
-// how long the nav echo waits before it's allowed to start fading in beneath
-// it — see the "Why this can fake the header's exact position" doc below for
-// why a plain translateY is enough. The nav's delay must equal this travel
-// time exactly, or the nav reads as arriving alongside (or ahead of) a
-// wordmark that's still mid-flight.
-const TRAVEL_MS = 1000;
-const NAV_FADE_MS = 450;
-
 interface WordmarkMetrics {
   ready: boolean;
   /** translateX (px) that carries K from its natural position to its slot
@@ -196,7 +205,7 @@ function measureWordmark(
  * puts its top edge at viewport-middle, and `-50%` (a percentage of the
  * element's *own* box, per the CSS transform spec) pulls it up by half its
  * own height, landing it dead-centre regardless of viewport size. That
- * translateY now takes TRAVEL_MS (1000ms), not an instant snap — see the
+ * translateY now takes TRAVEL_MS, not an instant snap — see the
  * timeline constants above — and the nav echo is held back by a matching
  * transition-delay so it never appears to move alongside a still-travelling
  * wordmark.
@@ -214,11 +223,11 @@ function measureWordmark(
  * braces, and it keeps `idle`'s pre-hydration paint sane even for a
  * reduced-motion user whose preference hasn't been read yet): `useReducedMotion`
  * gates every inline transition to `"none"`, landing every character at its
- * final opacity/position with no animation. It's read inside an effect
- * (framer-motion's hook is itself effect-driven, defaulting to `null` until
- * mounted), never during render, so server and first-client-render markup
- * stay identical — see IntroContext's hydration-safety note for why that
- * matters.
+ * final opacity/position with no animation. The hook resolves the preference
+ * inside an effect and seeds `false` until then (see
+ * `src/utils/useReducedMotion.ts`), never reading it during render, so server
+ * and first-client-render markup stay identical — see IntroContext's
+ * hydration-safety note for why that matters.
  *
  * ## a11y
  * Purely decorative — the real, interactive Logotype/NavBar are already
@@ -239,6 +248,9 @@ export default function IntroOverlay() {
   const plusRef = useRef<HTMLSpanElement>(null);
 
   const [metrics, setMetrics] = useState<WordmarkMetrics>(INITIAL_METRICS);
+  // Mirrors `metrics` for `remeasure`'s "did anything actually change?" test,
+  // which must run outside a state updater — see there.
+  const metricsRef = useRef<WordmarkMetrics>(INITIAL_METRICS);
   // True for the one commit that applies a resize-triggered re-measurement
   // (see the resize effect below) — folded into `noTransition` so that
   // commit renders with `transition: none` instead of genuinely animating
@@ -246,15 +258,21 @@ export default function IntroOverlay() {
   // once that snapped position has painted — see the effect that owns this
   // flag, further down, for why a single rAF is enough.
   const [suppressTransition, setSuppressTransition] = useState(false);
-  // `monoIn`/`spread`/`revealedWord1`/`revealedWord2` drive the wordmark's
-  // own internal choreography — see the timeline constants above. They're
-  // only ever written by the timer effect below, while `phase ===
+  // `monoIn`/`plusOut`/`spread`/`revealedWord1`/`revealedWord2` drive the
+  // wordmark's own internal choreography — see the timeline constants above.
+  // They're only ever written by the timer effect below, while `phase ===
   // "wordmark"`. `revealedWord1`/`revealedWord2` are how many of "ristina"'s
   // / "ekher"'s glyphs (in their own left-to-right order — see WORD1_ORDER/
   // WORD2_ORDER) have started fading in; the two counters advance on
   // independent timers so both words type in parallel rather than one flat
   // sequence.
+  //
+  // `plusOut` is deliberately separate from `spread` rather than derived from
+  // it. They used to be the same flag, which forced the `+` to fade at the
+  // exact instant K/B started travelling; splitting them is what lets the
+  // plus leave first and the letters follow.
   const [monoIn, setMonoIn] = useState(false);
+  const [plusOut, setPlusOut] = useState(false);
   const [spread, setSpread] = useState(false);
   const [revealedWord1, setRevealedWord1] = useState(0);
   const [revealedWord2, setRevealedWord2] = useState(0);
@@ -278,18 +296,86 @@ export default function IntroOverlay() {
   // is what this actually gates.
   const canResize = phase === "idle" || phase === "wordmark";
 
-  // Measure the live glyph layout once on mount. Runs BEFORE paint
-  // (useLayoutEffect), so the very first thing ever painted already has
-  // correct monogram positions — see `metrics.ready` in the render below for
-  // the one-frame fallback while this hasn't landed yet.
-  useLayoutEffect(() => {
+  // The one place a re-measurement is ever triggered from. `snap` forces the
+  // resulting commit to render with `transition: none`, for every caller
+  // except the very first (mount) measurement — see `suppressTransition`.
+  const remeasure = useCallback((snap: boolean) => {
     const container = containerRef.current;
     const kEl = charRefs.current[K_INDEX];
     const bEl = charRefs.current[B_INDEX];
     const plusEl = plusRef.current;
     if (!container || !kEl || !bEl || !plusEl) return;
-    setMetrics(measureWordmark(container, kEl, bEl, plusEl));
+
+    const next = measureWordmark(container, kEl, bEl, plusEl);
+
+    // Bail out when nothing actually moved. `measureWordmark` returns a fresh
+    // object every call, so without this every re-measure forces a commit —
+    // and a re-measure commit sets `transition: none` on EVERY animated
+    // property in this component, which jumps whatever beat is mid-flight
+    // straight to its end value. A resize that changed no glyph metric (the
+    // common case: this container is `inline-block`, so its width comes from
+    // the text, not the viewport) would otherwise make the spread or a glyph
+    // fade visibly pop for no reason at all.
+    //
+    // Compared against a ref rather than inside a `setMetrics` updater
+    // because the comparison has to decide whether to ALSO arm
+    // `suppressTransition`, and a state updater must stay pure — StrictMode
+    // double-invokes them.
+    const prev = metricsRef.current;
+    if (
+      prev.ready &&
+      prev.kX === next.kX &&
+      prev.bX === next.bX &&
+      prev.plusLeft === next.plusLeft
+    ) {
+      return;
+    }
+
+    metricsRef.current = next;
+    // Both state updates are queued from the same synchronous scope, so React
+    // batches them into one commit — which is what makes the new position
+    // paint without a transition rather than animate to it.
+    if (snap) setSuppressTransition(true);
+    setMetrics(next);
   }, []);
+
+  // Measure the live glyph layout once on mount. Runs BEFORE paint
+  // (useLayoutEffect), so the very first thing ever painted already has
+  // correct monogram positions — see `metrics.ready` in the render below for
+  // the one-frame fallback while this hasn't landed yet.
+  useLayoutEffect(() => {
+    remeasure(false);
+  }, [remeasure]);
+
+  // Re-measure once the webfont has actually loaded.
+  //
+  // This is not a refinement — without it the monogram visibly slides
+  // sideways early in the intro. Switzer is loaded with `display: "swap"`
+  // (layout.tsx), so the mount measurement above almost always runs against
+  // the Arial-metric fallback, not Switzer. Every number the monogram pose
+  // depends on — the container's full width, K's and B's natural offsets,
+  // each glyph's advance width — is a property of the FONT. When the swap
+  // lands, all of them change at once, but `metrics.kX`/`bX` are still the
+  // fallback's answers, so K and B are left sitting at stale offsets: the
+  // pair appears, then shifts off-centre, then only looks right again once
+  // the spread sends them to `translateX(0)` (their real, font-correct
+  // natural positions). Re-measuring on `fonts.ready` closes that window.
+  //
+  // `snap: true` because this can land mid-hold, after `metrics.ready` has
+  // already turned the transitions on — without it the correction would
+  // *animate*, which is the very slide it exists to remove.
+  useEffect(() => {
+    if (!canResize) return;
+    const fonts = document.fonts;
+    if (!fonts?.ready) return;
+    let cancelled = false;
+    fonts.ready.then(() => {
+      if (!cancelled) remeasure(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [canResize, remeasure]);
 
   // Re-measure on resize (font metrics don't change, but the container's
   // available width can) — but ONLY while `canResize`, i.e. while the
@@ -315,20 +401,10 @@ export default function IntroOverlay() {
   // effect below releases it next frame.
   useLayoutEffect(() => {
     if (!canResize) return;
-
-    function handleResize() {
-      const container = containerRef.current;
-      const kEl = charRefs.current[K_INDEX];
-      const bEl = charRefs.current[B_INDEX];
-      const plusEl = plusRef.current;
-      if (!container || !kEl || !bEl || !plusEl) return;
-      setSuppressTransition(true);
-      setMetrics(measureWordmark(container, kEl, bEl, plusEl));
-    }
-
+    const handleResize = () => remeasure(true);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [canResize]);
+  }, [canResize, remeasure]);
 
   // Releases `suppressTransition` one frame after a resize-triggered
   // re-measure has committed and painted — i.e. after the snap (not a
@@ -365,6 +441,7 @@ export default function IntroOverlay() {
   useEffect(() => {
     if (phase !== "wordmark" || !metrics.ready) {
       setMonoIn(false);
+      setPlusOut(false);
       setSpread(false);
       setRevealedWord1(0);
       setRevealedWord2(0);
@@ -379,7 +456,9 @@ export default function IntroOverlay() {
     // with nothing to animate.
     const raf = requestAnimationFrame(() => setMonoIn(true));
 
-    timers.push(window.setTimeout(() => setSpread(true), MONOGRAM_HOLD_MS));
+    // The `+` leaves first, then K/B travel — two beats, two timers.
+    timers.push(window.setTimeout(() => setPlusOut(true), MONOGRAM_HOLD_MS));
+    timers.push(window.setTimeout(() => setSpread(true), SPREAD_START_MS));
 
     // "ristina" and "ekher" type in PARALLEL: both start on the same beat
     // (REMAINING_START_MS) and both land their last glyph's fade exactly on
@@ -428,6 +507,7 @@ export default function IntroOverlay() {
   // never leave the wordmark stuck mid-morph on every later phase.
   const settled = phase === "nav" || phase === "photo";
   const effectiveMonoIn = isIdle || settled || monoIn;
+  const effectivePlusOut = settled || plusOut;
   const effectiveSpread = settled || spread;
   const effectiveWord1 = settled ? WORD1_INDICES.length : revealedWord1;
   const effectiveWord2 = settled ? WORD2_INDICES.length : revealedWord2;
@@ -480,22 +560,31 @@ export default function IntroOverlay() {
     };
   }
 
-  const plusOpacity = effectiveSpread ? 0 : effectiveMonoIn ? 1 : 0;
+  // Keyed off `effectivePlusOut`, not `effectiveSpread` — the whole point of
+  // the split is that the `+` is already on its way out by the time K and B
+  // start moving.
+  const plusOpacity = effectivePlusOut ? 0 : effectiveMonoIn ? 1 : 0;
   const plusTransition = noTransition
     ? "none"
-    : `opacity ${effectiveSpread ? PLUS_FADE_MS : MONOGRAM_FADE_MS}ms ${EASE}`;
+    : `opacity ${effectivePlusOut ? PLUS_FADE_MS : MONOGRAM_FADE_MS}ms ${EASE}`;
 
   return (
     <div
       aria-hidden="true"
-      className="intro-overlay pointer-events-none fixed inset-0 z-[100] bg-white"
+      // NOT `pointer-events-none`. This sheet is opaque and covers the whole
+      // viewport, so anything reachable through it is reachable blind: a click
+      // over a photo would open the lightbox underneath the preloader, and a
+      // scroll would drag the already-gathered deck off the viewport centre
+      // that `useDealOut` posed it against. It swallows input for the ~3.7s it
+      // is up, then unmounts at `dealOut`.
+      className="intro-overlay fixed inset-0 z-[100] bg-white"
       style={{
         opacity: fadingOut ? 0 : 1,
-        // The `photo` phase's first ~450ms (see IntroContext's DURATIONS
+        // The `photo` phase's first OVERLAY_DISSOLVE_MS (see IntroContext's
         // comment) IS this dissolve — the duration below must stay in sync
         // with that budget or the "overlay dissolve, then hold on the
         // centred photo" beat drifts out of alignment with OverviewFeed.
-        transition: noTransition ? "none" : `opacity 0.45s ${EASE}`,
+        transition: noTransition ? "none" : `opacity ${OVERLAY_DISSOLVE_MS}ms ${EASE}`,
       }}
     >
       <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center px-[40px]">

@@ -95,17 +95,47 @@ const INTRO_HEAD_SCRIPT = `(function () {
 
     if (!skip) {
       document.documentElement.setAttribute("data-intro", "play");
+
+      // Dead-man's switch. globals.css turns this attribute into an OPAQUE,
+      // full-viewport white sheet, and the only thing that ever removes it is
+      // IntroProvider reaching its "done" phase. So if the client bundle
+      // never executes far enough to mount IntroProvider — a chunk 404, a
+      // throw in any client module evaluated before it, an extension breaking
+      // hydration — the visitor is stranded on a blank white screen forever,
+      // with no CSS escape hatch. Every other opacity/visibility gate in this
+      // codebase has one (see .reveal and GridReveal's .gate); this is that
+      // hatch, and it deliberately lives here in the head script rather than
+      // in React, because the whole failure mode is "React never ran".
+      // Comfortably longer than the ~3.7s intro, so it can never fire early.
+      setTimeout(function () {
+        document.documentElement.removeAttribute("data-intro");
+      }, 8000);
     }
   } catch (e) {
     // Never let a script error leave the page blank.
   }
 })();`;
 
+// No-JS escape hatch for the `Reveal` primitive's hidden state (the `.reveal`
+// class in globals.css). This hazard is inherited, not new: framer-motion —
+// which Reveal replaces — serialised its `initial` variant into the SSR HTML
+// as an inline `opacity: 0`, so a visitor without JS got a page whose text
+// was permanently invisible, with no way to override it. Moving the hidden
+// state into a class fixed the "no way to override it" half; this block is
+// the override. <noscript> content only reaches the DOM when scripting is
+// disabled, so it can never fight the GSAP-driven reveal when JS *is*
+// available. `!important` because it must beat `.reveal` regardless of where
+// the stylesheet lands in source order.
+const REVEAL_NOSCRIPT_CSS = `.reveal { opacity: 1 !important; }`;
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
   return (
     <html lang="en" className={switzer.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: INTRO_HEAD_SCRIPT }} />
+        <noscript>
+          <style>{REVEAL_NOSCRIPT_CSS}</style>
+        </noscript>
       </head>
       <body suppressHydrationWarning>{children}</body>
     </html>

@@ -49,6 +49,21 @@ export default function OverviewFeed() {
     // photo 80 still resolves on first load. `visible` is a prefix slice of
     // `homeFeed`, so a tile's grid index already equals its feed index.
     <LightboxProvider photos={homeFeed}>
+      {/*
+        No CSS visibility gate here, unlike the collection page's
+        `GridReveal.module.css`. The home grid doesn't need one: IntroOverlay
+        is an opaque, full-viewport white sheet sitting on top of it for every
+        phase up to and including `photo`, so there is nothing to hide the
+        gather behind — it's already hidden. `useDealOut` owns this wrapper's
+        opacity outright from `gather` onwards.
+
+        This used to carry an `.intro-grid-gate` class scoped to
+        `html[data-intro="play"]`, which made the grid's visibility depend on
+        an attribute that something else could remove (see IntroContext's note
+        on the StrictMode unmount that used to do exactly that). An
+        `opacity: 0` whose escape hatch lives in a DIFFERENT file than the code
+        that clears it is a blank-page waiting to happen.
+      */}
       <div ref={gridRef} className="flex w-full flex-col items-center">
         <PhotoGrid photos={visible} priorityCount={PRIORITY_COUNT} />
 

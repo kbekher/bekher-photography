@@ -25,6 +25,19 @@
 
 html {
   background-color: var(--color-bg);
+  /* Reserve the scrollbar's space permanently, so it appearing or vanishing
+   * never shifts the page sideways. Two places depend on this rather than
+   * merely benefitting from it:
+   *  - the intro. The grid's images are still loading while the preloader is
+   *    up, so the document grows past the viewport mid-animation; without a
+   *    reserved gutter, the scrollbar arriving nudges the whole centred
+   *    wordmark left by half its width.
+   *  - the lightbox morph, which measures a grid tile's rect on open and
+   *    again on close. Its body scroll-lock takes the document out of flow
+   *    between those two reads, so an unreserved gutter would make the two
+   *    measurements disagree by the scrollbar's width.
+   * No-op on platforms with overlay scrollbars (they occupy no space). */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -111,4 +124,81 @@ img {
 
 html[data-intro="play"] .intro-overlay {
   display: block;
+}
+
+/* NOTE: there is deliberately no `.intro-grid-gate` rule here any more. The
+ * home grid used to be held at `opacity: 0` by a rule scoped to
+ * `html[data-intro="play"]`, but that made the grid's visibility depend on an
+ * attribute owned by a different layer — and when a React StrictMode unmount
+ * removed that attribute mid-intro, the gate silently stopped applying (see
+ * IntroContext). It was also redundant: IntroOverlay is an opaque,
+ * full-viewport sheet covering the grid for every phase up to and including
+ * `photo`, so there is nothing for a gate to hide. useDealOut now owns that
+ * wrapper's opacity outright. Collection pages, which have no such sheet, do
+ * still need a gate — theirs lives in GridReveal.module.css.
+ */
+
+/* Hidden resting state for the `Reveal` primitive
+ * (src/components/ui/Reveal.tsx), which fades + rises its element into place
+ * with GSAP on mount. The hidden state lives here, as a static class in the
+ * server-rendered HTML, rather than as an inline style: it is present on the
+ * very first painted frame (so the reveal can't flash its content before
+ * `useLayoutEffect` hands the element to GSAP), and — unlike an inline style
+ * — it can be overridden by other stylesheets.
+ *
+ * That override-ability is the whole point. `opacity: 0` must never be a
+ * TERMINAL state — content that simply never appears is far worse than
+ * content that skips its entrance — which is the same rule
+ * src/components/collection/GridReveal.module.css follows for the grid gate,
+ * and for the same reason: everything that un-hides this class is JS, and JS
+ * is not guaranteed to run. Two escape hatches guarantee it opens anyway:
+ *  - `@media (prefers-reduced-motion: reduce)` below: forces it visible
+ *    unconditionally. Belt-and-suspenders alongside Reveal's own
+ *    reduced-motion branch (which independently sets `opacity: 1` without a
+ *    tween) — even if that JS path were bypassed, this rule alone reveals
+ *    the content.
+ *  - `<noscript>`: if JS never runs, nothing ever tweens this open.
+ *    src/app/layout.tsx injects a stylesheet forcing it visible; `<noscript>`
+ *    content only reaches the DOM when scripting is disabled, so it can never
+ *    fight the GSAP-driven path when JS *is* available.
+ */
+.reveal {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+  }
+}
+
+/* Lightbox hero frame (src/components/lightbox/Lightbox.tsx) — sizes the
+ * hero box to its exact design ratio (374:540 vertical, 580:388 horizontal)
+ * regardless of viewport shape, the CSS equivalent of `object-fit: contain`
+ * applied to the frame itself rather than to the photo inside it.
+ *
+ * This used to be `w-full h-full` plus `max-w-*`/`max-h-*` plus an
+ * `aspect-[...]` utility, which doesn't work: `aspect-ratio` only affects a
+ * dimension that is `auto`, and both were already definite. On any viewport
+ * shorter than it is wide (a laptop with browser chrome, a landscape phone),
+ * the box's height silently stopped matching its width's ratio, and
+ * `object-cover` cropped harder than the design frame intends — vertical
+ * photos read as cut off top and bottom.
+ *
+ * The fix needs width and height to come from the SAME calculation, since
+ * two independently-clamped `min()`s can each "win" and leave a box that
+ * isn't on-ratio at all. Container query units do that: `--w` picks
+ * whichever of the container's width/height is more restrictive, and height
+ * is derived FROM that value, so the box is always on-ratio, just scaled to
+ * fit. `--rw`/`--rh` (the ratio's two numbers, e.g. 374/540) are set inline
+ * per photo orientation.
+ */
+.lightbox-hero-viewport {
+  container-type: size;
+}
+
+.lightbox-hero-frame {
+  --w: min(calc(var(--rw) * 1px), 100cqw, calc(100cqh * var(--rw) / var(--rh)));
+  width: var(--w);
+  height: calc(var(--w) * var(--rh) / var(--rw));
 }
