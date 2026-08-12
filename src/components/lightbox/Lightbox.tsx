@@ -11,8 +11,7 @@ import {
 import Image from "next/image";
 import gsap from "gsap";
 import PillButton from "@/components/ui/PillButton";
-import Logotype from "@/components/ui/Logotype";
-import NavBar from "@/components/ui/NavBar";
+import SiteHeader from "@/components/ui/SiteHeader";
 import imageLoader from "@/utils/image-loader";
 import { prefersReducedMotion, useReducedMotion } from "@/utils/useReducedMotion";
 import { GSAP_EASE } from "@/components/intro/introTimings";
@@ -55,6 +54,12 @@ const SWITCH_LOAD_TIMEOUT_MS = 1200;
  */
 const HERO_BOX_CLASS = "lightbox-hero-frame relative shrink-0 overflow-hidden";
 
+function heroBoxClass(photo: LightboxPhoto): string {
+  return photo.aspectRatio === horizontal
+    ? `${HERO_BOX_CLASS} lightbox-hero-frame--horizontal`
+    : HERO_BOX_CLASS;
+}
+
 function heroFrameStyle(photo: LightboxPhoto): CSSProperties {
   const [rw, rh] = photo.aspectRatio === horizontal ? [580, 388] : [374, 540];
   return { "--rw": rw, "--rh": rh } as CSSProperties;
@@ -62,8 +67,8 @@ function heroFrameStyle(photo: LightboxPhoto): CSSProperties {
 
 function heroSizesFor(photo: LightboxPhoto): string {
   return photo.aspectRatio === horizontal
-    ? "(max-width: 1023px) 92vw, 580px"
-    : "(max-width: 1023px) 92vw, 374px";
+    ? "(max-width: 1023px) 92vw, 1280px"
+    : "(max-width: 1023px) 92vw, 900px";
 }
 
 function buildAlt(photo: LightboxPhoto): string {
@@ -79,20 +84,24 @@ function getFocusable(container: HTMLElement): HTMLElement[] {
   );
 }
 
+const ARROW_BTN_CLASS =
+  "absolute top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 cursor-pointer items-center justify-center text-fg";
+
 function ArrowIcon({ direction }: { direction: "left" | "right" }) {
   return (
     <svg
+      xmlns="http://www.w3.org/2000/svg"
       width="14"
       height="14"
       viewBox="0 0 14 14"
       fill="none"
       aria-hidden="true"
-      className={direction === "left" ? "rotate-180" : undefined}
+      className={direction === "right" ? "scale-x-[-1]" : undefined}
     >
       <path
-        d="M1 7H13M13 7L8 2M13 7L8 12"
+        d="M8.80249 11.62L4.99916 7.81667C4.54999 7.36751 4.54999 6.63251 4.99916 6.18334L8.80249 2.38"
         stroke="currentColor"
-        strokeWidth="1.3"
+        strokeMiterlimit={10}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -232,19 +241,15 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
 
   // --- Photo switching (arrows / thumbnails) -------------------------------
   //
-  // `displayIndex` lags `activeIndex` for the length of one crossfade, so the
-  // outgoing and incoming photos are on screen together. Each gets its OWN
-  // box, sized to its OWN aspect ratio (see `heroBoxClass`), which is the
-  // whole reason this can't be a single element whose `src` swaps:
+  // `displayIndex` lags `activeIndex` until the incoming photo has loaded and
+  // the switch has landed. Each layer gets its OWN aspect box (see
+  // `heroBoxClass`) so a horizontal frame never crops a vertical photo.
   //
-  //  - the frame must not change before the photo in it does. Sizing one
-  //    shared box from the incoming photo while it still contains the
-  //    outgoing one is what produced a horizontal photo `object-cover`-
-  //    cropped inside a vertical frame.
-  //  - and the incoming photo must not appear before it can be drawn. The
-  //    crossfade therefore does not start on the index change at all — it
-  //    waits for the incoming `<img>` to report `load`, so the new frame and
-  //    the new pixels arrive on the same frame.
+  // On navigation the outgoing photo hides immediately and the incoming frame
+  // appears at once with a shimmer placeholder, so thumbnail/metadata changes
+  // are not left hanging over the previous image while the full-size file
+  // loads. Once the incoming `<img>` reports `load`, it fades in and
+  // `displayIndex` catches up.
   const [displayIndex, setDisplayIndex] = useState(activeIndex);
   const [incomingReady, setIncomingReady] = useState(false);
   const switchingTo = displayIndex !== activeIndex ? activeIndex : null;
@@ -277,9 +282,24 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
     return () => window.clearTimeout(t);
   }, [switchingTo, incomingReady]);
 
+  // Hide the resting photo and show the incoming placeholder frame the same
+  // frame the route changes — do not wait for the full-size image to load.
+  useLayoutEffect(() => {
+    if (switchingTo === null) return;
+    const outgoing = heroRef.current;
+    const incoming = incomingRef.current;
+    if (outgoing) {
+      gsap.killTweensOf(outgoing);
+      gsap.set(outgoing, { opacity: 0 });
+    }
+    if (incoming) {
+      gsap.killTweensOf(incoming);
+      gsap.set(incoming, { opacity: 1 });
+    }
+  }, [switchingTo]);
+
   useLayoutEffect(() => {
     if (switchingTo === null || !incomingReady) return;
-    const outgoing = heroRef.current;
     const incoming = incomingRef.current;
     const land = () => {
       switchLandedRef.current = true;
@@ -289,14 +309,13 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
       land();
       return;
     }
-    // Both layers animate, unlike the open/close morph: their boxes are
-    // different shapes, so the incoming one cannot be relied on to cover the
-    // outgoing one.
-    const tl = gsap.timeline({ onComplete: land });
-    tl.fromTo(incoming, { opacity: 0 }, { opacity: 1, duration: SWITCH_S, ease: GSAP_EASE }, 0);
-    if (outgoing) {
-      tl.to(outgoing, { opacity: 0, duration: SWITCH_S, ease: GSAP_EASE }, 0);
+    const img = incoming.querySelector("img");
+    if (!img) {
+      land();
+      return;
     }
+    const tl = gsap.timeline({ onComplete: land });
+    tl.fromTo(img, { opacity: 0 }, { opacity: 1, duration: SWITCH_S, ease: GSAP_EASE });
     return () => {
       tl.kill();
     };
@@ -538,6 +557,7 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
   useEffect(() => {
     const scrollY = window.scrollY;
     const body = document.body;
+    const dialog = dialogRef.current;
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     const prev = {
       overflow: body.style.overflow,
@@ -546,17 +566,22 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
       width: body.style.width,
       paddingRight: body.style.paddingRight,
     };
+    const prevDialogPadding = dialog?.style.paddingRight ?? "";
     body.style.overflow = "hidden";
     body.style.position = "fixed";
     body.style.top = `-${scrollY}px`;
     body.style.width = "100%";
-    if (scrollbarWidth > 0) body.style.paddingRight = `${scrollbarWidth}px`;
+    if (scrollbarWidth > 0) {
+      body.style.paddingRight = `${scrollbarWidth}px`;
+      if (dialog) dialog.style.paddingRight = `${scrollbarWidth}px`;
+    }
     return () => {
       body.style.overflow = prev.overflow;
       body.style.position = prev.position;
       body.style.top = prev.top;
       body.style.width = prev.width;
       body.style.paddingRight = prev.paddingRight;
+      if (dialog) dialog.style.paddingRight = prevDialogPadding;
       window.scrollTo(0, scrollY);
     };
   }, []);
@@ -589,7 +614,7 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
       aria-modal="true"
       aria-label="Photo viewer"
       tabIndex={-1}
-      className={`fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden outline-none ${
+      className={`fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden pt-[env(safe-area-inset-top,0px)] outline-none ${
         isClosing ? "pointer-events-none" : ""
       }`}
     >
@@ -598,21 +623,18 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
           stay fully opaque while it morphs across it. */}
       <div ref={backdropRef} aria-hidden="true" className="absolute inset-0 bg-bg" />
 
-      <div className="relative mx-auto flex h-full w-full max-w-[1280px] flex-col px-[40px]">
-        <header data-lb-chrome className="flex w-full shrink-0 flex-col items-center pt-24">
-          <Logotype />
-          <div className="mt-24 w-full">
-            <NavBar
-              trailing={
-                <PillButton as="button" onClick={close}>
-                  Close
-                </PillButton>
-              }
-            />
-          </div>
-        </header>
+      <div className="relative mx-auto flex h-full w-full max-w-[1280px] flex-col items-center px-[40px]">
+        <SiteHeader
+          chrome
+          className="shrink-0"
+          navTrailing={
+            <PillButton as="button" onClick={close}>
+              Close
+            </PillButton>
+          }
+        />
 
-        <div className="flex min-h-0 flex-1 flex-col items-center">
+        <div className="flex min-h-0 w-full flex-1 flex-col items-center">
           <div
             data-lb-chrome
             className="flex gap-2 flex-wrap w-full shrink-0 justify-center pt-[26px] text-center"
@@ -627,7 +649,7 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
               type="button"
               onClick={goPrev}
               aria-label="Previous photo"
-              className="absolute left-0 top-1/2 z-10 -m-[10px] -translate-y-1/2 p-[10px] text-fg"
+              className={`${ARROW_BTN_CLASS} left-0 -ml-2`}
             >
               <ArrowIcon direction="left" />
             </button>
@@ -638,7 +660,7 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
             <div
               ref={heroRef}
               style={{ ...heroFrameStyle(displayPhoto), ...morphBackdrop }}
-              className={HERO_BOX_CLASS}
+              className={heroBoxClass(displayPhoto)}
             >
               <Image
                 key={displayPhoto.src}
@@ -655,15 +677,8 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
               />
             </div>
 
-            {/* Incoming layer, only while switching. A sibling of the hero
-                rather than a child of it, so it can carry its own aspect box:
-                a vertical photo arriving over a horizontal one gets a vertical
-                frame from the first frame it is visible, instead of being
-                cover-cropped into the outgoing photo's shape.
-
-                Rendered (invisible) as soon as the target changes so the
-                browser starts fetching it — `onLoad` is what releases the
-                crossfade, so this element existing early is the preload. */}
+            {/* Incoming layer while switching — shown immediately with a
+                shimmer placeholder; the full-size image fades in once loaded. */}
             {incomingPhoto ? (
               <div
                 aria-hidden="true"
@@ -671,8 +686,10 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
               >
                 <div
                   ref={incomingRef}
-                  style={{ ...heroFrameStyle(incomingPhoto), opacity: 0 }}
-                  className={HERO_BOX_CLASS}
+                  style={heroFrameStyle(incomingPhoto)}
+                  className={`${heroBoxClass(incomingPhoto)} ${
+                    incomingReady ? "" : "image-placeholder"
+                  }`}
                 >
                   <Image
                     key={incomingPhoto.src}
@@ -683,7 +700,7 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
                     priority
                     quality={90}
                     sizes={heroSizesFor(incomingPhoto)}
-                    className="object-cover"
+                    className="object-cover opacity-0"
                     draggable={false}
                     onLoad={() => setIncomingReady(true)}
                     onError={() => setIncomingReady(true)}
@@ -697,7 +714,7 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
               type="button"
               onClick={goNext}
               aria-label="Next photo"
-              className="absolute right-0 top-1/2 z-10 -m-[10px] -translate-y-1/2 p-[10px] text-fg"
+              className={`${ARROW_BTN_CLASS} right-0 -mr-2`}
             >
               <ArrowIcon direction="right" />
             </button>
@@ -737,7 +754,7 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
                     aria-current={active || undefined}
                     aria-label={active ? `${buildAlt(photo)} (current photo)` : buildAlt(photo)}
                     onClick={() => goThumb(i)}
-                    className={`relative block h-[40px] shrink-0 overflow-hidden outline-none transition-opacity duration-200 ${
+                    className={`relative block h-[40px] shrink-0 cursor-pointer overflow-hidden outline-none transition-opacity duration-200 ${
                       thumbHorizontal ? "aspect-[36/24]" : "aspect-[22/32]"
                     } ${active ? "opacity-100" : "opacity-40 hover:opacity-70"}`}
                   >

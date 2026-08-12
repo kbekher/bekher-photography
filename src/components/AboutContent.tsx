@@ -6,8 +6,13 @@ import Image from "next/image";
 import imageLoader from "@/utils/image-loader";
 import TextLink from "@/components/ui/TextLink";
 import Reveal from "@/components/ui/Reveal";
-import { useReducedMotion } from "@/utils/useReducedMotion";
-import { GSAP_EASE } from "@/components/intro/introTimings";
+import {
+  ANCHOR_MOVE_MS,
+  CONTAINER_FADE_MS,
+  GSAP_EASE,
+  PHOTO_HOLD_MS,
+} from "@/components/intro/introTimings";
+import { prefersReducedMotion } from "@/utils/useReducedMotion";
 
 const PORTRAIT_SRC = "/hero.jpg";
 
@@ -21,88 +26,150 @@ const DOWNLOAD_LINKS = [
   { label: "Pexels", href: "https://www.pexels.com/@kristina-bekher-1944658582/" },
 ];
 
-// Portrait: a slow scale-up out of a small pose, not a rise. It is the one
-// element on the page that doesn't use the shared `Reveal` primitive, because
-// `Reveal` only offers a y-offset.
-const PORTRAIT_DURATION = 0.8;
-const PORTRAIT_FROM_SCALE = 0.6;
+const PORTRAIT_RATIO = 374 / 540;
+const PORTRAIT_POSE_WIDTH = 166;
+const PORTRAIT_MAX_WIDTH = 374;
 
-// The three text sections cascade in behind the portrait. This used to be a
-// parent element owning `delayChildren`/`staggerChildren` for the group; with
-// a `Reveal` per child the same shape is just an arithmetic delay per index,
-// and no element has to exist purely to own the stagger.
-const TEXT_DELAY_CHILDREN = 0.5;
-const TEXT_STAGGER = 0.12;
+/** Room for the site header + About heading + first bio line below the portrait. */
+const PORTRAIT_MAX_HEIGHT_CSS =
+  "calc(100dvh - env(safe-area-inset-top, 0px) - 17rem)";
+
+const PORTRAIT_DONE_S = (CONTAINER_FADE_MS + PHOTO_HOLD_MS + ANCHOR_MOVE_MS) / 1000;
+
 const TEXT_DURATION = 0.5;
-const TEXT_Y = 8;
-const textDelay = (i: number) => TEXT_DELAY_CHILDREN + i * TEXT_STAGGER;
+const TEXT_STAGGER = 0.12;
+
+function viewportSize() {
+  return {
+    w: window.visualViewport?.width ?? window.innerWidth,
+    h: window.visualViewport?.height ?? window.innerHeight,
+  };
+}
+
+function portraitTargetWidth(contentWidth: number): number {
+  const reserved = 17 * 16;
+  const maxH = Math.max(0, viewportSize().h - reserved);
+  const byHeight = maxH * PORTRAIT_RATIO;
+  return Math.min(PORTRAIT_MAX_WIDTH, contentWidth, byHeight);
+}
+
+function settlePortrait(el: HTMLElement, width: number) {
+  gsap.set(el, {
+    position: "relative",
+    left: "auto",
+    top: "auto",
+    width,
+    x: 0,
+    y: 0,
+    xPercent: 0,
+    yPercent: 0,
+    opacity: 1,
+    clearProps: "transform,zIndex",
+  });
+}
 
 export default function AboutContent() {
+  const slotRef = useRef<HTMLDivElement>(null);
   const portraitRef = useRef<HTMLDivElement>(null);
-  const shouldReduceMotion = useReducedMotion();
 
   useLayoutEffect(() => {
     const el = portraitRef.current;
-    if (!el) return;
+    const slot = slotRef.current;
+    if (!el || !slot) return;
 
-    // Reduced motion still has to clear `.reveal`'s `opacity: 0` — see the
-    // note on that class in globals.css. Bailing out early would leave the
-    // portrait permanently invisible for anyone whose CSS escape hatch
-    // didn't apply.
-    if (shouldReduceMotion) {
-      gsap.set(el, { opacity: 1, scale: 1, clearProps: "transform" });
+    const contentWidth = slot.clientWidth;
+    const targetWidth = portraitTargetWidth(contentWidth);
+    const targetHeight = targetWidth / PORTRAIT_RATIO;
+    slot.style.height = `${targetHeight}px`;
+
+    if (prefersReducedMotion()) {
+      settlePortrait(el, targetWidth);
       return;
     }
 
-    const tween = gsap.fromTo(
-      el,
-      { opacity: 0, scale: PORTRAIT_FROM_SCALE },
-      {
-        opacity: 1,
-        scale: 1,
-        duration: PORTRAIT_DURATION,
+    void slot.offsetHeight;
+    const slotRect = slot.getBoundingClientRect();
+    const landLeft = slotRect.left + slotRect.width / 2;
+    const landTop = slotRect.top;
+    const { w: vw, h: vh } = viewportSize();
+
+    gsap.set(el, {
+      position: "fixed",
+      left: vw / 2,
+      top: vh / 2,
+      xPercent: -50,
+      yPercent: -50,
+      width: PORTRAIT_POSE_WIDTH,
+      margin: 0,
+      opacity: 0,
+      zIndex: 1,
+    });
+
+    const tl = gsap.timeline({
+      onComplete: () => settlePortrait(el, targetWidth),
+    });
+
+    tl.to(el, {
+      opacity: 1,
+      duration: CONTAINER_FADE_MS / 1000,
+      ease: GSAP_EASE,
+    })
+      .to({}, { duration: PHOTO_HOLD_MS / 1000 })
+      .to(el, {
+        left: landLeft,
+        top: landTop,
+        xPercent: -50,
+        yPercent: 0,
+        width: targetWidth,
+        duration: ANCHOR_MOVE_MS / 1000,
         ease: GSAP_EASE,
-        onComplete: () => gsap.set(el, { clearProps: "transform" }),
-      }
-    );
+      });
 
     return () => {
-      tween.kill();
+      tl.kill();
     };
-  }, [shouldReduceMotion]);
+  }, []);
+
+  const aboutDelay = PORTRAIT_DONE_S + 0.04;
+  const contactDelay = aboutDelay + TEXT_STAGGER;
+  const downloadDelay = aboutDelay + TEXT_STAGGER * 2;
 
   return (
     <div className="flex w-full flex-col items-center">
-      <div ref={portraitRef} className="reveal mt-[122px]">
-        <Image
-          loader={imageLoader}
-          src={PORTRAIT_SRC}
-          alt="Kristina Bekher"
-          width={374}
-          height={540}
-          sizes="(max-width: 639px) 92vw, 374px"
-          priority
-          className="h-auto w-[374px] max-w-[92vw] aspect-[374/540] object-cover"
-        />
+      <div
+        ref={slotRef}
+        className="mt-24 flex w-full shrink-0 justify-center"
+      >
+        <div
+          ref={portraitRef}
+          className="reveal relative aspect-[374/540] w-[166px] max-w-full overflow-hidden will-change-transform"
+          style={{ maxHeight: PORTRAIT_MAX_HEIGHT_CSS }}
+        >
+          <Image
+            loader={imageLoader}
+            src={PORTRAIT_SRC}
+            alt="Kristina Bekher"
+            fill
+            sizes="(max-width: 639px) 100vw, 374px"
+            priority
+            className="object-cover"
+          />
+        </div>
       </div>
 
-      <div className="flex w-full flex-col items-center">
-        <Reveal
-          as="section"
-          delay={textDelay(0)}
-          duration={TEXT_DURATION}
-          y={TEXT_Y}
-          className="mt-48 flex flex-col items-center text-center"
-        >
+      {/* Text sits in the document flow from the first paint — only opacity
+          animates in, so the portrait slot never shifts when copy appears. */}
+      <div className="mt-48 flex w-full shrink-0 flex-col items-center">
+        <Reveal as="section" delay={aboutDelay} duration={TEXT_DURATION} y={0} className="flex flex-col items-center text-center">
           <h2>About</h2>
           <p className="mt-8 max-w-[506px] text-center">{BIO}</p>
         </Reveal>
 
         <Reveal
           as="section"
-          delay={textDelay(1)}
+          delay={contactDelay}
           duration={TEXT_DURATION}
-          y={TEXT_Y}
+          y={0}
           className="mt-[40px] flex flex-col items-center text-center"
         >
           <h2>Contact</h2>
@@ -121,9 +188,9 @@ export default function AboutContent() {
 
         <Reveal
           as="section"
-          delay={textDelay(2)}
+          delay={downloadDelay}
           duration={TEXT_DURATION}
-          y={TEXT_Y}
+          y={0}
           className="mb-96 mt-[40px] flex flex-col items-center text-center"
         >
           <h2>Download images on</h2>

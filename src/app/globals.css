@@ -191,14 +191,36 @@ html[data-intro="play"] .intro-overlay {
  * whichever of the container's width/height is more restrictive, and height
  * is derived FROM that value, so the box is always on-ratio, just scaled to
  * fit. `--rw`/`--rh` (the ratio's two numbers, e.g. 374/540) are set inline
- * per photo orientation.
+ * per photo orientation. Below 1024px a fixed design-width cap still applies;
+ * at desktop the cap is dropped so the frame scales to the full viewport height.
  */
 .lightbox-hero-viewport {
   container-type: size;
+  --lb-arrow-inset: 48px;
+  --lb-h-arrow-inset: calc(2 * var(--lb-arrow-inset));
 }
 
 .lightbox-hero-frame {
   --w: min(calc(var(--rw) * 1px), 100cqw, calc(100cqh * var(--rw) / var(--rh)));
   width: var(--w);
   height: calc(var(--w) * var(--rh) / var(--rw));
+}
+
+@media (min-width: 1024px) {
+  .lightbox-hero-frame {
+    --h: min(100cqh, calc(100cqw * var(--rh) / var(--rw)));
+    height: var(--h);
+    width: calc(var(--h) * var(--rw) / var(--rh));
+  }
+
+  /* Horizontal photos are wide — cap width so the frame stays between the
+     nav arrows instead of scaling to full height and spilling over them. */
+  .lightbox-hero-frame--horizontal {
+    --w: min(
+      calc(100cqw - 2 * var(--lb-h-arrow-inset)),
+      calc(100cqh * var(--rw) / var(--rh))
+    );
+    width: var(--w);
+    height: calc(var(--w) * var(--rh) / var(--rw));
+  }
 }

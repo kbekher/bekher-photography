@@ -158,7 +158,7 @@ export default function CollectionContent({
 
   return (
     <div className="flex w-full flex-col items-center">
-      <div className="mt-64 flex flex-col items-center gap-8 text-center">
+      <div className="mt-24 flex flex-col items-center gap-8 text-center">
         <Reveal as="h1" className="font-normal" duration={NAME_DURATION} y={NAME_Y}>
           {gallery.name}
         </Reveal>

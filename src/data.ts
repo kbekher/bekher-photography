@@ -134,7 +134,7 @@ export const homeFeed: FeedPhoto[] = [
   { aspectRatio: vertical, src: "home-feed/kfc-road-sign-harman.jpg", collection: null, place: "", year: "2026", description: "" },
   { aspectRatio: vertical, src: "home-feed/girls-on-a-boat-amsterdam.jpg", collection: '', place: "Amsterdam", year: "2026", description: "Sunbathing" },
   { aspectRatio: vertical, src: "european-feel/malaga-cathedral.jpg", collection: 'european-feel', place: "Malaga, Spain", year: "2023", description: "Santa Iglesia Catedral Basílica de la Encarnación" },
-  { aspectRatio: vertical, src: "home-feed/ryanair-plane-view.jpg", collection: '', place: "", year: "2024", description: "" },
+  { aspectRatio: vertical, src: "home-feed/ryanair-plane-view.jpg", collection: '', place: "", year: "2024", description: "Window seat" },
   { aspectRatio: vertical, src: "european-feel/hanging-clothes-between-houses-venice.jpg", collection: 'european-feel', place: "Venice, Italy", year: "2024", description: "" },
   { aspectRatio: horizontal, src: "european-feel/malaga-view-from-the-top.jpg", collection: 'european-feel', place: "Malaga", year: "2023", description: "La Malagueta" },
   { aspectRatio: vertical, src: "european-feel/rainy-sky-paris-city-center.jpg", collection: 'european-feel', place: "Paris", year: "2023", description: "" },

@@ -22,7 +22,7 @@ type ButtonProps = CommonProps &
 export type PillButtonProps = LinkProps | ButtonProps;
 
 const BASE =
-  "inline-flex h-[31px] items-center justify-center rounded-pill px-8 py-[6px] text-center " +
+  "inline-flex h-[31px] cursor-pointer items-center justify-center rounded-pill px-8 py-[6px] text-center " +
   "transition-colors duration-150 ease-out active:bg-surface " +
   "disabled:bg-surface disabled:cursor-not-allowed";
 

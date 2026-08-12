@@ -25,12 +25,18 @@ export interface NavBarProps {
  * 213x31 nav row: Overview / Index / About, centered, 24px below the logotype.
  * Marks the current route active via usePathname. Keyboard navigable (native
  * link/button semantics via PillButton).
+ *
+ * Three equal grid tracks keep the pill row at the true horizontal centre
+ * even when a trailing control (Close, Back) sits in the right column.
  */
 export default function NavBar({ trailing, className = "" }: NavBarProps) {
   const pathname = usePathname();
 
   return (
-    <nav className={`relative flex items-center justify-center gap-8 ${className}`.trim()}>
+    <nav
+      className={`grid w-full grid-cols-[1fr_auto_1fr] items-center ${className}`.trim()}
+    >
+      <div aria-hidden="true" />
       <ul className="flex items-center gap-8" role="list">
         {NAV_ITEMS.map((item) => (
           <li key={item.href}>
@@ -40,9 +46,7 @@ export default function NavBar({ trailing, className = "" }: NavBarProps) {
           </li>
         ))}
       </ul>
-      {trailing ? (
-        <div className="absolute right-0 top-1/2 -translate-y-1/2">{trailing}</div>
-      ) : null}
+      <div className="flex justify-end">{trailing}</div>
     </nav>
   );
 }

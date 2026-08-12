@@ -1,17 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import PillButton from "@/components/ui/PillButton";
 import Reveal from "@/components/ui/Reveal";
 import imageLoader from "@/utils/image-loader";
-import { useReducedMotion } from "@/utils/useReducedMotion";
+import { prefersReducedMotion, useReducedMotion } from "@/utils/useReducedMotion";
 import { GSAP_EASE } from "@/components/intro/introTimings";
 import { galleriesData, keptCollectionSlugs, vertical, type PhotoMetadata } from "@/data";
-
-// Pill (31px) + 8px gap between names, per spec §4.2.
-const ROW_PITCH = 39;
 
 // Index_Small_Vertical / Index_Small_Horizontal, per spec §3.
 const REST_VERTICAL = { w: 22, h: 32 };
@@ -47,69 +44,94 @@ const collections = keptCollectionSlugs.map((slug) => {
 });
 
 const COUNT = collections.length;
-const LAST_INDEX = COUNT - 1;
 
-// The block's vertical centre coincides with the middle item's natural slot
-// (row (COUNT-1)/2). See §5.2: the last collection's name first appears
-// there, then rises into its own slot; the rest fade/settle in a downward
-// stagger "out of" that same beat.
-const CENTER_SLOT_Y = ((COUNT - 1) / 2) * ROW_PITCH;
-function centerOffset(i: number) {
-  return CENTER_SLOT_Y - i * ROW_PITCH;
-}
+// Pill (31px) + gap-8 (8px) between rows — used as a fallback only.
+const ROW_PITCH = 39;
 
-const NAMES_SETTLE_START = 0.55;
-const NAMES_SETTLE_STAGGER = 0.09;
-const NAMES_SETTLE_DURATION = 0.5;
-const NAMES_SETTLE_Y = 10;
-/** The last name is the hero of the beat: it travels the whole way from the
- *  block's centre, so it gets its own longer duration and no delay. */
-const NAMES_HERO_DURATION = 0.7;
-const THUMBS_DELAY =
-  NAMES_SETTLE_START + (COUNT - 1) * NAMES_SETTLE_STAGGER + NAMES_SETTLE_DURATION;
+// §5.2: the first name appears at the vertical centre of the finished list,
+// travels up into the top slot, then the rest fade in one by one beneath it.
+const FIRST_FADE_S = 0.35;
+const FIRST_HOLD_S = 0.2;
+const FIRST_MOVE_S = 0.7;
+const OTHERS_STAGGER_S = 0.09;
+const OTHERS_DURATION_S = 0.5;
+const OTHERS_Y = 10;
+
+const OTHERS_SEQUENCE_S =
+  COUNT > 1 ? Math.max(0, COUNT - 2) * OTHERS_STAGGER_S + OTHERS_DURATION_S : 0;
+const NAMES_DONE_S = FIRST_FADE_S + FIRST_HOLD_S + FIRST_MOVE_S + OTHERS_SEQUENCE_S;
+const THUMBS_DELAY = NAMES_DONE_S;
 const THUMBS_FADE_DURATION = 0.6;
-
-/**
- * Per-name reveal timing. This used to be a single index-aware animation
- * variant with two branches; as plain `Reveal` props it is the same two-track
- * sequence, just resolved at render time instead of inside a variant resolver.
- */
-function nameReveal(i: number) {
-  return i === LAST_INDEX
-    ? { y: centerOffset(i), duration: NAMES_HERO_DURATION, delay: 0 }
-    : {
-        y: NAMES_SETTLE_Y,
-        duration: NAMES_SETTLE_DURATION,
-        delay: NAMES_SETTLE_START + i * NAMES_SETTLE_STAGGER,
-      };
-}
 
 const restTotalHeight =
   collections.reduce((sum, c) => sum + restDims(c.cover.aspectRatio).h, 0) +
   THUMB_GAP * (COUNT - 1);
 
+function listCenterOffset(first: HTMLElement, last: HTMLElement): number {
+  const firstRect = first.getBoundingClientRect();
+  const lastRect = last.getBoundingClientRect();
+  const firstCy = firstRect.top + firstRect.height / 2;
+  const lastCy = lastRect.top + lastRect.height / 2;
+  const listCenterY = (firstCy + lastCy) / 2;
+  return listCenterY - firstCy;
+}
+
+function listCenterOffsetFallback(count: number): number {
+  return ((count - 1) / 2) * ROW_PITCH;
+}
+
+function settleName(el: HTMLElement) {
+  gsap.set(el, { opacity: 1, x: 0, y: 0, clearProps: "transform" });
+}
+
 export default function IndexList() {
   const shouldReduceMotion = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
+  const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
   const boxRefs = useRef<(HTMLDivElement | null)[]>([]);
   const imageRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  /*
-    Hover/focus response (§5.4). This used to be a FLIP-style `layout`
-    animation — measure the before/after boxes, transform between them — but
-    here the growth IS a real layout change (the flex column re-centres around
-    the enlarged thumb), so tweening the box's own `width`/`height`
-    reproduces it directly without the measuring pass: every
-    frame is a genuine layout pass, and the siblings get pushed apart
-    progressively rather than being transformed to fake it.
+  useLayoutEffect(() => {
+    const items = itemRefs.current.filter((el): el is HTMLLIElement => el != null);
+    if (items.length === 0) return;
 
-    Kept out of React state: the sizes below are written straight to the DOM,
-    so a hover never re-renders the list. The resting dims/opacity are also
-    the inline values React server-rendered, which means the very first run of
-    this effect tweens each element to where it already is — a no-op — and
-    nothing moves until `activeIndex` actually changes.
-  */
+    if (prefersReducedMotion()) {
+      items.forEach(settleName);
+      return;
+    }
+
+    const first = items[0];
+    const last = items[items.length - 1];
+    const rest = items.slice(1);
+    const startY =
+      items.length > 1 ? listCenterOffset(first, last) : listCenterOffsetFallback(COUNT);
+
+    gsap.set(first, { opacity: 0, y: startY });
+    rest.forEach((el) => gsap.set(el, { opacity: 0, y: OTHERS_Y }));
+
+    const tl = gsap.timeline({
+      onComplete: () => items.forEach(settleName),
+    });
+
+    tl.to(first, { opacity: 1, duration: FIRST_FADE_S, ease: GSAP_EASE })
+      .to({}, { duration: FIRST_HOLD_S })
+      .to(first, { y: 0, duration: FIRST_MOVE_S, ease: GSAP_EASE })
+      .addLabel("others");
+
+    rest.forEach((el, index) => {
+      tl.to(
+        el,
+        { opacity: 1, y: 0, duration: OTHERS_DURATION_S, ease: GSAP_EASE },
+        `others+=${index * OTHERS_STAGGER_S}`
+      );
+    });
+
+    return () => {
+      tl.kill();
+    };
+  }, []);
+
   useEffect(() => {
     const tweens: gsap.core.Tween[] = [];
 
@@ -138,20 +160,23 @@ export default function IndexList() {
       );
     });
 
-    // Killing on re-run is what makes a fast hover-off-hover-on read as one
-    // continuous move: the in-flight tweens stop where they are and the next
-    // pass starts from those current values.
     return () => {
       tweens.forEach((tween) => tween.kill());
     };
   }, [activeIndex, shouldReduceMotion]);
 
   return (
-    <div className="flex w-full justify-center pt-[218px]">
-      <div className="flex gap-[50px]">
+    <div className="flex w-full flex-1 items-center justify-center">
+      <div className="relative">
         <ul className="flex w-[172px] flex-col items-center gap-8" role="list">
           {collections.map((c, i) => (
-            <Reveal as="li" key={c.slug} className="flex justify-center" {...nameReveal(i)}>
+            <li
+              key={c.slug}
+              ref={(el) => {
+                itemRefs.current[i] = el;
+              }}
+              className="reveal flex justify-center"
+            >
               <PillButton
                 href={`/collections/${c.slug}`}
                 className={activeIndex === i ? "!bg-surface" : ""}
@@ -162,25 +187,20 @@ export default function IndexList() {
               >
                 {c.name}
               </PillButton>
-            </Reveal>
+            </li>
           ))}
         </ul>
 
         {/*
-          The column only fades in (y = 0) once the names have finished
-          settling, hence the plain `Reveal` wrapper around — rather than on —
-          the sized box below: `Reveal` styles via `className` only, and this
-          box's height is computed from the data at module scope.
-
-          Fixed-height, `justify-content: center` column: at rest its content
-          exactly fills the box, so the resting layout starts flush at the
-          218px offset like the names column. When one thumbnail grows past
-          that height, the flex box centres the overflow symmetrically above
-          and below — a plain-CSS way to get a genuine, real (non-transform)
-          push-apart in *both* directions, on top of which the width/height
-          tween in the effect above smooths the size change itself (§5.4).
+          Previews sit to the right of the name list; the list above is what
+          gets horizontally centred on the page.
         */}
-        <Reveal delay={THUMBS_DELAY} duration={THUMBS_FADE_DURATION} y={0}>
+        <Reveal
+          delay={THUMBS_DELAY}
+          duration={THUMBS_FADE_DURATION}
+          y={0}
+          className="absolute left-full top-1/2 ml-[50px] hidden -translate-y-1/2 md:block"
+        >
           <div
             aria-hidden="true"
             className="flex flex-col items-center"
