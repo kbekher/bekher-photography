@@ -7,10 +7,10 @@ import imageLoader from "@/utils/image-loader";
 import TextLink from "@/components/ui/TextLink";
 import Reveal from "@/components/ui/Reveal";
 import {
-  ANCHOR_MOVE_MS,
   CONTAINER_FADE_MS,
   GSAP_EASE,
   PHOTO_HOLD_MS,
+  PORTRAIT_MOVE_MS,
 } from "@/components/intro/introTimings";
 import { prefersReducedMotion } from "@/utils/useReducedMotion";
 
@@ -34,7 +34,8 @@ const PORTRAIT_MAX_WIDTH = 374;
 const PORTRAIT_MAX_HEIGHT_CSS =
   "calc(100dvh - env(safe-area-inset-top, 0px) - 17rem)";
 
-const PORTRAIT_DONE_S = (CONTAINER_FADE_MS + PHOTO_HOLD_MS + ANCHOR_MOVE_MS) / 1000;
+const PORTRAIT_DONE_S =
+  (CONTAINER_FADE_MS + PHOTO_HOLD_MS + PORTRAIT_MOVE_MS) / 1000;
 
 const TEXT_DURATION = 0.5;
 const TEXT_STAGGER = 0.12;
@@ -117,12 +118,12 @@ export default function AboutContent() {
       .to({}, { duration: PHOTO_HOLD_MS / 1000 })
       .to(el, {
         left: landLeft,
-        top: landTop,
+        top: landTop + targetHeight / 2,
         xPercent: -50,
-        yPercent: 0,
+        yPercent: -50,
         width: targetWidth,
-        duration: ANCHOR_MOVE_MS / 1000,
-        ease: GSAP_EASE,
+        duration: PORTRAIT_MOVE_MS / 1000,
+        ease: "none",
       });
 
     return () => {

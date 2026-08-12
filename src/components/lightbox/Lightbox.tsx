@@ -85,7 +85,7 @@ function getFocusable(container: HTMLElement): HTMLElement[] {
 }
 
 const ARROW_BTN_CLASS =
-  "absolute top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 cursor-pointer items-center justify-center text-fg";
+  "absolute top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 cursor-pointer items-center justify-center text-fg lg:flex";
 
 function ArrowIcon({ direction }: { direction: "left" | "right" }) {
   return (
@@ -624,23 +624,23 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
       <div ref={backdropRef} aria-hidden="true" className="absolute inset-0 bg-bg" />
 
       <div className="relative mx-auto flex h-full w-full max-w-[1280px] flex-col items-center px-[40px]">
-        <SiteHeader
-          chrome
-          className="shrink-0"
-          navTrailing={
-            <PillButton as="button" onClick={close}>
-              Close
-            </PillButton>
-          }
-        />
+        <SiteHeader chrome className="shrink-0" hideNav />
 
         <div className="flex min-h-0 w-full flex-1 flex-col items-center">
           <div
             data-lb-chrome
-            className="flex gap-2 flex-wrap w-full shrink-0 justify-center pt-[26px] text-center"
+            className="grid w-full shrink-0 grid-cols-[1fr_auto_1fr] items-center pt-[26px]"
           >
-            <span>{current.description ? <p>&ldquo;{current.description}&rdquo; </p> : null}</span>
-            <span>{placeYear ? <p>{placeYear}</p> : null}</span>
+            <div aria-hidden="true" />
+            <div className="flex flex-wrap justify-center gap-2 text-center">
+              <span>{current.description ? <p>&ldquo;{current.description}&rdquo; </p> : null}</span>
+              <span>{placeYear ? <p>{placeYear}</p> : null}</span>
+            </div>
+            <div className="hidden justify-end lg:flex">
+              <PillButton as="button" onClick={close}>
+                Close
+              </PillButton>
+            </div>
           </div>
 
           <div className="lightbox-hero-viewport relative mt-[26px] flex min-h-0 w-full flex-1 items-center justify-center">
@@ -771,6 +771,15 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
                 );
               })}
             </div>
+          </div>
+
+          <div
+            data-lb-chrome
+            className="mt-4 mb-3 flex shrink-0 justify-center pb-[env(safe-area-inset-bottom,0px)] lg:hidden"
+          >
+            <PillButton as="button" onClick={close}>
+              Close
+            </PillButton>
           </div>
         </div>
       </div>

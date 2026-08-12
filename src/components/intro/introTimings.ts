@@ -6,15 +6,15 @@
  * silently desync the phase machine from the animation it exists to hold
  * open. Derive, don't duplicate.
  *
- * ## The whole first-load intro, end to end (~4.4s)
+ * ## The whole first-load intro, end to end (~4.6s)
  *   0      wordmark  K+B fades in, holds, `+` fades out, K/B spread apart,
  *                    "ristina" + "ekher" type in parallel        (2176ms)
  *   2176   nav       the wordmark travels up into its real header slot; the
  *                    nav echo fades in behind it                  (580ms)
  *   2756   photo     the white sheet dissolves, revealing the feed's first
  *                    photo alone, centred; then a hold on it      (790ms)
- *   3546   dealOut   the deck peels off card by card into the grid (900ms)
- *   4431   done
+ *   3546   dealOut   the deck peels off card by card into the grid (1020ms)
+ *   4566   done
  *
  * Those offsets are the only hand-maintained numbers in this file and exist
  * purely to make the shape readable at a glance — every constant below is
@@ -25,6 +25,22 @@
 /** Shared soft ease-out (design spec §5), in both syntaxes. */
 export const EASE = "cubic-bezier(0.25, 0.1, 0.25, 1)";
 export const GSAP_EASE = "power2.out";
+/**
+ * A stacked card's flight. Hard deceleration, because that is what the
+ * reference does: tracking one card across the GIF's frames, it covers ~75%
+ * of its travel in the first ~35ms of a ~200ms flight and spends the rest
+ * easing into the slot. Anything softer reads as sliding, not dealing — this
+ * curve is what keeps the deal snappy even though SETTLE_TRANSFORM_MS runs
+ * longer than the reference's own flight.
+ */
+export const DEAL_EASE = "power4.out";
+/**
+ * The cover card's flight. Deliberately NOT DEAL_EASE — in the reference the
+ * cover accelerates out of the deck and decelerates into its slot, roughly a
+ * symmetric quadratic (measured ~14% of the distance at the halfway point,
+ * ~92% at three quarters), so it glides while the rest snap past it.
+ */
+export const ANCHOR_EASE = "power2.inOut";
 
 // --- Wordmark morph (IntroOverlay) -----------------------------------------
 // The beats run in strict sequence and each one's start is derived from the
@@ -123,56 +139,82 @@ export const PHOTO_HOLD_MS = 440;
 export const PHOTO_DURATION_MS = OVERLAY_DISSOLVE_MS + PHOTO_HOLD_MS; // 790
 
 // --- Deal out (shared by home + collection) --------------------------------
-// Matched to the reference GIF: its first card leaves the deck at ~720ms and
-// its last one lands at ~1600ms, i.e. an ~880ms window for ~24 cards. That
-// works out to a ~25ms stagger over a ~320ms per-tile flight, which is what
-// gives it the rapid "dealing cards" read rather than a slow drift.
+// Every number below is read off the reference GIF frame by frame (30 frames
+// at 20-30ms, 24 tiles), so the shape it encodes is not a taste call:
+//
+//   t+0     the deck sits at viewport centre as ONE card — the tiles behind
+//           the cover are stacked flush, not fanned and not shrunk, which is
+//           why the pile measures exactly one card wide until it starts to
+//           empty.
+//   t+0     cards leave in REVERSE index order, ~18ms apart: last tile of the
+//           feed first, cover card (index 0) last. On a row-major grid that
+//           reads as bottom row first, right to left within each row, working
+//           up to the top-left slot — the same order a dealer's thumb takes
+//           off the top of a deck.
+//   ~t+590  the cover lands. Because the stagger is a fraction of one flight,
+//           ~10 cards are in the air at once — that overlap IS the effect.
+//           Widen the stagger past the flight and it becomes a queue of
+//           single cards instead.
+//
+// The one deliberate departure: the whole deal runs 300ms LONGER than the
+// reference's ~590ms, because at the reference's tempo it reads as a flinch
+// on a real screen. Every duration below is scaled to spend that 300ms in
+// proportion — stagger, flight and cover move together — so the overlap
+// ratio that produces the fan is preserved and only the tempo eases off.
+// Scale them as a set, never one at a time.
 
-/** Stagger between consecutive dealt tiles. */
-export const STAGGER_PER_INDEX_MS = 25;
-/** Cap, so a tall first viewport can't stretch the cascade past its budget. */
-export const MAX_STAGGER_MS = 480;
-/** One non-anchor tile's flight from the deck to its slot. */
+/** Stagger between consecutive cards leaving the deck, in deal order. */
+export const DEAL_STAGGER_MS = 24;
+/** @deprecated Use DEAL_STAGGER_MS — kept for any external imports. */
+export const STAGGER_PER_INDEX_MS = DEAL_STAGGER_MS;
+/**
+ * Cap on the longest start delay. Only bites if the dealt-tile count ever
+ * rises past useDealOut's MAX_DEAL_TILES (24 tiles = a 552ms ramp); it exists
+ * so a taller viewport compresses the tempo rather than stretching the deal
+ * past its budget. Order is preserved either way.
+ */
+export const MAX_STAGGER_MS = 600;
+/** One stacked tile's flight from the deck to its slot (includes scale-up). */
 export const SETTLE_TRANSFORM_MS = 300;
-/** Last non-anchor tile lands here. */
-const LAST_TILE_LANDING_MS = MAX_STAGGER_MS + SETTLE_TRANSFORM_MS; // 780
+/** Last stacked tile finishes its flight here. */
+export const LAST_NON_ANCHOR_LANDING_MS = MAX_STAGGER_MS + SETTLE_TRANSFORM_MS; // 900
 
 /**
- * The anchor's start delay. KEEP THIS AT 0.
- *
- * The anchor leaves at the exact same instant as everything else and is last
- * to ARRIVE purely because ANCHOR_MOVE_MS below is longer than any other
- * card's total — never because it is held back. Any non-zero value here, even
- * one derived from the stagger ramp so that it is "continuous", reads as the
- * front card being stuck: the deck empties out around a card that just sits
- * there, and then it moves. Landing last is the emphasis; waiting is a stall.
+ * Budget figure for the cover card's start — matches the last stacked tile's
+ * stagger cap. useDealOut reads the live max delay at runtime so a scaled
+ * ramp still starts the cover on the same beat as the last peel.
  */
-export const ANCHOR_START_MS = 0;
+export const ANCHOR_START_MS = MAX_STAGGER_MS;
 /**
- * The anchor's flight. Longer than LAST_TILE_LANDING_MS by a clear margin, so
- * it is unambiguously the last to settle while still having been in motion
- * the whole time. This is also what makes it read as the deliberate one: it
- * has the furthest to travel (viewport centre to the grid's first slot) and
- * it covers that distance slowly while the rest snap past it.
+ * Longer than SETTLE_TRANSFORM_MS so the cover lands after the last stacked
+ * tile even though both start on the same beat — and slower-eased (see
+ * ANCHOR_EASE), which is what makes the last card read as deliberate rather
+ * than merely late.
  */
-export const ANCHOR_MOVE_MS = 880;
+export const ANCHOR_MOVE_MS = 420;
 
-/** When the last card finishes moving. Derived from both tracks so it can
- *  never drift from them. */
-export const DEAL_LANDING_MS = Math.max(
-  LAST_TILE_LANDING_MS,
-  ANCHOR_START_MS + ANCHOR_MOVE_MS
-); // 880
+/** When the last card (the cover) finishes moving. */
+export const DEAL_LANDING_MS = ANCHOR_START_MS + ANCHOR_MOVE_MS; // 1020
 /**
  * The phase budget the deal must fit inside. Must be >= DEAL_LANDING_MS: if
  * it were shorter, IntroContext would advance to `done` mid-flight and
  * useDealOut's cleanup would snap every tile to its resting transform — a
  * visible cut.
  */
-export const DEAL_BUDGET_MS = DEAL_LANDING_MS + 20; // 885
+export const DEAL_BUDGET_MS = DEAL_LANDING_MS + 20; // 1040
 
 /** Group fade of the grid wrapper once `gather` has posed the deck. */
 export const CONTAINER_FADE_MS = 260;
+
+/**
+ * The About page's portrait travel — the same gesture as the cover card's
+ * (centre pose to real slot), but on its own constant rather than sharing
+ * ANCHOR_MOVE_MS. It is not the same move: the portrait more than doubles in
+ * width on the way, and it is the ONLY thing on that page, with no deck of
+ * cards snapping past it to set the tempo. At the deck's 260ms it just
+ * flinches.
+ */
+export const PORTRAIT_MOVE_MS = 880;
 
 // --- Collection page ------------------------------------------------------
 // The collection page runs the exact same gather -> hold -> deal sequence,

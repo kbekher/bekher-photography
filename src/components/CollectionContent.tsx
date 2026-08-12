@@ -1,15 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import PhotoGrid from "@/components/PhotoGrid";
 import PillButton from "@/components/ui/PillButton";
 import Reveal from "@/components/ui/Reveal";
 import LightboxProvider from "@/components/lightbox/LightboxProvider";
 import { useCollectionDealOut } from "@/components/collection/useCollectionDealOut";
-import {
-  COLLECTION_DEAL_START_MS,
-  DEAL_BUDGET_MS,
-} from "@/components/intro/introTimings";
 import type { Gallery } from "@/data";
 import styles from "@/components/collection/GridReveal.module.css";
 
@@ -17,6 +13,8 @@ export interface CollectionContentProps {
   gallery: Gallery;
   /** Collection slug — needed to build each photo's S3 key (`<slug>/<path>`). */
   slug: string;
+  /** Index link shown between prev/next on mobile (`/collections`). */
+  backHref: string;
   /** `/collections/<prevSlug>` — the previous collection in `keptCollectionSlugs`. */
   prevHref: string;
   /** `/collections/<nextSlug>` — the next collection in `keptCollectionSlugs`. */
@@ -38,12 +36,11 @@ export interface CollectionContentProps {
  *   grid deal     the deck peels off card by card into the grid, staggered;
  *                 the first photo travels into its own slot last — same
  *                 choreography as the intro's useDealOut
- *   prev/next     once the deal has fully landed (see BUTTONS_DELAY)
+ *   prev/next     once the deal has fully landed (synced via `dealDone`)
  *
- * Only the two text beats' numbers live here. Everything the grid does is
- * owned by introTimings.ts, and the one beat that has to agree with it —
- * the prev/next pair — is derived from those constants rather than restated,
- * so retuning the deal-out can never leave this file quoting a stale figure.
+ * Only the two text beats' numbers live here. The prev/next pair waits on
+ * `useCollectionDealOut`'s `dealDone` flag so it never quotes a stale delay
+ * if the deal-out timings change.
  */
 const NAME_DURATION = 0.45;
 const NAME_Y = 14;
@@ -52,14 +49,6 @@ const DESCRIPTION_DURATION = 0.4;
 const DESCRIPTION_DELAY = 0.1;
 const DESCRIPTION_Y = 10;
 
-/**
- * The prev/next pair must land AFTER the deal-out has fully settled, not in
- * the middle of it: the deal's start plus its whole budget, plus a short beat
- * so the two reads are separate gestures rather than one blur.
- */
-const BUTTONS_SETTLE_BEAT_MS = 100;
-const BUTTONS_DELAY =
-  (COLLECTION_DEAL_START_MS + DEAL_BUDGET_MS + BUTTONS_SETTLE_BEAT_MS) / 1000;
 const BUTTONS_DURATION = 0.4;
 const BUTTONS_Y = 8;
 
@@ -96,7 +85,7 @@ const BUTTONS_Y = 8;
  * two never fight over ownership of a tile's transform — and the deal-out
  * clears every inline style it set once it reaches `done`.
  *
- * `gridRef` below is deliberately scoped to wrap only `<PhotoGrid>`, not
+ * The gated wrapper below is deliberately scoped to wrap only `<PhotoGrid>`, not
  * `<LightboxProvider>` itself — `LightboxProvider` also renders the
  * `<Lightbox/>` overlay as a sibling of its children, and that overlay must
  * never be swept into the same `[data-index]` query the deal-out hook runs
@@ -105,6 +94,7 @@ const BUTTONS_Y = 8;
 export default function CollectionContent({
   gallery,
   slug,
+  backHref,
   prevHref,
   nextHref,
 }: CollectionContentProps) {
@@ -115,8 +105,6 @@ export default function CollectionContent({
     year: photo.year,
     description: photo.description,
   }));
-
-  const gridRef = useRef<HTMLDivElement>(null);
 
   // The deal-out plays only when there's something to deal: more than one
   // photo, no `?photo=` deep link already taking over with the lightbox, and
@@ -154,7 +142,10 @@ export default function CollectionContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useCollectionDealOut(gridRef, { enabled: dealEnabled });
+  // A ref CALLBACK, not a RefObject — the hook has to know the exact commit
+  // the grid attaches on, because on a reload it is not the one this
+  // component mounts in. See useCollectionDealOut's doc comment.
+  const { setGridRef, dealDone } = useCollectionDealOut({ enabled: dealEnabled });
 
   return (
     <div className="flex w-full flex-col items-center">
@@ -185,18 +176,21 @@ export default function CollectionContent({
       </noscript>
 
       <LightboxProvider photos={photos}>
-        <div ref={gridRef} className={`mt-48 w-full ${styles.gate}`}>
+        <div ref={setGridRef} className={`mt-48 w-full ${styles.gate}`}>
           <PhotoGrid photos={photos} priorityCount={4} />
         </div>
       </LightboxProvider>
 
       <Reveal
-        className="mt-64 flex items-center justify-center gap-[40px]"
-        delay={BUTTONS_DELAY}
+        className="mt-64 flex flex-wrap items-center justify-center gap-8 lg:gap-[40px]"
+        startWhen={dealDone}
         duration={BUTTONS_DURATION}
         y={BUTTONS_Y}
       >
         <PillButton href={prevHref}>View previous</PillButton>
+        <PillButton href={backHref} className="lg:hidden">
+          Back
+        </PillButton>
         <PillButton href={nextHref}>View next</PillButton>
       </Reveal>
     </div>

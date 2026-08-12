@@ -61,12 +61,11 @@ export type IntroPhase = "idle" | "wordmark" | "nav" | "photo" | "dealOut" | "do
 //   deliberate hold on that single centred image before the deck deals out.
 //   That hold is what makes the reveal read as intentional rather than a blip
 //   on the way to the grid.
-// - dealOut: owned by useDealOut, which sequences its own overlapping beats
-//   inside this window (tiles peel off staggered; the anchor leaves on the
-//   same frame as the rest but flies longer, so it lands last). DEAL_BUDGET_MS is derived to sit just past DEAL_LANDING_MS
-//   for exactly this reason — if the phase ever ended first, the `done`
-//   cleanup would fire mid-flight and snap the anchor to its resting
-//   transform, a visible cut.
+// - dealOut: owned by useDealOut — the deck empties in reverse feed order; the
+//   cover card starts with the last stacked tile and lands last on a longer
+//   flight. DEAL_BUDGET_MS is derived to sit just past DEAL_LANDING_MS for
+//   exactly this reason — if the phase ever ended first, the `done` cleanup
+//   would fire mid-flight and snap tiles to their resting transform, a visible cut.
 const DURATIONS: Record<Exclude<IntroPhase, "idle" | "done">, number> = {
   wordmark: WORDMARK_DURATION_MS,
   nav: NAV_DURATION_MS,

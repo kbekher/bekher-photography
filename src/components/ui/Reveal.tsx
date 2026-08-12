@@ -14,6 +14,8 @@ export interface RevealProps {
   duration?: number;
   /** Starting offset in px, animated to 0. */
   y?: number;
+  /** When false, hold the hidden state until this becomes true. */
+  startWhen?: boolean;
   className?: string;
   children?: ReactNode;
 }
@@ -42,6 +44,7 @@ export default function Reveal({
   delay = 0,
   duration = 0.45,
   y = 12,
+  startWhen = true,
   className = "",
   children,
 }: RevealProps) {
@@ -49,7 +52,7 @@ export default function Reveal({
 
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || !startWhen) return;
 
     // Read the preference synchronously rather than via `useReducedMotion()`.
     // That hook resolves one commit AFTER mount, and this is a mount-only
@@ -89,7 +92,7 @@ export default function Reveal({
     return () => {
       tween.kill();
     };
-  }, [delay, duration, y]);
+  }, [delay, duration, y, startWhen]);
 
   return (
     <Tag ref={ref} className={`reveal ${className}`.trim()}>

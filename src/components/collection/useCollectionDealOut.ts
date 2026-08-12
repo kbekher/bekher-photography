@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type RefObject } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   COLLECTION_DEAL_START_MS,
   COLLECTION_GATE_DELAY_MS,
@@ -34,23 +34,43 @@ export interface UseCollectionDealOutOptions {
  * sequence — see useDealOut.ts's module doc comment for the full picture,
  * and GridReveal.module.css for how the wrapper stays invisible until
  * `gather` has already run.
+ *
+ * Returns the grid wrapper's ref CALLBACK, not a RefObject, and that is the
+ * whole reason this hook owns the ref instead of taking one. The wrapper it
+ * gates renders inside `LightboxProvider`'s `<Suspense>` boundary, and on a
+ * reload that boundary is still suspended (`useSearchParams`) when this
+ * component's layout effects run: a plain `useRef` reads `null` there. The
+ * old shape bailed on that `null` with deps that never changed again, so the
+ * effect never re-ran once the grid did mount — no `data-visible`, and the
+ * `opacity: 0` gate stayed shut for good. A collection page reloaded from the
+ * address bar showed its title and no photographs at all.
+ *
+ * Nothing else in the component tree announces that commit; React's ref
+ * callback is the only signal that fires exactly when the node attaches, so
+ * the sequence is keyed off that rather than off mount.
  */
-export function useCollectionDealOut(
-  containerRef: RefObject<HTMLElement | null>,
-  { enabled }: UseCollectionDealOutOptions
-) {
+export function useCollectionDealOut({ enabled }: UseCollectionDealOutOptions) {
   const [step, setStep] = useState<DealOutStep>("idle");
+  // Both shapes of the same node: the state copy is what re-runs the effect
+  // below when the grid attaches, the ref is what useDealOutSequence reads
+  // (it wants a stable object, not a value that changes identity).
+  const [container, setContainer] = useState<HTMLElement | null>(null);
+  const containerRef = useRef<HTMLElement | null>(null);
   const startedRef = useRef(false);
+
+  const setGridRef = useCallback((node: HTMLElement | null) => {
+    containerRef.current = node;
+    setContainer(node);
+  }, []);
 
   useDealOutSequence(containerRef, step);
 
   useIsomorphicLayoutEffect(() => {
-    const container = containerRef.current;
     if (!container) return;
 
     if (!enabled) {
       container.dataset.visible = "true";
-      if (startedRef.current) setStep("done");
+      setStep("done");
       return;
     }
 
@@ -59,7 +79,7 @@ export function useCollectionDealOut(
 
     const timers = [
       window.setTimeout(() => {
-        if (containerRef.current) containerRef.current.dataset.visible = "true";
+        container.dataset.visible = "true";
       }, COLLECTION_GATE_DELAY_MS),
       window.setTimeout(() => setStep("deal"), COLLECTION_DEAL_START_MS),
       window.setTimeout(() => setStep("done"), DONE_MS),
@@ -68,5 +88,7 @@ export function useCollectionDealOut(
     return () => {
       timers.forEach((id) => window.clearTimeout(id));
     };
-  }, [containerRef, enabled]);
+  }, [container, enabled]);
+
+  return { setGridRef, dealDone: step === "done" };
 }

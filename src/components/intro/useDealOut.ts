@@ -10,23 +10,69 @@ import {
 import gsap from "gsap";
 import { useIntroPhase } from "./IntroContext";
 import {
+  ANCHOR_EASE,
   ANCHOR_MOVE_MS,
-  ANCHOR_START_MS,
   CONTAINER_FADE_MS,
   DEAL_BUDGET_MS,
+  DEAL_EASE,
   DEAL_LANDING_MS,
+  DEAL_STAGGER_MS,
   GSAP_EASE,
   MAX_STAGGER_MS,
   SETTLE_TRANSFORM_MS,
-  STAGGER_PER_INDEX_MS,
   TRAVEL_MS,
 } from "./introTimings";
 
 export { DEAL_BUDGET_MS, DEAL_LANDING_MS };
 
 const ANCHOR_SCALE = 1;
-const STACK_FIT = 0.96;
 const MAX_DEAL_TILES = 24;
+/** Must sit above every stacked layer so the cover card never gets buried. */
+const ANCHOR_Z_INDEX = 1000;
+
+/**
+ * Deal delays, in reverse feed order: the LAST tile leaves the deck first and
+ * the cover card (index 0) leaves last, DEAL_STAGGER_MS apart. Because the
+ * grid is row-major, that single rule produces the reference's whole visible
+ * order for free — bottom row first, right to left inside each row, working
+ * up to the top-left slot. Deriving it from the index rather than from
+ * (row, col) also means it cannot desync from the layout: no column count to
+ * measure, nothing to get wrong at a breakpoint.
+ *
+ * Scales the whole ramp down if the dealt-tile count would otherwise exceed
+ * MAX_STAGGER_MS — order is preserved, only tempo compresses.
+ */
+function computeDealDelays(
+  tiles: HTMLElement[],
+  anchor: HTMLElement | null
+): Map<HTMLElement, number> {
+  const others = tiles.filter((el) => el !== anchor);
+  const delays = new Map<HTMLElement, number>();
+  if (others.length === 0) return delays;
+
+  const maxIndex = Math.max(...others.map((el) => Number(el.dataset.index ?? 0)));
+
+  let maxRaw = 0;
+  const raw: Array<{ el: HTMLElement; delay: number }> = [];
+
+  for (const el of others) {
+    const index = Number(el.dataset.index ?? 0);
+    const delay = (maxIndex - index) * DEAL_STAGGER_MS;
+    raw.push({ el, delay });
+    maxRaw = Math.max(maxRaw, delay);
+  }
+
+  const scale = maxRaw > MAX_STAGGER_MS ? MAX_STAGGER_MS / maxRaw : 1;
+  for (const { el, delay } of raw) {
+    delays.set(el, delay * scale);
+  }
+  return delays;
+}
+
+function maxDealDelay(delays: Map<HTMLElement, number>): number {
+  if (delays.size === 0) return 0;
+  return Math.max(...delays.values());
+}
 
 export const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -54,13 +100,15 @@ export interface DealOutSequenceOptions {
  * one `clearProps` pass instead of unwinding state.
  *
  * ## The shape
- *  - `gather` snaps every visible tile to the anchor's centre, scaled down to
- *    fit behind it, z-ordered so the anchor sits on top. Nothing animates —
- *    this is a hard set, hidden either behind IntroOverlay's opaque sheet
- *    (home) or behind a CSS opacity gate (collection).
- *  - `deal` releases them: each tile flies to its slot on a stagger derived
- *    from its position in the deck, and the anchor leaves on the very first
- *    frame alongside them but flies for longer, so it lands last.
+ *  - `gather` snaps every visible tile to the anchor's centre as a flush,
+ *    fully opaque deck — cover card on top, the rest stacked under it in feed
+ *    order. Nothing animates; this is a hard set, hidden either behind
+ *    IntroOverlay's opaque sheet (home) or behind a CSS opacity gate
+ *    (collection).
+ *  - `deal` releases the stack in reverse feed order, DEAL_STAGGER_MS apart;
+ *    each card slides out from UNDER the deck to its slot. The cover card
+ *    starts on the same beat as the last stacked tile and lands last thanks
+ *    to a longer, softer-eased flight.
  *  - `done` clears every inline style GSAP wrote, returning the grid to plain
  *    CSS-laid-out DOM.
  */
@@ -112,6 +160,7 @@ export function useDealOutSequence(
       const dealt = visible.slice(0, MAX_DEAL_TILES);
       if (!dealt.includes(anchor)) dealt.push(anchor);
       dealtRef.current = dealt;
+      const dealtSet = new Set(dealt);
 
       const anchorRect = anchor.getBoundingClientRect();
       const anchorCx = anchorRect.left + anchorRect.width / 2;
@@ -121,14 +170,17 @@ export function useDealOutSequence(
 
       dealt.forEach((el) => {
         el.style.willChange = "transform";
+        el.style.position = "relative";
         el.style.pointerEvents = el === anchor ? "" : "none";
 
         if (el === anchor) {
+          el.style.zIndex = String(ANCHOR_Z_INDEX);
           gsap.set(el, {
             x: targetX - anchorCx,
             y: targetY - anchorCy,
             scale: ANCHOR_SCALE,
-            zIndex: MAX_DEAL_TILES + 1,
+            opacity: 1,
+            zIndex: ANCHOR_Z_INDEX,
             transformOrigin: "50% 50%",
           });
           return;
@@ -137,18 +189,44 @@ export function useDealOutSequence(
         const r = el.getBoundingClientRect();
         const cx = r.left + r.width / 2;
         const cy = r.top + r.height / 2;
-        const fit =
+        /**
+         * Capped at 1: the deck is flush in the reference — every card sits
+         * at its natural size, and the pile reads as ONE card until it starts
+         * to empty. `fitToAnchor` is therefore not a stylistic shrink, it is
+         * only the clamp that keeps a wider tile (a 215px horizontal against
+         * a 166px vertical cover) from sticking out of the pile. Same-shaped
+         * tiles get exactly 1 and never scale at all.
+         */
+        const fitToAnchor =
           r.width > 0 && r.height > 0
-            ? Math.min(poseW / r.width, poseH / r.height) * STACK_FIT
-            : 0.5;
+            ? Math.min(1, poseW / r.width, poseH / r.height)
+            : 1;
+        // Straight feed order, so the deck is layered the way a real one is:
+        // index 0 on top, each later tile one layer further down. It is also
+        // exactly the reverse of the deal order, which is what makes each
+        // card slide out from UNDER the pile instead of over it, and what
+        // keeps an in-flight card above the cards that already landed.
         const index = Number(el.dataset.index ?? 0);
+        const stackZ = Math.max(1, ANCHOR_Z_INDEX - index);
+        el.style.zIndex = String(stackZ);
         gsap.set(el, {
           x: targetX - cx,
           y: targetY - cy,
-          scale: fit,
-          zIndex: Math.max(1, MAX_DEAL_TILES - index),
+          scale: fitToAnchor,
+          // Opaque from the first frame — nothing fades in. A stacked card is
+          // hidden because it is behind the cover and no larger than it, so
+          // the deck depleting is the only thing that reveals anything.
+          opacity: 1,
+          zIndex: stackZ,
           transformOrigin: "50% 50%",
         });
+      });
+
+      tiles.forEach((el) => {
+        if (!dealtSet.has(el)) {
+          el.style.visibility = "hidden";
+          el.style.pointerEvents = "none";
+        }
       });
 
       if (fadeContainer) {
@@ -178,61 +256,60 @@ export function useDealOutSequence(
       const dealt = dealtRef.current;
       const anchor = dealt.find((el) => el.dataset.index === "0") ?? null;
       const others = dealt.filter((el) => el !== anchor);
+      const delays = computeDealDelays(dealt, anchor);
 
-      // The stagger counts POSITION IN THE DECK, not `data-index`. Those are
-      // not the same list: `dealt` is filtered to what's in the viewport and
-      // capped at MAX_DEAL_TILES, so keying off the raw grid index leaves
-      // holes in the ramp — a skipped tile becomes a skipped beat, and the
-      // cascade stutters. Sorting first is what makes "position" mean
-      // "reading order", which is the order the eye expects them to leave in.
-      const ordered = [...others].sort(
-        (a, b) => Number(a.dataset.index ?? 0) - Number(b.dataset.index ?? 0)
-      );
-
-      ordered.forEach((el, position) => {
+      others.forEach((el) => {
         gsap.to(el, {
           x: 0,
           y: 0,
           scale: 1,
           duration: SETTLE_TRANSFORM_MS / 1000,
-          delay: Math.min(position * STAGGER_PER_INDEX_MS, MAX_STAGGER_MS) / 1000,
-          ease: GSAP_EASE,
+          delay: (delays.get(el) ?? 0) / 1000,
+          ease: DEAL_EASE,
           overwrite: true,
           onComplete: () => {
             el.style.pointerEvents = "";
+            el.style.zIndex = "";
           },
         });
       });
 
       if (anchor) {
-        // Leaves on the SAME frame as the first card — see ANCHOR_START_MS,
-        // which must stay 0. It arrives last only because ANCHOR_MOVE_MS
-        // outlasts every other card's delay-plus-flight, so it is in motion
-        // the entire time rather than waiting its turn.
+        // Same start beat as the last stacked tile — not frame zero, not after
+        // the deck has cleared — so the cover peels with the final card.
+        const lastStartMs = maxDealDelay(delays);
+        gsap.set(anchor, { zIndex: ANCHOR_Z_INDEX, opacity: 1 });
+        anchor.style.zIndex = String(ANCHOR_Z_INDEX);
         gsap.to(anchor, {
           x: 0,
           y: 0,
           scale: 1,
+          opacity: 1,
           duration: ANCHOR_MOVE_MS / 1000,
-          delay: ANCHOR_START_MS / 1000,
-          ease: GSAP_EASE,
+          delay: lastStartMs / 1000,
+          ease: ANCHOR_EASE,
           overwrite: true,
+          onComplete: () => {
+            anchor.style.zIndex = "";
+          },
         });
       }
     }
 
     if (step === "done" && enteredRef.current) {
       enteredRef.current = false;
-      const tiles =
-        dealtRef.current.length > 0
-          ? dealtRef.current
-          : Array.from(container.querySelectorAll<HTMLElement>("[data-index]"));
+      const allTiles = Array.from(
+        container.querySelectorAll<HTMLElement>("[data-index]")
+      );
 
-      gsap.killTweensOf([...tiles, container]);
-      tiles.forEach((el) => {
+      gsap.killTweensOf([...allTiles, container]);
+      allTiles.forEach((el) => {
         gsap.set(el, { clearProps: "all" });
         el.style.willChange = "";
         el.style.pointerEvents = "";
+        el.style.visibility = "";
+        el.style.position = "";
+        el.style.zIndex = "";
       });
       gsap.set(container, { clearProps: "opacity" });
       container.style.transition = "";
