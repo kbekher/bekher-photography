@@ -77,9 +77,8 @@ const MONOGRAM_GAP_EM = 0.18;
 // is imported from introTimings.ts, where WORDMARK_DURATION_MS is *derived*
 // from the last beat here — so this choreography can never overrun the phase
 // that exists to hold it open:
-//   t=0     monogram pose (K, +, B) fades in from opacity 0 / scale(0.96) —
-//           a short pop-in rather than a hard cut, over MONOGRAM_FADE_MS.
-//   t=380   MONOGRAM_HOLD_MS elapses and `+` starts fading out over
+//   t=0     monogram pose (K, +, B) fades in at centre over MONOGRAM_FADE_MS.
+//   t=1080  MONOGRAM_HOLD_MS elapses and `+` starts fading out over
 //           PLUS_FADE_MS. On its OWN beat: the brief is "the plus
 //           disappears, THEN K moves left", so the spread below does not
 //           start alongside it the way it used to.
@@ -126,7 +125,8 @@ function measureWordmark(
   container: HTMLElement,
   kEl: HTMLElement,
   bEl: HTMLElement,
-  plusEl: HTMLElement
+  plusEl: HTMLElement,
+  markReady = true
 ): WordmarkMetrics {
   // The gap is a fraction of the CONTAINER's computed font-size, not a
   // hardcoded px value — see MONOGRAM_GAP_EM above.
@@ -276,6 +276,10 @@ export default function IntroOverlay() {
   const [spread, setSpread] = useState(false);
   const [revealedWord1, setRevealedWord1] = useState(0);
   const [revealedWord2, setRevealedWord2] = useState(0);
+  // True once the centred monogram has been painted (idle hold or a prior
+  // fade-in). Used to skip a second opacity pop when `idle` hands off to
+  // `wordmark` — re-fading would flash the letters invisible for a frame.
+  const monogramVisibleRef = useRef(false);
 
   // `idle` is included (not just wordmark/nav/photo) so this renders on the
   // very first client render too — `phase` starts as `"idle"` identically on
@@ -299,14 +303,14 @@ export default function IntroOverlay() {
   // The one place a re-measurement is ever triggered from. `snap` forces the
   // resulting commit to render with `transition: none`, for every caller
   // except the very first (mount) measurement — see `suppressTransition`.
-  const remeasure = useCallback((snap: boolean) => {
+  const remeasure = useCallback((snap: boolean, markReady = true) => {
     const container = containerRef.current;
     const kEl = charRefs.current[K_INDEX];
     const bEl = charRefs.current[B_INDEX];
     const plusEl = plusRef.current;
     if (!container || !kEl || !bEl || !plusEl) return;
 
-    const next = measureWordmark(container, kEl, bEl, plusEl);
+    const next = measureWordmark(container, kEl, bEl, plusEl, markReady);
 
     // Bail out when nothing actually moved. `measureWordmark` returns a fresh
     // object every call, so without this every re-measure forces a commit —
@@ -339,43 +343,27 @@ export default function IntroOverlay() {
     setMetrics(next);
   }, []);
 
-  // Measure the live glyph layout once on mount. Runs BEFORE paint
-  // (useLayoutEffect), so the very first thing ever painted already has
-  // correct monogram positions — see `metrics.ready` in the render below for
-  // the one-frame fallback while this hasn't landed yet.
+  // Measure once Switzer has loaded so kX/bX are computed from real glyph
+  // widths, not the Arial fallback. Until then the statically-centred "K+B"
+  // stand-in (see render below) stays up — a fade-in at the wrong offsets
+  // reads as "K slides in from the left".
   useLayoutEffect(() => {
-    remeasure(false);
-  }, [remeasure]);
-
-  // Re-measure once the webfont has actually loaded.
-  //
-  // This is not a refinement — without it the monogram visibly slides
-  // sideways early in the intro. Switzer is loaded with `display: "swap"`
-  // (layout.tsx), so the mount measurement above almost always runs against
-  // the Arial-metric fallback, not Switzer. Every number the monogram pose
-  // depends on — the container's full width, K's and B's natural offsets,
-  // each glyph's advance width — is a property of the FONT. When the swap
-  // lands, all of them change at once, but `metrics.kX`/`bX` are still the
-  // fallback's answers, so K and B are left sitting at stale offsets: the
-  // pair appears, then shifts off-centre, then only looks right again once
-  // the spread sends them to `translateX(0)` (their real, font-correct
-  // natural positions). Re-measuring on `fonts.ready` closes that window.
-  //
-  // `snap: true` because this can land mid-hold, after `metrics.ready` has
-  // already turned the transitions on — without it the correction would
-  // *animate*, which is the very slide it exists to remove.
-  useEffect(() => {
-    if (!canResize) return;
-    const fonts = document.fonts;
-    if (!fonts?.ready) return;
     let cancelled = false;
-    fonts.ready.then(() => {
-      if (!cancelled) remeasure(true);
-    });
+    const measure = () => {
+      if (!cancelled) remeasure(false, true);
+    };
+    const fonts = document.fonts;
+    if (!fonts?.ready) {
+      measure();
+      return () => {
+        cancelled = true;
+      };
+    }
+    fonts.ready.then(measure);
     return () => {
       cancelled = true;
     };
-  }, [canResize, remeasure]);
+  }, [remeasure]);
 
   // Re-measure on resize (font metrics don't change, but the container's
   // available width can) — but ONLY while `canResize`, i.e. while the
@@ -450,11 +438,15 @@ export default function IntroOverlay() {
 
     const timers: number[] = [];
 
-    // Flip on the next frame (not this one) so the opacity/scale actually
-    // has a "before" value to transition from — setting it true in the same
-    // pass as the initial `false` render would collapse to a single commit
-    // with nothing to animate.
-    const raf = requestAnimationFrame(() => setMonoIn(true));
+    // Flip on the next frame (not this one) so opacity actually has a
+    // "before" value to transition from — unless the monogram was already
+    // visible during `idle`, in which case re-fading reads as a blink.
+    let raf = 0;
+    if (monogramVisibleRef.current) {
+      setMonoIn(true);
+    } else {
+      raf = requestAnimationFrame(() => setMonoIn(true));
+    }
 
     // The `+` leaves first, then K/B travel — two beats, two timers.
     timers.push(window.setTimeout(() => setPlusOut(true), MONOGRAM_HOLD_MS));
@@ -484,10 +476,24 @@ export default function IntroOverlay() {
     schedule(WORD2_INDICES, setRevealedWord2);
 
     return () => {
-      cancelAnimationFrame(raf);
+      if (raf) cancelAnimationFrame(raf);
       timers.forEach((t) => window.clearTimeout(t));
     };
   }, [phase, metrics.ready]);
+
+  // Track whether the centred monogram has already been painted so the
+  // `idle` -> `wordmark` handoff doesn't re-trigger a fade from invisible.
+  useEffect(() => {
+    if (phase !== "idle" && phase !== "wordmark") return;
+    if (!metrics.ready) {
+      // The statically-centred fallback is on screen.
+      monogramVisibleRef.current = true;
+      return;
+    }
+    if (phase === "idle" || monoIn) {
+      monogramVisibleRef.current = true;
+    }
+  }, [phase, metrics.ready, monoIn]);
 
   if (!mounted) return null;
 
@@ -527,14 +533,12 @@ export default function IntroOverlay() {
   function kbStyle(targetX: number): CSSProperties {
     return {
       opacity: effectiveMonoIn ? 1 : 0,
-      transform: `translateX(${effectiveSpread ? 0 : targetX}px) scale(${
-        effectiveMonoIn ? 1 : 0.96
-      })`,
+      transform: `translateX(${effectiveSpread ? 0 : targetX}px)`,
       transition: noTransition
         ? "none"
         : effectiveSpread
           ? `transform ${SPREAD_MS}ms ${EASE}`
-          : `opacity ${MONOGRAM_FADE_MS}ms ${EASE}, transform ${MONOGRAM_FADE_MS}ms ${EASE}`,
+          : `opacity ${MONOGRAM_FADE_MS}ms ${EASE}`,
     };
   }
 

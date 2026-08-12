@@ -6,15 +6,15 @@
  * silently desync the phase machine from the animation it exists to hold
  * open. Derive, don't duplicate.
  *
- * ## The whole first-load intro, end to end (~3.7s)
+ * ## The whole first-load intro, end to end (~4.4s)
  *   0      wordmark  K+B fades in, holds, `+` fades out, K/B spread apart,
- *                    "ristina" + "ekher" type in parallel        (1476ms)
- *   1476   nav       the wordmark travels up into its real header slot; the
+ *                    "ristina" + "ekher" type in parallel        (2176ms)
+ *   2176   nav       the wordmark travels up into its real header slot; the
  *                    nav echo fades in behind it                  (580ms)
- *   2056   photo     the white sheet dissolves, revealing the feed's first
+ *   2756   photo     the white sheet dissolves, revealing the feed's first
  *                    photo alone, centred; then a hold on it      (790ms)
- *   2846   dealOut   the deck peels off card by card into the grid (900ms)
- *   3746   done
+ *   3546   dealOut   the deck peels off card by card into the grid (900ms)
+ *   4431   done
  *
  * Those offsets are the only hand-maintained numbers in this file and exist
  * purely to make the shape readable at a glance — every constant below is
@@ -32,10 +32,10 @@ export const GSAP_EASE = "power2.out";
 // instead of overlapping it. The one intentional exception is
 // SPREAD_OVERLAP_MS below.
 
-/** K+B pops in from opacity 0 / scale 0.96. */
+/** K+B fades in at the centred monogram pose. */
 export const MONOGRAM_FADE_MS = 200;
 /** How long the finished K+B monogram simply sits there. */
-export const MONOGRAM_HOLD_MS = 380;
+export const MONOGRAM_HOLD_MS = 1080;
 /** `+` fades out — on its own beat, BEFORE K/B start moving. */
 export const PLUS_FADE_MS = 180;
 /**
@@ -47,7 +47,7 @@ export const PLUS_FADE_MS = 180;
 export const SPREAD_OVERLAP_MS = 60;
 /** K slides left / B slides right, from the monogram pose to their natural
  *  in-word positions. */
-export const SPREAD_START_MS = MONOGRAM_HOLD_MS + PLUS_FADE_MS - SPREAD_OVERLAP_MS; // 500
+export const SPREAD_START_MS = MONOGRAM_HOLD_MS + PLUS_FADE_MS - SPREAD_OVERLAP_MS; // 1200
 export const SPREAD_MS = 460;
 
 /**
@@ -68,16 +68,16 @@ export const SPREAD_TYPE_OVERLAP = 0.4;
  *  K and B are still settling. */
 export const REMAINING_START_MS = Math.round(
   SPREAD_START_MS + SPREAD_MS * (1 - SPREAD_TYPE_OVERLAP)
-); // 776
+); // 1476
 /** Per-glyph fade. */
 export const REMAINING_FADE_MS = 120;
 /** The typing window: every glyph of BOTH words lands inside it. */
 export const REMAINING_TYPE_MS = 500;
-export const REMAINING_WINDOW_END_MS = REMAINING_START_MS + REMAINING_TYPE_MS; // 1276
+export const REMAINING_WINDOW_END_MS = REMAINING_START_MS + REMAINING_TYPE_MS; // 1976
 
 /** Beat of stillness on the finished wordmark before it travels up. */
 export const WORDMARK_HOLD_MS = 200;
-export const WORDMARK_DURATION_MS = REMAINING_WINDOW_END_MS + WORDMARK_HOLD_MS; // 1476
+export const WORDMARK_DURATION_MS = REMAINING_WINDOW_END_MS + WORDMARK_HOLD_MS; // 2176
 
 /**
  * Hard ceiling on the first-row asset preload.
