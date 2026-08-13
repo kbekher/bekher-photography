@@ -14,7 +14,12 @@ import PillButton from "@/components/ui/PillButton";
 import SiteHeader from "@/components/ui/SiteHeader";
 import imageLoader from "@/utils/image-loader";
 import { prefersReducedMotion, useReducedMotion } from "@/utils/useReducedMotion";
-import { GSAP_EASE } from "@/components/intro/introTimings";
+import {
+  FADE_MS,
+  FLIGHT_MS,
+  GSAP_EASE,
+  SNAP_MS,
+} from "@/components/intro/introTimings";
 import { horizontal } from "@/data";
 import { useLightbox, type LightboxPhoto } from "./LightboxProvider";
 import {
@@ -32,16 +37,22 @@ const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), [tabindex]:not([tab
  *  close, via this attribute rather than a ref per element. */
 const CHROME_SELECTOR = "[data-lb-chrome]";
 
-const BACKDROP_IN_S = 0.32;
-const BACKDROP_OUT_S = 0.3;
-const CHROME_IN_S = 0.26;
-const CHROME_IN_DELAY_S = 0.14;
-const CHROME_OUT_S = 0.16;
+// The lightbox's CHROME is on the site's shared scale; its morph deliberately
+// is not (see lightboxMorph.ts). Backdrop and chrome are pure opacity changes
+// on things that do not move, so FADE_MS; chrome leaving is something getting
+// out of the way, so SNAP_MS; the hero fade and the photo crossfade are short
+// moves, so FLIGHT_MS. Every one of these was already within ~60ms of its
+// beat — they were tuned by eye to the same tempo, just never told about it.
+const BACKDROP_IN_S = FADE_MS / 1000;
+const BACKDROP_OUT_S = FADE_MS / 1000;
+const CHROME_IN_S = FADE_MS / 1000;
+const CHROME_IN_DELAY_S = SNAP_MS / 1000;
+const CHROME_OUT_S = SNAP_MS / 1000;
 /** Fallback when there is no tile to morph from/to (deep link, or a photo
  *  past the end of the home feed's rendered page). */
-const HERO_FADE_S = 0.3;
+const HERO_FADE_S = FLIGHT_MS / 1000;
 /** Crossfade when switching photos with the arrows or the thumb strip. */
-const SWITCH_S = 0.3;
+const SWITCH_S = FLIGHT_MS / 1000;
 /** How long the crossfade will wait for the incoming photo to load before
  *  giving up and switching anyway. See the timeout effect for why. */
 const SWITCH_LOAD_TIMEOUT_MS = 1200;

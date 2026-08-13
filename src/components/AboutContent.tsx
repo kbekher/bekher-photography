@@ -7,10 +7,12 @@ import imageLoader from "@/utils/image-loader";
 import TextLink from "@/components/ui/TextLink";
 import Reveal from "@/components/ui/Reveal";
 import {
-  CONTAINER_FADE_MS,
+  ARRIVE_MS,
+  FADE_MS,
   GSAP_EASE,
-  PHOTO_HOLD_MS,
-  PORTRAIT_MOVE_MS,
+  HOLD_MS,
+  LONG_MOVE_MS,
+  STAGGER_TEXT_MS,
 } from "@/components/intro/introTimings";
 import { prefersReducedMotion } from "@/utils/useReducedMotion";
 
@@ -34,11 +36,15 @@ const PORTRAIT_MAX_WIDTH = 374;
 const PORTRAIT_MAX_HEIGHT_CSS =
   "calc(100dvh - env(safe-area-inset-top, 0px) - 17rem)";
 
-const PORTRAIT_DONE_S =
-  (CONTAINER_FADE_MS + PHOTO_HOLD_MS + PORTRAIT_MOVE_MS) / 1000;
+/**
+ * The portrait's whole sequence, and deliberately the same three beats the
+ * home page's intro plays before its grid appears: FADE it up, HOLD on it
+ * centred, then travel. Same numbers, so the two pages read as one site.
+ */
+const PORTRAIT_DONE_S = (FADE_MS + HOLD_MS + LONG_MOVE_MS) / 1000;
 
-const TEXT_DURATION = 0.5;
-const TEXT_STAGGER = 0.12;
+const TEXT_DURATION = ARRIVE_MS / 1000;
+const TEXT_STAGGER = STAGGER_TEXT_MS / 1000;
 
 function viewportSize() {
   return {
@@ -112,18 +118,22 @@ export default function AboutContent() {
 
     tl.to(el, {
       opacity: 1,
-      duration: CONTAINER_FADE_MS / 1000,
+      duration: FADE_MS / 1000,
       ease: GSAP_EASE,
     })
-      .to({}, { duration: PHOTO_HOLD_MS / 1000 })
+      .to({}, { duration: HOLD_MS / 1000 })
       .to(el, {
         left: landLeft,
         top: landTop + targetHeight / 2,
         xPercent: -50,
         yPercent: -50,
         width: targetWidth,
-        duration: PORTRAIT_MOVE_MS / 1000,
-        ease: "none",
+        duration: LONG_MOVE_MS / 1000,
+        // Eased, not linear. This ran on `ease: "none"` and it was the most
+        // exposed motion on the site — the only thing moving on the page,
+        // travelling at a constant speed and then stopping dead on arrival.
+        // GSAP_EASE is the same soft ease-out every other arrival uses.
+        ease: GSAP_EASE,
       });
 
     return () => {

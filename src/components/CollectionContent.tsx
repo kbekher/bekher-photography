@@ -6,6 +6,11 @@ import PillButton from "@/components/ui/PillButton";
 import Reveal from "@/components/ui/Reveal";
 import LightboxProvider from "@/components/lightbox/LightboxProvider";
 import { useCollectionDealOut } from "@/components/collection/useCollectionDealOut";
+import {
+  ARRIVE_MS,
+  RISE_PX,
+  STAGGER_TEXT_MS,
+} from "@/components/intro/introTimings";
 import type { Gallery } from "@/data";
 import styles from "@/components/collection/GridReveal.module.css";
 
@@ -42,15 +47,18 @@ export interface CollectionContentProps {
  * `useCollectionDealOut`'s `dealDone` flag so it never quotes a stale delay
  * if the deal-out timings change.
  */
-const NAME_DURATION = 0.45;
-const NAME_Y = 14;
+// All three text beats are the same gesture — something arriving and staying
+// — so all three are ARRIVE_MS at RISE_PX, one STAGGER_TEXT_MS apart. They
+// used to be 0.45/0.4/0.4 at y 14/10/8, three tunings of one thing.
+const NAME_DURATION = ARRIVE_MS / 1000;
+const NAME_Y = RISE_PX;
 
-const DESCRIPTION_DURATION = 0.4;
-const DESCRIPTION_DELAY = 0.1;
-const DESCRIPTION_Y = 10;
+const DESCRIPTION_DURATION = ARRIVE_MS / 1000;
+const DESCRIPTION_DELAY = STAGGER_TEXT_MS / 1000;
+const DESCRIPTION_Y = RISE_PX;
 
-const BUTTONS_DURATION = 0.4;
-const BUTTONS_Y = 8;
+const BUTTONS_DURATION = ARRIVE_MS / 1000;
+const BUTTONS_Y = RISE_PX;
 
 /**
  * Collection detail content (spec §4.3): name, description, photo grid, then

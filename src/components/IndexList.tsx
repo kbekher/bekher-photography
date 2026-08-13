@@ -7,7 +7,15 @@ import PillButton from "@/components/ui/PillButton";
 import Reveal from "@/components/ui/Reveal";
 import imageLoader from "@/utils/image-loader";
 import { prefersReducedMotion, useReducedMotion } from "@/utils/useReducedMotion";
-import { GSAP_EASE } from "@/components/intro/introTimings";
+import {
+  ARRIVE_MS,
+  FADE_MS,
+  GSAP_EASE,
+  HOLD_MS,
+  LONG_MOVE_MS,
+  RISE_PX,
+  STAGGER_TEXT_MS,
+} from "@/components/intro/introTimings";
 import { galleriesData, keptCollectionSlugs, vertical, type PhotoMetadata } from "@/data";
 
 // Index_Small_Vertical / Index_Small_Horizontal, per spec §3.
@@ -22,8 +30,9 @@ const GROW_SCALE = 2.5;
 
 // Dimmed at rest, full strength when hovered/focused.
 const THUMB_REST_OPACITY = 0.15;
-const THUMB_RESIZE_DURATION = 0.45;
-const THUMB_FADE_DURATION = 0.35;
+/** The box growing is an arrival; the dim/undim is a pure opacity change. */
+const THUMB_RESIZE_DURATION = ARRIVE_MS / 1000;
+const THUMB_FADE_DURATION = FADE_MS / 1000;
 
 function restDims(aspectRatio: string) {
   return aspectRatio === vertical ? REST_VERTICAL : REST_HORIZONTAL;
@@ -50,18 +59,26 @@ const ROW_PITCH = 39;
 
 // §5.2: the first name appears at the vertical centre of the finished list,
 // travels up into the top slot, then the rest fade in one by one beneath it.
-const FIRST_FADE_S = 0.35;
-const FIRST_HOLD_S = 0.2;
-const FIRST_MOVE_S = 0.7;
-const OTHERS_STAGGER_S = 0.09;
-const OTHERS_DURATION_S = 0.5;
-const OTHERS_Y = 10;
+//
+// That is the SAME three-beat shape the home page's intro and the About
+// page's portrait both play — appear, hold, travel — so it uses the same
+// three beats. The hold in particular was 200ms against the intro's 440ms,
+// which was the difference between "a blip on the way to the list" and the
+// deliberate pause the deal-out takes on its lone centred photo.
+const FIRST_FADE_S = FADE_MS / 1000;
+const FIRST_HOLD_S = HOLD_MS / 1000;
+const FIRST_MOVE_S = LONG_MOVE_MS / 1000;
+const OTHERS_STAGGER_S = STAGGER_TEXT_MS / 1000;
+const OTHERS_DURATION_S = ARRIVE_MS / 1000;
+const OTHERS_Y = RISE_PX;
 
 const OTHERS_SEQUENCE_S =
   COUNT > 1 ? Math.max(0, COUNT - 2) * OTHERS_STAGGER_S + OTHERS_DURATION_S : 0;
 const NAMES_DONE_S = FIRST_FADE_S + FIRST_HOLD_S + FIRST_MOVE_S + OTHERS_SEQUENCE_S;
 const THUMBS_DELAY = NAMES_DONE_S;
-const THUMBS_FADE_DURATION = 0.6;
+/** A group opacity change on something that does not move — the same gesture
+ *  as the grid wrapper's fade, so the same beat. */
+const THUMBS_FADE_DURATION = FADE_MS / 1000;
 
 const restTotalHeight =
   collections.reduce((sum, c) => sum + restDims(c.cover.aspectRatio).h, 0) +

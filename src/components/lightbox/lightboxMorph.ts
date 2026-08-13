@@ -26,6 +26,23 @@ import { GSAP_EASE } from "@/components/intro/introTimings";
  * even that.
  */
 
+/**
+ * The one pair of durations in the app deliberately NOT taken from
+ * `introTimings.ts`'s shared scale, and the reason is the input, not the
+ * pixels.
+ *
+ * Every beat on that scale describes motion the visitor watches: an intro
+ * playing itself, a page introducing itself. This morph is motion the visitor
+ * CAUSED — they clicked a photo and are waiting for it. Direct manipulation
+ * has to answer faster than choreography does, or the click reads as lag, and
+ * a lightbox that opens on a cinematic tempo feels broken in a way the same
+ * duration on a page-enter never would.
+ *
+ * They land close to the scale anyway (OPEN_S is TRAVEL_MS + 20ms, CLOSE_S is
+ * exactly HOLD_MS) because it is all one tempo — but they are their own
+ * constants on purpose. Retune them against how the lightbox feels to click,
+ * not against what the deal-out is doing.
+ */
 const OPEN_S = 0.52;
 const CLOSE_S = 0.44;
 

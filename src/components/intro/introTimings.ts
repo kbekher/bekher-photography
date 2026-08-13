@@ -35,12 +35,23 @@ export const GSAP_EASE = "power2.out";
  */
 export const DEAL_EASE = "power4.out";
 /**
- * The cover card's flight. Deliberately NOT DEAL_EASE — in the reference the
- * cover accelerates out of the deck and decelerates into its slot, roughly a
- * symmetric quadratic (measured ~14% of the distance at the halfway point,
- * ~92% at three quarters), so it glides while the rest snap past it.
+ * The cover card's flight. Softer than DEAL_EASE but still an ease-OUT, and
+ * that distinction is the whole point.
+ *
+ * This was `power2.inOut` for a while, taken from the reference's symmetric
+ * cover curve. It does not survive the retime. The reference's cover flew
+ * ~200ms, where an ease-in is a couple of slow frames nobody registers; ours
+ * flies ANCHOR_MOVE_MS, and at that length the same curve leaves the cover
+ * covering ~12% of its distance in its first half while DEAL_EASE has already
+ * thrown every other card ~75% of the way in its first ~15%. Same start beat,
+ * opposite acceleration — so the cover reads as hesitating, not gliding.
+ *
+ * `power3.out` leaves the deck on the same snap as the rest and spends the
+ * difference decelerating instead. What makes the last card read as
+ * deliberate is its LONGER flight (ANCHOR_MOVE_MS) and gentler tail, never a
+ * later or slower departure.
  */
-export const ANCHOR_EASE = "power2.inOut";
+export const ANCHOR_EASE = "power3.out";
 
 // --- Wordmark morph (IntroOverlay) -----------------------------------------
 // The beats run in strict sequence and each one's start is derived from the
@@ -236,15 +247,63 @@ export const DEAL_BUDGET_MS = DEAL_LANDING_MS + 20; // 1040
 /** Group fade of the grid wrapper once `gather` has posed the deck. */
 export const CONTAINER_FADE_MS = 260;
 
+// --- The shared motion scale ----------------------------------------------
+// Everything above this line describes the deal-out. Everything below is the
+// rest of the site expressed IN it.
+//
+// The deal is the site's signature gesture, so it is the guard: any other
+// animation either quotes one of its beats or has a written reason not to.
+// Before this block existed, "fade something in" had seven different
+// durations across Reveal, AboutContent, CollectionContent, IndexList and
+// Lightbox (260/320/350/400/450/500/600ms), four different sibling staggers
+// and four different rise offsets — none of them disagreeing on purpose, just
+// each tuned in isolation. Consumers import from here now; a component that
+// hardcodes a duration is the bug.
+//
+// Six beats, and the rule for picking one is what the motion IS, not where it
+// happens:
+
+/** Something getting OUT OF THE WAY — closing chrome, a hover dimming. Fast
+ *  enough to feel like a response rather than an animation. */
+export const SNAP_MS = Math.round(SETTLE_TRANSFORM_MS / 2); // 150
+/** A pure opacity change on something that does not move: a backdrop, a
+ *  chrome group, a container. Shares CONTAINER_FADE_MS because the grid
+ *  wrapper's group fade is exactly this gesture. */
+export const FADE_MS = CONTAINER_FADE_MS; // 260
+/** A short move: one card's flight, a crossfade, a hero fading in place. */
+export const FLIGHT_MS = SETTLE_TRANSFORM_MS; // 300
+/** Something ARRIVING and staying — a text block's fade + rise. The cover
+ *  card's beat, because that is the same gesture: the considered one that
+ *  lands last and is meant to be read. */
+export const ARRIVE_MS = ANCHOR_MOVE_MS; // 420
+/** A beat of stillness before the next thing happens. */
+export const HOLD_MS = PHOTO_HOLD_MS; // 440
 /**
- * The About page's portrait travel — the same gesture as the cover card's
- * (centre pose to real slot), but on its own constant rather than sharing
- * ANCHOR_MOVE_MS. It is not the same move: the portrait more than doubles in
- * width on the way, and it is the ONLY thing on that page, with no deck of
- * cards snapping past it to set the tempo. At the deck's 260ms it just
- * flinches.
+ * A lone element crossing the viewport into its slot — the About portrait,
+ * the Index page's first collection name. Shared by both because it is one
+ * gesture: the page's single hero element travelling to where it belongs,
+ * with nothing else moving to set a tempo against it.
+ *
+ * A root primitive, not derived. TRAVEL_MS is the wordmark's much shorter
+ * hop into a header slot, and ARRIVE_MS is a beat inside a deck of 24 cards;
+ * neither scales to a lone element crossing most of a screen. Tuned against
+ * the Index pill (the smaller, more exposed of the two) and adopted by the
+ * portrait, which also more than doubles in width on the way.
  */
-export const PORTRAIT_MOVE_MS = 880;
+export const LONG_MOVE_MS = 700;
+
+/** Sibling text beats — a cascade, which must read as a SEQUENCE.
+ *
+ *  Deliberately not derived from DEAL_STAGGER_MS. The deal's 24ms against a
+ *  300ms flight puts ~10 cards in the air at once, and that overlap is the
+ *  fan; the same 8% ratio against ARRIVE_MS would be ~34ms, which on text
+ *  reads as one blurred simultaneous event rather than beats. Opposite
+ *  intent, so a separate primitive. */
+export const STAGGER_TEXT_MS = 120;
+
+/** How far a `Reveal` rises into place. One value, so a heading, a paragraph
+ *  and a button row cannot travel different distances for no reason. */
+export const RISE_PX = 12;
 
 // --- Collection page ------------------------------------------------------
 // The collection page runs the exact same gather -> hold -> deal sequence,

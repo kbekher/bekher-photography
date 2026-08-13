@@ -3,16 +3,19 @@
 import { useLayoutEffect, useRef, type ElementType, type ReactNode } from "react";
 import gsap from "gsap";
 import { prefersReducedMotion } from "@/utils/useReducedMotion";
-import { GSAP_EASE } from "@/components/intro/introTimings";
+import { ARRIVE_MS, GSAP_EASE, RISE_PX } from "@/components/intro/introTimings";
 
 export interface RevealProps {
   /** Rendered element. Defaults to `div`. */
   as?: ElementType;
-  /** Seconds before this element starts its reveal. */
+  /** Seconds before this element starts its reveal. Prefer a multiple of
+   *  `STAGGER_TEXT_MS` so cascading siblings stay on the shared beat. */
   delay?: number;
-  /** Seconds the fade + rise takes. */
+  /** Seconds the fade + rise takes. Defaults to the scale's `ARRIVE_MS`;
+   *  override only with another beat from `introTimings.ts`. */
   duration?: number;
-  /** Starting offset in px, animated to 0. */
+  /** Starting offset in px, animated to 0. Defaults to `RISE_PX` — pass 0 for
+   *  a pure fade with no movement, but avoid inventing other distances. */
   y?: number;
   /** When false, hold the hidden state until this becomes true. */
   startWhen?: boolean;
@@ -42,8 +45,8 @@ export interface RevealProps {
 export default function Reveal({
   as: Tag = "div",
   delay = 0,
-  duration = 0.45,
-  y = 12,
+  duration = ARRIVE_MS / 1000,
+  y = RISE_PX,
   startWhen = true,
   className = "",
   children,
