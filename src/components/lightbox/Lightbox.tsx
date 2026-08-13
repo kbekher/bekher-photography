@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useReducer,
   useRef,
   useState,
   type CSSProperties,
@@ -53,9 +54,18 @@ const CHROME_OUT_S = SNAP_MS / 1000;
 const HERO_FADE_S = FLIGHT_MS / 1000;
 /** Crossfade when switching photos with the arrows or the thumb strip. */
 const SWITCH_S = FLIGHT_MS / 1000;
-/** How long the crossfade will wait for the incoming photo to load before
- *  giving up and switching anyway. See the timeout effect for why. */
-const SWITCH_LOAD_TIMEOUT_MS = 1200;
+/**
+ * Last-resort valve for a switch that never reports back — an aborted request,
+ * a tab resuming from sleep. See the timeout effect for why it exists.
+ *
+ * It used to be 1.2s, and that was the white screen: a hero rendition is
+ * ~650KB-1.5MB, so this fired on any ordinary slow connection, dropped the
+ * shimmer and ran the crossfade on an `<img>` that had no pixels yet. Now that
+ * the placeholder survives a switch (nothing below keys the shimmer off this),
+ * landing early no longer paints an empty frame, so the valve can sit where a
+ * genuinely stuck request is the only thing that trips it.
+ */
+const SWITCH_LOAD_TIMEOUT_MS = 10000;
 
 // --- Touch navigation -----------------------------------------------------
 // Gesture thresholds only. A swipe/tap here does exactly what an arrow click
@@ -97,10 +107,55 @@ function heroFrameStyle(photo: LightboxPhoto): CSSProperties {
   return { "--rw": rw, "--rh": rh } as CSSProperties;
 }
 
+/**
+ * What the browser is told to download for the hero — the single biggest lever
+ * on how long a photo takes to appear, and what the old values got wrong.
+ *
+ * `sizes` has to describe the box `.lightbox-hero-frame` actually produces:
+ *  - phones: the frame is `100cqw`, i.e. the viewport minus the dialog's 80px
+ *    of side padding, and hard-capped at the photo's nominal width (374px
+ *    vertical / 580px horizontal). Above ~460/660px wide, that cap — not the
+ *    viewport — is what you get, all the way to `lg`.
+ *  - desktop: the frame is HEIGHT-driven (`--h: min(100cqh, …)`, width follows
+ *    from the aspect), so the hint has to follow the viewport's height. `vh`
+ *    is a legal source-size and is the only way to say that. The hero viewport
+ *    is roughly `100vh` minus ~310px of chrome (header, caption, counter,
+ *    thumb strip), so a vertical frame is ≈0.69·(100vh − 310px) ≈ 50vh and a
+ *    horizontal one ≈1.5·(100vh − 310px), capped by the 1280px container, so
+ *    ≈90vh.
+ *
+ * The flat 900px/1280px hints described neither. On a retina laptop the
+ * vertical hero asked for the 1920px rendition — 1.5MB, and above this photo
+ * set's ~2075px native width, so it was the full scan — to fill a box ~420 CSS
+ * px wide. Right-sized, that same hero is the 1080px rendition at ~650KB.
+ *
+ * The numbers lean generous on purpose: a hint slightly too large costs one
+ * srcset step, one slightly too small costs sharpness.
+ */
+/** Paint a cached, already-decoded stand-in behind a hero frame — see
+ *  `previewSrc`. `cover`/`center` matches the `<img>`'s own object-fit, so the
+ *  photo resolves on top of itself rather than over a differently framed crop. */
+function previewStyle(src: string | null): CSSProperties | undefined {
+  return src
+    ? {
+        backgroundImage: `url("${src}")`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }
+    : undefined;
+}
+
+/** The shimmer is the LAST resort — only for a photo with no tile on the page
+ *  to borrow a stand-in from (a deep link, or a photo past the end of the
+ *  home feed's rendered page). */
+function frameClass(photo: LightboxPhoto, showShimmer: boolean): string {
+  return showShimmer ? `${heroBoxClass(photo)} image-placeholder` : heroBoxClass(photo);
+}
+
 function heroSizesFor(photo: LightboxPhoto): string {
   return photo.aspectRatio === horizontal
-    ? "(max-width: 1023px) 92vw, 1280px"
-    : "(max-width: 1023px) 92vw, 900px";
+    ? "(max-width: 660px) 90vw, (max-width: 1023px) 580px, 90vh"
+    : "(max-width: 454px) 85vw, (max-width: 1023px) 374px, 50vh";
 }
 
 function buildAlt(photo: LightboxPhoto): string {
@@ -291,12 +346,12 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
   // `heroBoxClass`) so a horizontal frame never crops a vertical photo.
   //
   // On navigation the outgoing photo hides immediately and the incoming frame
-  // appears at once with a shimmer placeholder, so thumbnail/metadata changes
-  // are not left hanging over the previous image while the full-size file
-  // loads. Once the incoming `<img>` reports `load`, it fades in and
-  // `displayIndex` catches up.
+  // appears at once with a stand-in (see `previewSrc`), so thumbnail/metadata
+  // changes are not left hanging over the previous image while the full-size
+  // file loads. Once the incoming `<img>` has loaded AND decoded, it fades in
+  // and `displayIndex` catches up.
   const [displayIndex, setDisplayIndex] = useState(activeIndex);
-  const [incomingReady, setIncomingReady] = useState(false);
+  const [incomingTimedOut, setIncomingTimedOut] = useState(false);
   const switchingTo = displayIndex !== activeIndex ? activeIndex : null;
   const displayPhoto = photos[displayIndex] ?? current;
   const incomingPhoto = switchingTo !== null ? photos[switchingTo] : undefined;
@@ -309,28 +364,93 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
   const goPrev = useCallback(() => prev(), [prev]);
   const goThumb = useCallback((i: number) => goTo(i), [goTo]);
 
-  // A new target resets the readiness latch; the incoming `<Image>`'s `onLoad`
-  // sets it. Cached photos fire that synchronously on mount, so an
-  // already-seen photo still switches immediately.
+  // --- "Has this photo actually got pixels?" -------------------------------
+  //
+  // Tracked per SRC rather than per layer, which is what makes the handover at
+  // the end of a switch seamless. Landing mounts a brand-new `<img>` in the
+  // resting layer for a url the incoming layer just finished downloading; that
+  // img is a memory-cache hit, but its own `load` event is still asynchronous,
+  // so a per-layer flag would show a frame or two of placeholder every single
+  // time a switch completed. Keyed on the url, the resting layer knows the
+  // photo is already there and renders it as ready immediately.
+  //
+  // A ref + a bump rather than a `Set` in state: this is a monotonic cache,
+  // never re-read across renders for anything but membership, and rebuilding a
+  // Set on every load only to render the same thing is pure ceremony.
+  const loadedSrcsRef = useRef<Set<string>>(new Set());
+  const [, bumpLoaded] = useReducer((n: number) => n + 1, 0);
+  const markLoaded = useCallback((src: string, img: HTMLImageElement | null) => {
+    const mark = () => {
+      if (loadedSrcsRef.current.has(src)) return;
+      loadedSrcsRef.current.add(src);
+      bumpLoaded();
+    };
+    // `load` means the bytes arrived, NOT that there is a frame ready to
+    // paint — decoding a 2000px photo takes real time on a phone, and that
+    // gap is exactly the flash this whole file is trying to remove. `decode()`
+    // closes it; if it rejects (src changed, no support) fall through, because
+    // a slightly early swap still beats waiting forever.
+    if (typeof img?.decode === "function") img.decode().then(mark, mark);
+    else mark();
+  }, []);
+
+  /**
+   * The grid tile's own already-decoded image, painted UNDER the hero as a
+   * low-res stand-in while the full-size rendition loads. Free — the browser
+   * has it in cache and on screen already — and far better than a shimmer,
+   * because what you see is the photo you asked for, arriving blurry and then
+   * sharpening, rather than a grey box.
+   *
+   * `previewSrc` belongs to whatever is in the RESTING layer, so it is set at
+   * open and re-read when a switch lands; the incoming layer carries its own.
+   * Both stay painted for the life of their layer: dropping one the moment its
+   * `<img>` reports ready is what used to expose the background between the
+   * stand-in going and the photo painting.
+   */
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+  const [incomingPreviewSrc, setIncomingPreviewSrc] = useState<string | null>(null);
+
+  // Whether prefetching the neighbouring photos is a favour or an imposition.
+  // Resolved after mount, never during render: this component server-renders
+  // on a `?photo=` deep link, and it also means the first paint carries no
+  // warmers at all — which is what we want anyway, the hero comes first.
+  const [mayWarm, setMayWarm] = useState(false);
   useEffect(() => {
-    setIncomingReady(false);
-  }, [switchingTo]);
+    const connection = (
+      navigator as Navigator & {
+        connection?: { saveData?: boolean; effectiveType?: string };
+      }
+    ).connection;
+    setMayWarm(
+      !connection?.saveData && !/(^|-)2g$/.test(connection?.effectiveType ?? "")
+    );
+  }, []);
+
+  const restingLoaded = loadedSrcsRef.current.has(displayPhoto.src);
+  const incomingLoaded = incomingPhoto
+    ? loadedSrcsRef.current.has(incomingPhoto.src)
+    : false;
+  const incomingReady = incomingLoaded || incomingTimedOut;
 
   // Belt and braces: a photo that never fires `load` or `error` (an aborted
   // request, an offline tab resuming) must not freeze the viewer on the
-  // previous photo forever. After this the switch proceeds regardless — worst
-  // case the incoming frame is briefly empty, which is still better than the
-  // arrows appearing to be broken.
+  // previous photo forever. After this the switch proceeds regardless — the
+  // resting layer keeps the stand-in and the shimmer until the photo lands, so
+  // proceeding early costs nothing visually.
   useEffect(() => {
-    if (switchingTo === null || incomingReady) return;
-    const t = window.setTimeout(() => setIncomingReady(true), SWITCH_LOAD_TIMEOUT_MS);
+    if (switchingTo === null || incomingLoaded) return;
+    const t = window.setTimeout(() => setIncomingTimedOut(true), SWITCH_LOAD_TIMEOUT_MS);
     return () => window.clearTimeout(t);
-  }, [switchingTo, incomingReady]);
+  }, [switchingTo, incomingLoaded]);
 
   // Hide the resting photo and show the incoming placeholder frame the same
   // frame the route changes — do not wait for the full-size image to load.
   useLayoutEffect(() => {
     if (switchingTo === null) return;
+    setIncomingTimedOut(false);
+    // In a LAYOUT effect so the stand-in is on the incoming frame before it is
+    // ever painted; a passive effect here would show one frame of empty box.
+    setIncomingPreviewSrc(getTileImageSrc(switchingTo));
     const outgoing = heroRef.current;
     const incoming = incomingRef.current;
     if (outgoing) {
@@ -348,6 +468,11 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
     const incoming = incomingRef.current;
     const land = () => {
       switchLandedRef.current = true;
+      // The stand-in moves down with the photo, so the resting layer has
+      // something under it if this switch landed on the timeout rather than on
+      // a load. Re-read from the grid rather than carried over from
+      // `incomingPreviewSrc`, which is only as fresh as the last render.
+      setPreviewSrc(getTileImageSrc(switchingTo));
       setDisplayIndex(switchingTo);
     };
     if (!incoming || reducedMotion) {
@@ -517,12 +642,6 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
   }, [activeIndex]);
 
   // --- Open --------------------------------------------------------------
-  // The tile's own rendered image url, captured at open so it can be painted
-  // under the hero while the full-size rendition loads. State rather than a
-  // style computed inline, because it can only be read off the live DOM.
-  const [morphBackdropSrc, setMorphBackdropSrc] = useState<string | null>(null);
-  const [heroLoaded, setHeroLoaded] = useState(false);
-
   useLayoutEffect(() => {
     const hero = heroRef.current;
     const backdrop = backdropRef.current;
@@ -531,6 +650,13 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
 
     const openIndex = activeIndexRef.current;
     const chrome = dialog.querySelectorAll<HTMLElement>(CHROME_SELECTOR);
+
+    // Read HERE and not in the rAF below: setting state in a layout effect
+    // re-renders before the browser paints, so the hero's very first frame
+    // already carries the tile's image. Deferred by one frame it would instead
+    // be the first frame of the morph that is empty — the exact hole this
+    // stand-in exists to fill.
+    if (openedFromClickRef.current) setPreviewSrc(getTileImageSrc(openIndex));
 
     // Read synchronously, not from `useReducedMotion()`. This effect is
     // mount-only and the hook resolves one commit later, so branching on its
@@ -558,10 +684,7 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
         ease: GSAP_EASE,
       });
 
-      if (openedFromClickRef.current) {
-        setMorphBackdropSrc(getTileImageSrc(openIndex));
-        if (morphOpen(hero, openIndex)) return;
-      }
+      if (openedFromClickRef.current && morphOpen(hero, openIndex)) return;
 
       // No tile to morph from — deep link, or a photo the grid hasn't
       // rendered. Fade the hero up in place instead.
@@ -791,18 +914,31 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
     photos.length
   ).padStart(totalDigits, "0")}`;
 
-  // Dropped the instant the full-size rendition paints — see
-  // `getTileImageSrc`. Keeping it after that would only matter during a
-  // photo switch, where it would show the WRONG photo's thumbnail through the
-  // crossfade.
-  const morphBackdrop: CSSProperties | undefined =
-    !heroLoaded && morphBackdropSrc
-      ? {
-          backgroundImage: `url("${morphBackdropSrc}")`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }
-      : undefined;
+  // The photos worth having in cache before they are asked for: whichever way
+  // the visitor goes next. This is what turns an arrow press from "wait for
+  // 650KB" into an instant switch — by the time the crossfade above runs, the
+  // file it is waiting on has usually been here for a while.
+  //
+  // Gated on the CURRENT photo having finished, because warming is only worth
+  // doing with bandwidth nobody is waiting on, and `fetchPriority="low"` keeps
+  // it behind anything that is.
+  //
+  // `activeIndex` is in the list on purpose even though it is normally the
+  // photo on screen: the filter drops it then, but DURING a switch the resting
+  // layer is still the outgoing photo, so keeping the incoming one here means
+  // its warm `<img>` is not torn out from under a download that is already in
+  // flight the moment the arrow is pressed.
+  const warmPhotos =
+    mayWarm && restingLoaded && !isClosing && photos.length > 1
+      ? [activeIndex, activeIndex + 1, activeIndex - 1]
+          .map((i) => photos[(i + photos.length) % photos.length])
+          .filter(
+            (photo, i, list): photo is LightboxPhoto =>
+              Boolean(photo) &&
+              photo.src !== displayPhoto.src &&
+              list.findIndex((other) => other?.src === photo.src) === i
+          )
+      : [];
 
   return (
     <div
@@ -863,8 +999,8 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
                 never to the incoming one. */}
             <div
               ref={heroRef}
-              style={{ ...heroFrameStyle(displayPhoto), ...morphBackdrop }}
-              className={heroBoxClass(displayPhoto)}
+              style={{ ...heroFrameStyle(displayPhoto), ...previewStyle(previewSrc) }}
+              className={frameClass(displayPhoto, !restingLoaded && !previewSrc)}
             >
               <Image
                 key={displayPhoto.src}
@@ -872,17 +1008,26 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
                 src={`/${displayPhoto.src}`}
                 alt={buildAlt(displayPhoto)}
                 fill
-                priority
+                /* `priority` is deprecated in Next 16 and would also inject a
+                   `<link rel=preload>` into the head for an overlay that only
+                   ever mounts client-side — these two are the half of it that
+                   actually does anything here. */
+                loading="eager"
+                fetchPriority="high"
                 quality={90}
                 sizes={heroSizesFor(displayPhoto)}
                 className="object-cover"
                 draggable={false}
-                onLoad={() => setHeroLoaded(true)}
+                onLoad={(event) => markLoaded(displayPhoto.src, event.currentTarget)}
               />
             </div>
 
-            {/* Incoming layer while switching — shown immediately with a
-                shimmer placeholder; the full-size image fades in once loaded. */}
+            {/* Incoming layer while switching — shown immediately over the
+                tile's cached stand-in (or a shimmer if there is none); the
+                full-size image fades in on top once it has loaded AND decoded.
+                The stand-in stays put underneath for the whole crossfade,
+                which is what closes the gap the old code left between the
+                placeholder going and the photo painting. */}
             {incomingPhoto ? (
               <div
                 aria-hidden="true"
@@ -890,10 +1035,14 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
               >
                 <div
                   ref={incomingRef}
-                  style={heroFrameStyle(incomingPhoto)}
-                  className={`${heroBoxClass(incomingPhoto)} ${
-                    incomingReady ? "" : "image-placeholder"
-                  }`}
+                  style={{
+                    ...heroFrameStyle(incomingPhoto),
+                    ...previewStyle(incomingPreviewSrc),
+                  }}
+                  className={frameClass(
+                    incomingPhoto,
+                    !incomingLoaded && !incomingPreviewSrc
+                  )}
                 >
                   <Image
                     key={incomingPhoto.src}
@@ -901,15 +1050,44 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
                     src={`/${incomingPhoto.src}`}
                     alt=""
                     fill
-                    priority
+                    loading="eager"
+                    fetchPriority="high"
                     quality={90}
                     sizes={heroSizesFor(incomingPhoto)}
                     className="object-cover opacity-0"
                     draggable={false}
-                    onLoad={() => setIncomingReady(true)}
-                    onError={() => setIncomingReady(true)}
+                    onLoad={(event) => markLoaded(incomingPhoto.src, event.currentTarget)}
+                    onError={() => setIncomingTimedOut(true)}
                   />
                 </div>
+              </div>
+            ) : null}
+
+            {/* Neighbour warming. Off-screen but not `display: none` — a
+                hidden image still downloads, a non-rendered one does not — and
+                deliberately the same loader/quality/`sizes` as the hero, so
+                the browser picks the identical srcset candidate and the arrow
+                press that follows is a cache hit rather than a near miss. */}
+            {warmPhotos.length > 0 ? (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none invisible absolute h-px w-px overflow-hidden"
+              >
+                {warmPhotos.map((photo) => (
+                  <Image
+                    key={photo.src}
+                    loader={imageLoader}
+                    src={`/${photo.src}`}
+                    alt=""
+                    fill
+                    loading="eager"
+                    fetchPriority="low"
+                    quality={90}
+                    sizes={heroSizesFor(photo)}
+                    draggable={false}
+                    onLoad={(event) => markLoaded(photo.src, event.currentTarget)}
+                  />
+                ))}
               </div>
             ) : null}
 
