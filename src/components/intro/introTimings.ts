@@ -96,6 +96,36 @@ export const WORDMARK_HOLD_MS = 200;
 export const WORDMARK_DURATION_MS = REMAINING_WINDOW_END_MS + WORDMARK_HOLD_MS; // 2176
 
 /**
+ * Hard ceiling on the wait for Switzer to load before the intro starts.
+ *
+ * The wordmark IS the intro — showing it in the metric-adjusted Arial
+ * fallback and letting `font-display: swap` re-render it a moment later is a
+ * visible glyph-shape-and-width jump on the one element the whole sequence is
+ * built around. So the overlay's content is held invisible (globals.css keys
+ * it off `data-fonts="ready"`) and the phase machine is held in `idle` until
+ * the real face is available — see IntroContext's decide-once effect and
+ * `fontsReady.ts`. The white sheet is already up the entire time; only the
+ * K+B inside it waits.
+ *
+ * The cap is what stops a dead font request trapping anyone on that blank
+ * sheet: past it we simply start, fallback face and all. A brief swap is a
+ * far better failure than no intro at all.
+ */
+export const FONT_WAIT_CAP_MS = 1500;
+/**
+ * CSS-only backstop for the same reveal. Everything that clears
+ * `data-fonts` is JS, and JS is not guaranteed to run (a chunk 404, a throw
+ * in any module evaluated before IntroProvider) — same hazard, and the same
+ * rule, as `.reveal` and GridReveal's gate: `opacity: 0` must never be a
+ * TERMINAL state. globals.css runs the identical fade off a delayed
+ * `animation` so the wordmark appears even if React never hydrates.
+ *
+ * Derived from — and deliberately later than — the JS cap above, so on every
+ * load where React *is* alive this never gets the chance to fire.
+ */
+export const INTRO_CONTENT_FAILSAFE_MS = FONT_WAIT_CAP_MS + 500; // 2000
+
+/**
  * Hard ceiling on the first-row asset preload.
  *
  * Must be LONGER than WORDMARK_DURATION_MS, or the preloader cannot preload.

@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { whenFontsReady } from "./fontsReady";
 import { markIntroPlayed } from "./introSession";
 import {
   DEAL_BUDGET_MS,
@@ -197,6 +198,21 @@ export default function IntroProvider({ children }: { children: ReactNode }) {
     if (decided.current) return;
     decided.current = true;
 
+    // Releases the overlay's font gate (globals.css's `.intro-content`
+    // rules, keyed off `data-fonts="ready"` on <html>). Held closed until
+    // Switzer is genuinely available, because `font-display: swap` would
+    // otherwise paint the K+B in the Arial fallback and re-paint it a moment
+    // later at a different size and shape — see fontsReady.ts.
+    //
+    // Every path below calls this exactly once, including the ones that never
+    // play an intro: the gate is scoped under `data-intro="play"` and so is
+    // already inert on those, but leaving an unreleased opacity gate lying
+    // around for a later mount to trip over is the kind of thing that only
+    // ever shows up as a mystery blank sheet.
+    const releaseFontGate = () => {
+      document.documentElement.dataset.fonts = "ready";
+    };
+
     // A `?photo=n` deep link opens the lightbox immediately on load. Playing
     // the intro underneath it would run two full-screen animations at once
     // and deal the grid out behind an already-open overlay, so a deep link
@@ -230,6 +246,7 @@ export default function IntroProvider({ children }: { children: ReactNode }) {
       // `setPhase` closes that window in the same commit rather than relying
       // on React to flush the two closely enough that it never paints.
       document.documentElement.removeAttribute("data-intro");
+      releaseFontGate();
       setPhase("done");
       return;
     }
@@ -252,7 +269,34 @@ export default function IntroProvider({ children }: { children: ReactNode }) {
       burnedThisPageLoad = true;
     }
 
-    setPhase(willPlay ? "wordmark" : "done");
+    if (!willPlay) {
+      releaseFontGate();
+      setPhase("done");
+      return;
+    }
+
+    // Start the choreography only once the wordmark's own typeface can
+    // actually be painted with — the single beat this whole gate exists for.
+    //
+    // Waiting here, rather than only hiding the content in CSS, is what stops
+    // a slow font landing the visitor mid-morph: the phase clock is what the
+    // `+` fade, the spread and the typing are all measured from, so if it ran
+    // while the content was still gated the K+B would fade in already
+    // spreading. `idle` rests in the exact same centred pose the morph starts
+    // from (see IntroOverlay), so holding here is genuinely a hold on a
+    // finished frame, not a stall on an empty one — the white sheet is up
+    // throughout either way.
+    //
+    // `whenFontsReady()` is capped (FONT_WAIT_CAP_MS) and resolves on font
+    // failure as well as success, so this can extend the wait but never
+    // become one. No cancellation on unmount, deliberately: StrictMode's
+    // simulated unmount would trip a cancel flag, and the remount is blocked
+    // by `decided` above, so the intro would never start in dev. A `setPhase`
+    // on an unmounted component is a no-op in React 18+.
+    whenFontsReady().then(() => {
+      releaseFontGate();
+      setPhase("wordmark");
+    });
   }, []);
 
   // Own the `data-intro` attribute for the whole life of the intro, in ONE

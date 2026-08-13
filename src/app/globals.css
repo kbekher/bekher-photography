@@ -126,6 +126,54 @@ html[data-intro="play"] .intro-overlay {
   display: block;
 }
 
+/* Font gate for the overlay's CONTENT (the K+B monogram and the nav echo) —
+ * distinct from the sheet-visibility gate above, and deliberately so.
+ *
+ * The white sheet must be up from the very first painted frame (that's the
+ * rule above). The wordmark inside it must not: Switzer is loaded with
+ * `font-display: swap`, so anything painted before the woff2 arrives is drawn
+ * in the metric-adjusted Arial fallback and then re-drawn in Switzer the
+ * moment it lands. On a page full of body copy that swap is invisible; on a
+ * blank sheet holding a single 3.7s animation of ONE wordmark, it reads as
+ * the K+B glitching to a different size and shape mid-intro.
+ *
+ * So the content starts invisible and fades in — over the monogram's own
+ * MONOGRAM_FADE_MS beat, which is what that beat was always for — once
+ * IntroProvider has confirmed the real face is available and flipped
+ * `data-fonts="ready"` (see fontsReady.ts). The phase machine waits on the
+ * same promise, so the fade and the start of the choreography are one beat,
+ * not two. Every duration/easing here is a custom property set from
+ * introTimings.ts in layout.tsx — the numbers live in one place, in TS.
+ *
+ * Scoped under `html[data-intro="play"]` so it is inert on every load that
+ * isn't playing an intro, and so the head script's 8s dead-man's switch
+ * (which drops that attribute) releases this gate too.
+ */
+html[data-intro="play"] .intro-content {
+  opacity: 0;
+  /* CSS-only backstop — see INTRO_CONTENT_FAILSAFE_MS. If React never runs,
+   * nothing ever sets `data-fonts`, and `opacity: 0` would be terminal. This
+   * runs the same fade off a delay instead, so the wordmark always arrives. */
+  animation: intro-content-in var(--intro-content-fade) var(--intro-ease)
+    var(--intro-content-failsafe) forwards;
+}
+
+html[data-intro="play"][data-fonts="ready"] .intro-content {
+  /* The real path: React got there first, so drop the backstop and fade. */
+  animation: none;
+  opacity: 1;
+  transition: opacity var(--intro-content-fade) var(--intro-ease);
+}
+
+@keyframes intro-content-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* NOTE: there is deliberately no `.intro-grid-gate` rule here any more. The
  * home grid used to be held at `opacity: 0` by a rule scoped to
  * `html[data-intro="play"]`, but that made the grid's visibility depend on an

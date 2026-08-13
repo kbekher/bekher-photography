@@ -1,7 +1,22 @@
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import localFont from "next/font/local";
 import "./globals.css";
+import {
+  EASE,
+  INTRO_CONTENT_FAILSAFE_MS,
+  MONOGRAM_FADE_MS,
+} from "@/components/intro/introTimings";
 
+// `display: "swap"` stays deliberately: for body copy, text-in-a-fallback
+// beats invisible text, and next/font emits a `<link rel="preload">` plus an
+// Arial fallback face with matched metrics, so the swap costs no reflow.
+//
+// The intro is the one place that trade doesn't hold — a swap under a
+// single, centred, animating wordmark is a visible change of glyph shape, not
+// an invisible reflow — so the intro opts out of the swap specifically,
+// rather than the whole site opting into `font-display: block`. See
+// src/components/intro/fontsReady.ts.
 const switzer = localFont({
   src: "../../public/fonts/Switzer-Variable.woff2",
   variable: "--font-switzer",
@@ -9,6 +24,17 @@ const switzer = localFont({
   weight: "100 900",
   adjustFontFallback: "Arial",
 });
+
+// The intro's font gate lives in CSS (it has to hold from the first painted
+// frame, before React exists — see globals.css), but its numbers live in
+// introTimings.ts like every other beat in the sequence. These custom
+// properties are the join between the two, so the durations are still written
+// exactly once, in TS.
+const INTRO_CSS_VARS = {
+  "--intro-content-fade": `${MONOGRAM_FADE_MS}ms`,
+  "--intro-content-failsafe": `${INTRO_CONTENT_FAILSAFE_MS}ms`,
+  "--intro-ease": EASE,
+} as CSSProperties;
 
 export const metadata: Metadata = {
   title: "Kristina Bekher",
@@ -107,6 +133,9 @@ const INTRO_HEAD_SCRIPT = `(function () {
       // hatch, and it deliberately lives here in the head script rather than
       // in React, because the whole failure mode is "React never ran".
       // Comfortably longer than the ~3.7s intro, so it can never fire early.
+      // Dropping the attribute also releases the overlay's font gate
+      // (globals.css scopes its .intro-content rules under it), so that
+      // second opacity gate can't outlive this one either.
       setTimeout(function () {
         document.documentElement.removeAttribute("data-intro");
       }, 8000);
@@ -130,7 +159,12 @@ const REVEAL_NOSCRIPT_CSS = `.reveal { opacity: 1 !important; }`;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
   return (
-    <html lang="en" className={switzer.variable} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={switzer.variable}
+      style={INTRO_CSS_VARS}
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: INTRO_HEAD_SCRIPT }} />
         <noscript>

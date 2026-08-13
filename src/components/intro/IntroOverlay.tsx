@@ -9,6 +9,7 @@ import {
   type CSSProperties,
 } from "react";
 import { useReducedMotion } from "@/utils/useReducedMotion";
+import { whenFontsReady } from "./fontsReady";
 import { useIntroPhase } from "./IntroContext";
 import {
   EASE,
@@ -187,12 +188,12 @@ function measureWordmark(
  * on real glyph widths, which aren't knowable from CSS alone — so a
  * `useLayoutEffect` measures the live DOM once on mount (and again on
  * resize) via `offsetLeft`/`offsetWidth`, computed BEFORE paint so there's
- * no flash of an un-measured layout. Until that first measurement lands the
- * per-character wordmark renders `visibility: hidden` rather than guessing,
- * and a plain statically-centred "K+B" stands in for it — see the comment on
- * that fallback in the render below for why it can't simply be omitted (the
- * pre-hydration window would be a blank white sheet, defeating the whole
- * point of globals.css's `data-intro="play"` gate).
+ * no flash of an un-measured layout. That measurement waits on
+ * `whenFontsReady()` — glyph widths measured against the Arial fallback
+ * would place the monogram at offsets the real face never wanted. Until it
+ * lands the per-character wordmark renders `visibility: hidden` rather than
+ * guessing, and a statically-centred "K+B" in the same pose stands in for it
+ * — see the comment on that fallback in the render below.
  *
  * ## Why this can fake the header's exact position without measuring it
  * The real header (PageShell) is `flex flex-col items-center pt-24`, then
@@ -210,11 +211,20 @@ function measureWordmark(
  * transition-delay so it never appears to move alongside a still-travelling
  * wordmark.
  *
- * ## Why this never needs its own entrance fade (beyond the morph itself)
- * The wordmark/navbar block simply appears (its own internal choreography
- * aside) when this component mounts — the overlay itself only fades OUT,
- * during the `photo` phase, and it's fully opaque for the wordmark/nav
- * phases. There's nothing to reveal underneath until that fade-out begins.
+ * ## The entrance fade, and where it lives
+ * The white sheet itself never fades IN — it's opaque from the first painted
+ * frame (globals.css's `data-intro="play"` gate) and only ever fades OUT,
+ * during the `photo` phase. The wordmark inside it does fade in, but that
+ * fade is not driven from here: it belongs to the `intro-content` gate in
+ * globals.css, which holds this overlay's contents at opacity 0 until Switzer
+ * has actually loaded (see fontsReady.ts) and then fades them in over
+ * MONOGRAM_FADE_MS — the monogram's own entrance beat, just triggered by the
+ * font rather than by a timer. The alternative was painting the K+B in the
+ * metric-adjusted Arial fallback and letting `font-display: swap` redraw it
+ * mid-animation at a different size, which is the one glitch a preloader
+ * built entirely out of one wordmark cannot afford. IntroProvider waits on
+ * the same promise before leaving `idle`, so the fade and the first beat of
+ * the choreography are the same moment.
  *
  * ## Reduced motion
  * Reduced-motion users never see this component at all — IntroContext jumps
@@ -347,19 +357,18 @@ export default function IntroOverlay() {
   // widths, not the Arial fallback. Until then the statically-centred "K+B"
   // stand-in (see render below) stays up — a fade-in at the wrong offsets
   // reads as "K slides in from the left".
+  //
+  // Shares `whenFontsReady()` with IntroProvider (which holds the phase
+  // machine in `idle` on the same promise) rather than touching
+  // `document.fonts` directly, so the measurement and the choreography can
+  // never disagree about when the type is ready — and so a stalled font
+  // request hits the same cap here instead of leaving the wordmark
+  // permanently `visibility: hidden` behind a started intro.
   useLayoutEffect(() => {
     let cancelled = false;
-    const measure = () => {
+    whenFontsReady().then(() => {
       if (!cancelled) remeasure(false, true);
-    };
-    const fonts = document.fonts;
-    if (!fonts?.ready) {
-      measure();
-      return () => {
-        cancelled = true;
-      };
-    }
-    fonts.ready.then(measure);
+    });
     return () => {
       cancelled = true;
     };
@@ -512,7 +521,17 @@ export default function IntroOverlay() {
   // the two reveal counters' last values, so a remount or a missed timer can
   // never leave the wordmark stuck mid-morph on every later phase.
   const settled = phase === "nav" || phase === "photo";
-  const effectiveMonoIn = isIdle || settled || monoIn;
+  // `monogramVisibleRef` is a one-way latch: once the monogram has been
+  // painted visible it must never render at opacity 0 again. Without it in
+  // this expression there is one commit — the `idle` -> `wordmark` handoff —
+  // where `isIdle` has already gone false but the timer effect hasn't yet run
+  // to set `monoIn`, so the glyphs render transparent for however long React
+  // takes to flush passive effects. That used to be invisible (the monogram
+  // faded in from 0 anyway); now that the entrance fade belongs to the
+  // content gate in globals.css it would be a blink in the middle of it, and
+  // the glyph-level fade would multiply with the gate's instead of the
+  // monogram simply arriving once, on one curve.
+  const effectiveMonoIn = isIdle || settled || monoIn || monogramVisibleRef.current;
   const effectivePlusOut = settled || plusOut;
   const effectiveSpread = settled || spread;
   const effectiveWord1 = settled ? WORD1_INDICES.length : revealedWord1;
@@ -591,7 +610,24 @@ export default function IntroOverlay() {
         transition: noTransition ? "none" : `opacity ${OVERLAY_DISSOLVE_MS}ms ${EASE}`,
       }}
     >
-      <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center px-[40px]">
+      {/*
+        `intro-content` is the font gate's target — globals.css holds this
+        wrapper at opacity 0 while the intro is playing and fades it in over
+        MONOGRAM_FADE_MS once `data-fonts="ready"` lands on <html> (see
+        IntroProvider / fontsReady.ts). It is a static class in the
+        server-rendered HTML, not an inline style or React state, for the same
+        reason `.reveal` is: it has to hold from the very first painted frame,
+        long before any JS has run, and it has to stay overridable — the head
+        script's dead-man's switch releases it by dropping `data-intro`, and
+        the keyframe backstop in globals.css opens it even if React never
+        runs at all.
+
+        This is the monogram's entrance: the sheet paints white immediately,
+        and the K+B arrives — once, already in Switzer — rather than being
+        painted in the Arial fallback and re-drawn a moment later at a
+        different size when `font-display: swap` swaps the real face in.
+      */}
+      <div className="intro-content mx-auto flex w-full max-w-[1280px] flex-col items-center px-[40px]">
         <div className="flex w-full flex-col items-center pt-24">
           <div
             className="relative"
@@ -606,23 +642,35 @@ export default function IntroOverlay() {
               Pre-measurement stand-in. `metrics.ready` is false in the
               server-rendered HTML and on the client's first render, and the
               per-character wordmark is `visibility: hidden` until the layout
-              effect below has run — so WITHOUT this the preloader would be a
-              blank white sheet for the entire pre-hydration window, which is
-              precisely what globals.css's `data-intro="play"` gate exists to
-              prevent (it paints this overlay from the very first frame,
-              before any JS runs). A plain, statically-centred "K+B" fills
-              that window. It's rendered identically on both sides of the
-              hydration boundary (`metrics.ready` is a literal `false` seed,
-              never computed from the DOM), and useLayoutEffect swaps it for
-              the measured version BEFORE the next paint, so the handoff is
-              never a visible frame. The two poses differ only by
-              MONOGRAM_GAP_EM's few px, and both are centred on the same
-              point, so even a slow hydration lands as a sub-pixel settle
-              rather than a jump.
+              effect above has run — so without this there would be nothing to
+              paint at all until measurement lands. It is rendered identically
+              on both sides of the hydration boundary (`metrics.ready` is a
+              literal `false` seed, never computed from the DOM).
+
+              It is no longer racing hydration the way it used to: the content
+              gate (see `intro-content` above) keeps this whole block
+              invisible until fonts are ready AND React has flipped the
+              attribute, by which point the measurement has almost always
+              already landed. What it still genuinely covers is the CSS
+              keyframe backstop — the JS-never-ran path, where this stand-in
+              is the only wordmark that will ever be shown.
+
+              The `+`'s margins are the same MONOGRAM_GAP_EM the measured pose
+              spaces its glyphs by, and both poses are centred on the same
+              point, so the handoff from this to the measured version is a
+              sub-pixel settle rather than the visible re-spacing a plain
+              "K+B" text node produced.
             */}
             {!metrics.ready ? (
               <span className="absolute left-1/2 top-0 -translate-x-1/2 whitespace-nowrap">
-                K+B
+                K
+                <span
+                  className="inline-block"
+                  style={{ marginInline: `${MONOGRAM_GAP_EM}em` }}
+                >
+                  +
+                </span>
+                B
               </span>
             ) : null}
             <span
