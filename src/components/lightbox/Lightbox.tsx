@@ -57,6 +57,27 @@ const SWITCH_S = FLIGHT_MS / 1000;
  *  giving up and switching anyway. See the timeout effect for why. */
 const SWITCH_LOAD_TIMEOUT_MS = 1200;
 
+// --- Touch navigation -----------------------------------------------------
+// Gesture thresholds only. A swipe/tap here does exactly what an arrow click
+// does — it hands off to the same crossfade — so there is deliberately no
+// motion tied to the finger: the photo never moves, it changes.
+
+/** Fraction of the frame's width a swipe must cover to count — but never
+ *  fewer than MIN_COMMIT_PX, so a narrow frame stays swipeable. */
+const SWIPE_RATIO = 0.22;
+const MIN_SWIPE_PX = 48;
+/** px/ms past which a flick counts however far it actually travelled. A fast
+ *  flick is unambiguous, and demanding distance from it is exactly what makes
+ *  a swipe feel unresponsive. */
+const SWIPE_VELOCITY = 0.45;
+/** Movement before a gesture is classified as horizontal or vertical. */
+const AXIS_LOCK_PX = 8;
+/** A touch that never locked an axis and ended within this is a tap. */
+const TAP_MAX_MS = 300;
+/** Left of this fraction of the frame taps backwards, right of it forwards.
+ *  Under half on purpose: forward is the overwhelmingly common intent. */
+const TAP_PREV_ZONE = 0.4;
+
 /**
  * The hero's box, sized to ONE photo's aspect. Both crossfade layers call
  * this with their own photo, which is what stops a frame from changing shape
@@ -230,6 +251,19 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
   const heroRef = useRef<HTMLDivElement>(null);
   const incomingRef = useRef<HTMLDivElement>(null);
   const thumbStripRef = useRef<HTMLDivElement>(null);
+  /** The area a swipe/tap is read from; see the touch effect for why it is
+   *  this element and not the dialog. */
+  const viewportRef = useRef<HTMLDivElement>(null);
+  /** Live gesture state. A ref, not state: it updates on every touchmove and
+   *  must never cause a render — nothing on screen follows the finger. */
+  const dragRef = useRef({
+    active: false,
+    axis: null as null | "x" | "y",
+    dx: 0,
+    startX: 0,
+    startY: 0,
+    startT: 0,
+  });
 
   const [isClosing, setIsClosing] = useState(false);
   // See the doc comment above — the whole close path reads this, never
@@ -342,6 +376,115 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
     const el = heroRef.current;
     if (el) gsap.set(el, { opacity: 1 });
   }, [displayIndex]);
+
+  // --- Swipe + tap ---------------------------------------------------------
+  //
+  // Touch had no way to move between photos at all: the arrows are `lg:` only,
+  // which left the thumbnail strip as the sole control on a phone. So swipe
+  // horizontally to move, or tap the left of the frame to go back and the
+  // right to go forward.
+  //
+  // This is gesture DETECTION only — it calls the same `next`/`prev` an arrow
+  // click does and the existing crossfade takes it from there. Nothing tracks
+  // the finger.
+  //
+  // ## Native listeners, not React's `onTouch*`
+  // `touchmove` has to be non-passive so a horizontal drag can
+  // `preventDefault` and stop the browser also reading it as a scroll or an
+  // edge back-navigation. React attaches its own touch listeners passively at
+  // the root, where `preventDefault` is a no-op.
+  //
+  // ## Why the hero VIEWPORT and not the dialog
+  // The thumbnail strip is its own horizontally scrollable element. Bound any
+  // higher and a swipe along the strip would change photo instead of scrolling
+  // it — the two gestures are identical and only the target tells them apart.
+  useEffect(() => {
+    const vp = viewportRef.current;
+    if (!vp || photos.length < 2 || isClosing) return;
+
+    const drag = dragRef.current;
+    const swipeDistance = () =>
+      Math.max(MIN_SWIPE_PX, (heroRef.current?.offsetWidth ?? vp.clientWidth) * SWIPE_RATIO);
+
+    function onStart(event: TouchEvent) {
+      // Never hijack a press on a control, and never try to interpret a second
+      // finger — a pinch to zoom the photo has to keep working.
+      if (event.touches.length !== 1) {
+        drag.active = false;
+        return;
+      }
+      if ((event.target as HTMLElement | null)?.closest("button")) return;
+      const t = event.touches[0];
+      drag.active = true;
+      drag.axis = null;
+      drag.dx = 0;
+      drag.startX = t.clientX;
+      drag.startY = t.clientY;
+      drag.startT = performance.now();
+    }
+
+    function onMove(event: TouchEvent) {
+      if (!drag.active) return;
+      if (event.touches.length !== 1) {
+        drag.active = false;
+        return;
+      }
+      const t = event.touches[0];
+      const dx = t.clientX - drag.startX;
+      const dy = t.clientY - drag.startY;
+
+      // Decide the axis ONCE and stay decided. Re-deciding as the finger
+      // wanders would let a drifting vertical drag turn into a photo change.
+      if (drag.axis === null) {
+        if (Math.abs(dx) < AXIS_LOCK_PX && Math.abs(dy) < AXIS_LOCK_PX) return;
+        drag.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+      }
+      if (drag.axis !== "x") return;
+      event.preventDefault();
+      drag.dx = dx;
+    }
+
+    const onEnd = (event: TouchEvent) => {
+      if (!drag.active) return;
+      drag.active = false;
+      const elapsed = Math.max(1, performance.now() - drag.startT);
+      const touch = event.changedTouches[0];
+
+      // Never became a drag: a tap.
+      if (drag.axis === null) {
+        if (elapsed > TAP_MAX_MS || !touch) return;
+        const rect = vp.getBoundingClientRect();
+        const ratio = (touch.clientX - rect.left) / Math.max(1, rect.width);
+        if (ratio < TAP_PREV_ZONE) goPrev();
+        else goNext();
+        return;
+      }
+      if (drag.axis !== "x") return;
+
+      const dx = drag.dx;
+      const velocity = Math.abs(dx) / elapsed;
+      if (Math.abs(dx) < swipeDistance() && velocity < SWIPE_VELOCITY) return;
+      // Swiping left pulls the next photo in from the right, which is the
+      // direction the content conceptually moves.
+      if (dx < 0) goNext();
+      else goPrev();
+    };
+
+    function onCancel() {
+      drag.active = false;
+    }
+
+    vp.addEventListener("touchstart", onStart, { passive: true });
+    vp.addEventListener("touchmove", onMove, { passive: false });
+    vp.addEventListener("touchend", onEnd, { passive: true });
+    vp.addEventListener("touchcancel", onCancel, { passive: true });
+    return () => {
+      vp.removeEventListener("touchstart", onStart);
+      vp.removeEventListener("touchmove", onMove);
+      vp.removeEventListener("touchend", onEnd);
+      vp.removeEventListener("touchcancel", onCancel);
+    };
+  }, [photos.length, isClosing, goNext, goPrev]);
 
   // Exactly one grid tile is hidden at a time: the one the hero is currently
   // standing in for. `morphOpen` hides the tile it grows out of, but arrows
@@ -463,9 +606,20 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
       // The grid is revealed by the backdrop LEAVING, not by tweening tiles
       // back in. Nothing about the grid's own opacity is touched, so there is
       // no half-finished tile restore to get stranded.
+      //
+      // Delayed by exactly the chrome's own fade so the two never overlap.
+      // Run together — as they did — and the grid is already showing through
+      // the thinning backdrop while the caption is still half visible, so the
+      // photo's description and place read as printed over the page behind
+      // them. The text has to be gone before anything appears underneath it.
+      //
+      // Still lands before the close morph does (CHROME_OUT_S +
+      // BACKDROP_OUT_S is under `morphClose`'s own duration), so this delay
+      // cannot leave the backdrop mid-fade when the overlay unmounts.
       gsap.to(backdrop, {
         opacity: 0,
         duration: BACKDROP_OUT_S,
+        delay: CHROME_OUT_S,
         ease: GSAP_EASE,
         overwrite: true,
       });
@@ -477,9 +631,12 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
       return;
     }
 
+    // Same delay as the backdrop, for the same reason: the caption must be
+    // gone before the photo starts going too.
     gsap.to(hero, {
       opacity: 0,
       duration: HERO_FADE_S,
+      delay: CHROME_OUT_S,
       ease: GSAP_EASE,
       overwrite: true,
       onComplete: () => {
@@ -561,15 +718,25 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
   }, []);
 
   // Scroll lock. The width compensation is load-bearing for the morph, not
-  // cosmetic: taking the body out of flow removes the document scrollbar, and
-  // on any platform with classic (space-occupying) scrollbars the page would
-  // widen by ~15px underneath us — shifting every grid tile sideways between
-  // the rect the open morph measured and the rect the close morph measures.
-  useEffect(() => {
+  // cosmetic: taking the body out of flow can remove the document scrollbar,
+  // and the page would then widen underneath us — shifting every grid tile
+  // sideways between the rect the open morph measured and the rect the close
+  // morph measures.
+  //
+  // ## Why a LAYOUT effect
+  // This was a passive effect, which meant the overlay had already mounted and
+  // PAINTED over a still-unlocked body; the lock then landed a frame later and
+  // reflowed the whole page underneath a backdrop that was still transparent.
+  // That one shifted frame is the blink on open. Worse, passive effects and
+  // the open sequence's `requestAnimationFrame` have no guaranteed order
+  // between them, so the morph could measure a tile's rect either before or
+  // after the reflow — the same open looked different run to run. Locking
+  // before the first paint removes both: nothing paints unlocked, and every
+  // measurement happens after the document has settled.
+  useLayoutEffect(() => {
     const scrollY = window.scrollY;
     const body = document.body;
     const dialog = dialogRef.current;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     const prev = {
       overflow: body.style.overflow,
       position: body.style.position,
@@ -578,13 +745,32 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
       paddingRight: body.style.paddingRight,
     };
     const prevDialogPadding = dialog?.style.paddingRight ?? "";
+
+    const widthBefore = document.documentElement.clientWidth;
     body.style.overflow = "hidden";
     body.style.position = "fixed";
     body.style.top = `-${scrollY}px`;
     body.style.width = "100%";
-    if (scrollbarWidth > 0) {
-      body.style.paddingRight = `${scrollbarWidth}px`;
-      if (dialog) dialog.style.paddingRight = `${scrollbarWidth}px`;
+
+    // Compensate for the shift the lock ACTUALLY caused, rather than assuming
+    // it equals the scrollbar's width.
+    //
+    // It usually does not. globals.css sets `scrollbar-gutter: stable` on
+    // <html> precisely so the gutter survives the scrollbar going away — so on
+    // every browser that honours it the correct compensation here is ZERO, and
+    // the old `innerWidth - clientWidth` reading still returned a full
+    // scrollbar width (that difference is the reserved gutter, present with or
+    // without a scrollbar). Two fixes for one problem, stacking: the page was
+    // pushed sideways by a scrollbar's width for as long as the lightbox was
+    // open, and back again on close. On macOS's default overlay scrollbars the
+    // width is 0 and nothing showed, which is why this only bit sometimes.
+    //
+    // Reading the delta is correct in both worlds, including browsers with no
+    // `scrollbar-gutter` support, where it still yields the scrollbar width.
+    const shift = document.documentElement.clientWidth - widthBefore;
+    if (shift > 0) {
+      body.style.paddingRight = `${shift}px`;
+      if (dialog) dialog.style.paddingRight = `${shift}px`;
     }
     return () => {
       body.style.overflow = prev.overflow;
@@ -654,7 +840,14 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
             </div>
           </div>
 
-          <div className="lightbox-hero-viewport relative mt-[26px] flex min-h-0 w-full flex-1 items-center justify-center">
+          <div
+            ref={viewportRef}
+            /* `pan-y pinch-zoom` hands the browser everything except the
+               horizontal axis, which the swipe handler claims. Left at `auto`
+               the browser may start its own scroll or back-navigation gesture
+               before `preventDefault` lands. */
+            style={{ touchAction: "pan-y pinch-zoom" }}
+            className="lightbox-hero-viewport relative mt-[26px] flex min-h-0 w-full flex-1 items-center justify-center">
             <button
               data-lb-chrome
               type="button"
