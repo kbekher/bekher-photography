@@ -20,7 +20,7 @@ export const galleriesData: Record<string, Gallery> = {
   'noir-et-blanc': {
     id: 'noir-et-blanc',
     name: "Noir et Blanc",
-    description: "Out of the few black-and-white rolls I’ve ever shot, I picked a handful for this printed collection. At first, I had no plan to make a series, but these frames seemed to fall into place — fragments of everyday life and small adventures.",
+    description: "Fragments of everyday life and small adventures.",
     photos: [
       { aspectRatio: vertical, path: "road-in-mist-bw.jpg", place: "Misty Road", year: "2025", description: "Heavy mist hung over the ground and blurred into the sky on a freezing winter day. The road fades into the fog just a few hundred meters ahead, as if leading nowhere…" },
       { aspectRatio: horizontal, path: "mohnesee-in-winter-bw.jpg", place: "Möhnesee, Germany", year: "2025", description: "Around the lake the air was clear, the sun was shining and yet only a few kilometers away the mist swallowed everything. It felt as if this place existed on another planet." },
@@ -33,7 +33,7 @@ export const galleriesData: Record<string, Gallery> = {
   'alpine-escape': {
     id: 'alpine-escape',
     name: "Alpine Escape",
-    description: "26 kilometers, 2,970 meters, and memories to last a lifetime. This collection documents a 2024 trip through the Lauterbrunnen Valley with friends, centered around the incredible hike up Mount Schilthorn.",
+    description: "26 kilometers, 2,970 meters, and memories to last a lifetime. This collection documents a trip through the Lauterbrunnen Valley, centered around the hike up Mount Schilthorn.",
     photos: [
       { aspectRatio: horizontal, path: "wooden-houses-in-alps.jpg", place: "Lauterbrunnen, Switzerland", year: "2024", description: "" },
       { aspectRatio: vertical, path: "duck-on-fallen-tree-thun-lake.jpg", place: "Lake Thun, Switzerland", year: "2024", description: "Lonely duck." },
@@ -49,7 +49,7 @@ export const galleriesData: Record<string, Gallery> = {
   'harman-phoenix': {
     id: 'harman-phoenix',
     name: "Harman Phoenix",
-    description: "Exploring the high-contrast world of Harman Phoenix I & II. This collection contains of intense, burning reds with dreamy blue tones. This series was an exploration of color. I had a lot of fun finding the perfect subjects to embrace the unique, experimental palette of these films",
+    description: "Exploring the high-contrast world of Harman Phoenix: burning reds and dreamy blue tones...",
     photos: [
       { aspectRatio: horizontal, path: "cows-on-the-hill.jpg", place: "Durdle Door, UK", year: "2025", description: "Cows on the hill" },
       { aspectRatio: vertical, path: "portland-bill.jpg", place: "Portland Bill Lighthouse, UK", year: "2025", description: "" },
@@ -65,15 +65,15 @@ export const galleriesData: Record<string, Gallery> = {
   'european-feel': {
     id: 'european-feel',
     name: "European Feel",
-    description: "These photos represent a journey I never expected to take. Forced to leave Ukraine and start over, I had a chance to explore Europe, which I am grateful for to this day. I think one should seek for peace and beauty even during the most challenging times.",
+    description: "“Anyone who keeps the ability to see beauty never grows old.“ — Franz Kafka",
     photos: [
       { aspectRatio: vertical, path: "galeries-lafayette-paris.jpg", place: "Paris", year: "2023", description: "Galeries Lafayette" },
-      { aspectRatio: vertical, path: "montmartre-rain-street-paris.jpg", place: "Montmartre, Paris", year: "2023", description: "Rainy Montmartre" },
-      { aspectRatio: vertical, path: "rainy-sky-paris-city-center.jpg", place: "Paris, France", year: "2023", description: "" },
+      { aspectRatio: vertical, path: "montmartre-rain-street-paris.jpg", place: "Paris", year: "2023", description: "Rainy Montmartre" },
+      { aspectRatio: vertical, path: "rainy-sky-paris-city-center.jpg", place: "Paris", year: "2023", description: "" },
       { aspectRatio: horizontal, path: "brugges-city-center.jpg", place: "Bruges, Belgium", year: "2024", description: "" },
-      { aspectRatio: vertical, path: "view-from-bridge-brugges.jpg", place: "Bruges, Belgium", year: "2024", description: "So serene..." },
-      { aspectRatio: vertical, path: "funiculaire-lyon-france.jpg", place: "Lyon, France", year: "2025", description: "Up to Fourvière" },
-      { aspectRatio: vertical, path: "croix-rousse-lyon-france.jpg", place: "Croix-Rousse, Lyon", year: "2025", description: "" },
+      { aspectRatio: vertical, path: "view-from-bridge-brugges.jpg", place: "Bruges", year: "2024", description: "So serene..." },
+      { aspectRatio: vertical, path: "funiculaire-lyon-france.jpg", place: "Lyon", year: "2025", description: "Up to Fourvière" },
+      { aspectRatio: vertical, path: "croix-rousse-lyon-france.jpg", place: "Lyon", year: "2025", description: "Croix-Rousse" },
       { aspectRatio: horizontal, path: "light-and-shadow-lyon.jpg", place: "Lyon, France", year: "2025", description: "Light & shadows" },
       { aspectRatio: vertical, path: "lyon-street-in-shadow.jpg", place: "Lyon, France", year: "2025", description: "" },
       { aspectRatio: horizontal, path: "hanging-clothes-venice.jpg", place: "Venice, Italy", year: "2024", description: "" },
@@ -81,24 +81,23 @@ export const galleriesData: Record<string, Gallery> = {
       { aspectRatio: vertical, path: "canal-boats-old-venice.jpg", place: "Venice, Italy", year: "2024", description: "" },
       { aspectRatio: vertical, path: "venice-first-impression.jpg", place: "Venice, Italy", year: "2024", description: "First impression" },
       { aspectRatio: vertical, path: "barcelona-cathedral.jpg", place: "Barcelona, Spain", year: "2025", description: "" },
-      { aspectRatio: horizontal, path: "malaga-view-from-the-top.jpg", place: "La Malagueta, Malaga", year: "2023", description: "" },
+      { aspectRatio: horizontal, path: "malaga-view-from-the-top.jpg", place: "Malaga", year: "2023", description: "La Malagueta" },
       { aspectRatio: vertical, path: "malaga-cathedral.jpg", place: "Malaga, Spain", year: "2023", description: "Santa Iglesia Catedral Basílica de la Encarnación" },
     ],
   },
   'jazzy-blues': {
     id: 'jazzy-blues',
     name: "Jazzy Blues",
-    description: "Ever heard of Jazzy Blues film? You're lucky if even half the roll comes out properly exposed. After two years of experimenting at a rate of one roll per year, this is all I have to show for it. Working with an expired 25 ISO stock is tricky, but those colors... they really do feel a little jazzy, don't they?",
+    description: "Years of experimenting with expired ISO 25 film, in a few frames...",
     photos: [
       { aspectRatio: vertical, path: "design-books-jazzy-blues.jpg", place: "Düsseldorf, Germany", year: "2023", description: "This brutal world" },
       { aspectRatio: horizontal, path: "jazzy-blues-chamomile.jpg", place: "Unna, Germany", year: "2023", description: "Camomiles by neighbor's house" },
       { aspectRatio: vertical, path: "plant-stature-amterdam-jazzy-blues.jpg", place: "Amsterdam, Netherlands", year: "2024", description: "" },
-      { aspectRatio: horizontal, path: "white-cat-walking-jazzy-blues.jpg", place: "Amsterdam, Netherlands", year: "2024", description: "" },
+      { aspectRatio: horizontal, path: "rolls-roys-car-mirror.jpg", place: "Düsseldorf, Germany", year: "2023", description: "" },
       { aspectRatio: horizontal, path: "lady-smelling-roses.jpg", place: "Unna, Germany", year: "2024", description: "" },
-      { aspectRatio: horizontal, path: "flowers-in-focus-jazzy-blues.jpg", place: "Unna, Germany", year: "2023", description: "In focus" },
       { aspectRatio: vertical, path: "flower-in-sunlight.jpg", place: "Dortmund, Germany", year: "2023", description: "" },
       { aspectRatio: horizontal, path: "rolls-roys-car.jpg", place: "Düsseldorf, Germany", year: "2023", description: "" },
-      { aspectRatio: horizontal, path: "rolls-roys-car-mirror.jpg", place: "Düsseldorf, Germany", year: "2023", description: "" },
+      { aspectRatio: horizontal, path: "white-cat-walking-jazzy-blues.jpg", place: "Amsterdam, Netherlands", year: "2024", description: "" },
     ],
   },
 };
