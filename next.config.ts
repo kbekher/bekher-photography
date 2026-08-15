@@ -52,13 +52,7 @@ const nextConfig: NextConfig = {
     imageSizes: [48, 96, 128, 256, 384, 448, 512],
     loader: 'custom',
     loaderFile: './src/utils/image-loader.ts',
-    // 75 for grid tiles and thumbnails, 80 for the lightbox hero. Every
-    // allowed value is another distinct object at the origin, so this list
-    // stays as short as what the site actually asks for — the same reasoning
-    // as the width lists above. 90 is gone: nothing renders at it any more.
-    // (The OpenGraph urls still request q=90, but they are hand-built strings
-    // that bypass next/image, so this list does not govern them.)
-    qualities: [75, 80],
+    qualities: [75, 90],
   },
   async redirects() {
     return [

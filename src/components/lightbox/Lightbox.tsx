@@ -52,28 +52,6 @@ const CHROME_OUT_S = SNAP_MS / 1000;
 /** Fallback when there is no tile to morph from/to (deep link, or a photo
  *  past the end of the home feed's rendered page). */
 const HERO_FADE_S = FLIGHT_MS / 1000;
-/**
- * Quality for the full-size hero renditions.
- *
- * Measured on this photo set, webp, at the widths the hero actually asks for:
- *
- *   vertical  w=828   406KB -> 263KB   (-35%)
- *   vertical  w=1080  647KB -> 415KB   (-35%)
- *   vertical  w=1920 1522KB -> 947KB   (-37%)
- *   horizontal w=1920 349KB -> 194KB   (-44%)
- *
- * A third to nearly half the bytes, on the one image a visitor is actually
- * waiting to look at. Film grain is what makes the difference so large: it is
- * high-frequency noise, and q90 spends an enormous number of bits describing
- * it faithfully at a size where none of that detail survives being displayed
- * in a ~420 CSS px box.
- *
- * Kept as one constant rather than repeated at each `<Image>` so the resting
- * layer, the incoming layer and the neighbour warmers cannot drift apart —
- * they must request the SAME url, or warming stops warming anything.
- */
-const HERO_QUALITY = 80;
-
 /** Crossfade when switching photos with the arrows or the thumb strip. */
 const SWITCH_S = FLIGHT_MS / 1000;
 /**
@@ -1088,7 +1066,7 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
                    actually does anything here. */
                 loading="eager"
                 fetchPriority="high"
-                quality={HERO_QUALITY}
+                quality={90}
                 sizes={heroSizesFor(displayPhoto)}
                 className="object-cover"
                 draggable={false}
@@ -1126,7 +1104,7 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
                     fill
                     loading="eager"
                     fetchPriority="high"
-                    quality={HERO_QUALITY}
+                    quality={90}
                     sizes={heroSizesFor(incomingPhoto)}
                     className="object-cover opacity-0"
                     draggable={false}
@@ -1156,7 +1134,7 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
                     fill
                     loading="eager"
                     fetchPriority="low"
-                    quality={HERO_QUALITY}
+                    quality={90}
                     sizes={heroSizesFor(photo)}
                     draggable={false}
                     onLoad={(event) => markLoaded(photo.src, event.currentTarget)}
