@@ -31,8 +31,19 @@ export const DOMAIN = '';
  * loader appends (`w`, `q`, `f`) MUST be part of the cache key, or every
  * width collapses onto whichever one warmed the cache first.
  */
-const IMG_ORIGIN_FALLBACK =
-  'https://tojp4f5baeta7girwrpqvogul40oddhk.lambda-url.eu-central-1.on.aws';
+/**
+ * The CDN, not the Function URL behind it.
+ *
+ * It used to be the Lambda's own URL, on the reasoning that the origin of
+ * record is the safest thing to fall back to. That stopped being true the
+ * moment the Function URL was switched to `AWS_IAM` and put behind an origin
+ * access control: it now answers 403 to anything that isn't a signed request
+ * from one of the two CloudFront distributions. A fallback nothing can reach
+ * is not a fallback — it just moved the failure from "env var missing" to
+ * "every image on the page is broken", which is exactly what it did to local
+ * development.
+ */
+const IMG_ORIGIN_FALLBACK = 'https://d14lj85n4pdzvr.cloudfront.net';
 
 const IMG_ORIGIN = (process.env.NEXT_PUBLIC_IMG_ORIGIN || IMG_ORIGIN_FALLBACK)
   // A trailing slash here would produce `//img/...`, which S3-backed origins

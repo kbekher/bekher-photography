@@ -185,7 +185,9 @@ export default function CollectionContent({
 
       <LightboxProvider photos={photos}>
         <div ref={setGridRef} className={`mt-48 w-full ${styles.gate}`}>
-          <PhotoGrid photos={photos} priorityCount={4} />
+          {/* Two desktop rows / four phone rows — the first screen. See
+              OverviewFeed's note on why this is 8 and not 4. */}
+          <PhotoGrid photos={photos} priorityCount={8} />
         </div>
       </LightboxProvider>
 

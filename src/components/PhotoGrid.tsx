@@ -11,7 +11,8 @@ export interface GridPhoto {
 
 export interface PhotoGridProps {
   photos: GridPhoto[];
-  /** How many of the first photos (in array order) should be priority-loaded. */
+  /** How many of the first photos (in array order) load eagerly at high
+   *  priority — i.e. how many cover the first screen. */
   priorityCount?: number;
   /**
    * Make tiles open the lightbox on click. Requires a `<LightboxProvider>`

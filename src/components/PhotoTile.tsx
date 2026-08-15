@@ -141,7 +141,14 @@ export default function PhotoTile({
       alt={alt}
       fill
       draggable={false}
-      priority={priority}
+      /* `priority` is deprecated in Next 16, and these two are the half of it
+         that does the work: start the request immediately, and tell the
+         browser it outranks the rest of the page. The other half — injecting
+         a `<link rel=preload>` into the head — is what `preload` now does,
+         and the docs are explicit that `loading`/`fetchPriority` are the
+         better instrument when you know which images are above the fold. */
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : undefined}
       sizes={SIZES[orientation]}
       onLoad={() => setLoaded(true)}
       onError={handleError}
