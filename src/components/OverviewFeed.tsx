@@ -49,9 +49,18 @@ export default function OverviewFeed() {
   // across the re-render. Only move focus explicitly for the last click,
   // when the button itself unmounts (its focus would otherwise fall back to
   // <body>).
+  //
+  // `preventScroll` is load-bearing, not a precaution. The target is
+  // `.sr-only`, which is `position: absolute` with no `top`/`left`, so it
+  // resolves to its static position — and for an absolutely-positioned child
+  // of a FLEX container (the wrapper below is `flex flex-col`), that is the
+  // container's content-box start corner, i.e. the TOP of the grid, not the
+  // end of it where this div actually sits in source order. Focusing scrolls
+  // the target into view, so without this the last click threw the reader
+  // back to scroll 0, away from the photos it had just loaded.
   useEffect(() => {
     if (!hasMore) {
-      endRef.current?.focus();
+      endRef.current?.focus({ preventScroll: true });
     }
   }, [hasMore]);
 

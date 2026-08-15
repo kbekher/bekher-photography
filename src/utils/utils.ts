@@ -1,4 +1,4 @@
-import { PhotoMetadata } from "@/data";
+import { Photo } from "@/data";
 
 export const computeDimensions = (aspectRatio: string, baseWidth: number) => {
   const [widthRatio, heightRatio] = aspectRatio.split('/').map(Number);
@@ -7,13 +7,13 @@ export const computeDimensions = (aspectRatio: string, baseWidth: number) => {
   return { width, height };
 };
 
-export const getBestFitRow = (photos: PhotoMetadata[]) => {
+export const getBestFitRow = (photos: Photo[]) => {
   const maxCols = 12;
-  let bestCombo: { photo: PhotoMetadata; index: number; colSpan: number }[] = [];
+  let bestCombo: { photo: Photo; index: number; colSpan: number }[] = [];
   let maxColsUsed = 0;
 
   for (let start = 0; start < photos.length; start++) {
-    const combo: { photo: PhotoMetadata; index: number; colSpan: number }[] = [];
+    const combo: { photo: Photo; index: number; colSpan: number }[] = [];
     let colsUsed = 0;
 
     for (let i = start; i < photos.length; i++) {

@@ -16,8 +16,6 @@ import styles from "@/components/collection/GridReveal.module.css";
 
 export interface CollectionContentProps {
   gallery: Gallery;
-  /** Collection slug — needed to build each photo's S3 key (`<slug>/<path>`). */
-  slug: string;
   /** Index link shown between prev/next on mobile (`/collections`). */
   backHref: string;
   /** `/collections/<prevSlug>` — the previous collection in `keptCollectionSlugs`. */
@@ -101,18 +99,13 @@ const BUTTONS_Y = RISE_PX;
  */
 export default function CollectionContent({
   gallery,
-  slug,
   backHref,
   prevHref,
   nextHref,
 }: CollectionContentProps) {
-  const photos = gallery.photos.map((photo) => ({
-    src: `${slug}/${photo.path}`,
-    aspectRatio: photo.aspectRatio,
-    place: photo.place,
-    year: photo.year,
-    description: photo.description,
-  }));
+  // Already `LightboxPhoto`-shaped — `Photo.src` is the full S3 key (see
+  // src/data.ts), so there is nothing to map.
+  const photos = gallery.photos;
 
   // The deal-out plays only when there's something to deal: more than one
   // photo, no `?photo=` deep link already taking over with the lightbox, and

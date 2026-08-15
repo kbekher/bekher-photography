@@ -40,7 +40,7 @@ export async function generateMetadata({
   // and Facebook and LinkedIn in particular still treat webp as unsupported
   // for `og:image` and will show no preview at all. This is one image fetched
   // by a crawler, so its bytes do not matter; unfurling at all does.
-  const ogImageUrl = `${LAMBDA_IMG_BASE}/${slug}/${cover.path}?w=1200&q=90&f=jpeg`;
+  const ogImageUrl = `${LAMBDA_IMG_BASE}/${cover.src}?w=1200&q=90&f=jpeg`;
   const canonicalPath = `/collections/${slug}`;
 
   return {
@@ -93,7 +93,6 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
     >
       <CollectionContent
         gallery={gallery}
-        slug={slug}
         backHref="/collections"
         prevHref={`/collections/${prevSlug}`}
         nextHref={`/collections/${nextSlug}`}
