@@ -3,6 +3,8 @@ import PageShell from "@/components/ui/PageShell";
 import AboutContent from "@/components/AboutContent";
 
 export const metadata: Metadata = {
+  // Own canonical, not the root layout's — see the note there.
+  alternates: { canonical: "/about" },
   title: "About — Kristina Bekher",
   description:
     "Kristina Bekher is a Ukrainian photographer and software engineer based in Germany. Read about her work and get in touch.",

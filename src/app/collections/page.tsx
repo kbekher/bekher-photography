@@ -3,6 +3,7 @@ import PageShell from "@/components/ui/PageShell";
 import IndexList from "@/components/IndexList";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/collections" },
   title: "Index — Kristina Bekher",
   description: "Browse Kristina Bekher's film photography collections.",
 };
