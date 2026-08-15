@@ -40,6 +40,34 @@ const OG_IMAGE_URL = `${LAMBDA_IMG_BASE}/hero.jpg?w=1200&q=75&f=jpeg`;
 const OG_IMAGE_WIDTH = 1200;
 const OG_IMAGE_HEIGHT = 1810;
 
+const SITE_URL = "https://www.kristinabekher.com";
+
+/**
+ * Site-wide publication date.
+ *
+ * A LITERAL, deliberately — never `new Date()`. A date computed at build time
+ * would move on every deploy, telling crawlers the site had been republished
+ * each time a typo was fixed, which is both untrue and the kind of signal
+ * that gets discounted once noticed. Edit it when the site is genuinely
+ * republished, and not otherwise.
+ */
+const SITE_PUBLISHED = "2026-08-15";
+
+/**
+ * The publish date, and the only reason it is JSON-LD rather than a `<meta>`
+ * tag: there is no meta tag that carries a publication date for a *site*.
+ * `article:published_time` is an OpenGraph article property and is ignored
+ * outright when `og:type` is `website`, so adding it here would emit markup
+ * that reads correctly and does nothing. Three lines of JSON-LD is the
+ * smallest thing that a crawler actually parses.
+ */
+const SITE_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  url: SITE_URL,
+  datePublished: SITE_PUBLISHED,
+};
+
 // `display: "swap"` stays deliberately: for body copy, text-in-a-fallback
 // beats invisible text, and next/font emits a `<link rel="preload">` plus an
 // Arial fallback face with matched metrics, so the swap costs no reflow.
@@ -77,6 +105,13 @@ export const metadata: Metadata = {
   // that doesn't will claim to be the home page, which is worse than having
   // no canonical at all. All current routes do; new ones must too.
   alternates: { canonical: "/" },
+  // Inherited by every route, which is correct here: one person shot,
+  // wrote and published all of it. `authors` emits <meta name="author">
+  // plus <link rel="author">; `creator`/`publisher` are what the OG and
+  // schema-consuming crawlers read.
+  authors: [{ name: "Kristina Bekher", url: "https://www.kristinabekher.com" }],
+  creator: "Kristina Bekher",
+  publisher: "Kristina Bekher",
   title: "Kristina Bekher",
   description: "Kristina Bekher is a Ukrainian photographer and software developer based in Germany. The website is a portfolio of her photography work.",
   icons: {
@@ -212,6 +247,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <noscript>
           <style>{REVEAL_NOSCRIPT_CSS}</style>
         </noscript>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(SITE_JSON_LD) }}
+        />
       </head>
       <body suppressHydrationWarning>{children}</body>
     </html>
