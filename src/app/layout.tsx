@@ -7,6 +7,38 @@ import {
   INTRO_CONTENT_FAILSAFE_MS,
   MONOGRAM_FADE_MS,
 } from "@/components/intro/introTimings";
+import { LAMBDA_IMG_BASE } from "@/constants/constants";
+
+/**
+ * The social preview card (Facebook, LinkedIn, WhatsApp, Slack, iMessage, X).
+ * Nothing on the site renders this — it exists only for link unfurls.
+ *
+ * ## Why it is built from LAMBDA_IMG_BASE rather than hardcoded
+ * It used to point at a pair of standalone objects (`hero-1200.jpg`,
+ * `hero-256.jpg`) sitting at the root of the assets bucket, which meant the
+ * same photograph existed twice, in two places, at two sizes, maintained by
+ * hand. Deriving it from the image base makes the resizer the one source of
+ * truth, and means this URL follows `NEXT_PUBLIC_IMG_ORIGIN` onto the CDN
+ * along with everything else, with no second place to remember to update.
+ *
+ * ## Why `f=jpeg` and not the webp every other image on the site uses
+ * Scrapers are not browsers. Several of the big ones — Facebook and LinkedIn
+ * especially — still treat WebP as unsupported for `og:image` and will
+ * silently show no preview at all. JPEG is the format that always unfurls,
+ * and this is one image fetched by a crawler, not by a visitor, so its bytes
+ * do not matter.
+ *
+ * ## Why the dimensions are declared, and declared like THIS
+ * These numbers are the real intrinsic size of the rendition. The previous
+ * pair claimed `1200x630` — the conventional 1.91:1 social banner — for a
+ * photo that is actually 1200x1810. Platforms lay the card out from what you
+ * declare, so that mismatch had them reserving a wide letterbox for a tall
+ * portrait. If a proper 1.91:1 preview is ever wanted it needs a purpose-made
+ * crop: the resizer scales by width only and ignores `h`.
+ */
+const OG_IMAGE_URL = `${LAMBDA_IMG_BASE}/hero.jpg?w=1200&q=75&f=jpeg`;
+const OG_IMAGE_WIDTH = 1200;
+const OG_IMAGE_HEIGHT = 1810;
 
 // `display: "swap"` stays deliberately: for body copy, text-in-a-fallback
 // beats invisible text, and next/font emits a `<link rel="preload">` plus an
@@ -53,9 +85,9 @@ export const metadata: Metadata = {
     description: "Kristina Bekher is a Ukrainian photographer and software developer based in Germany. The website is a portfolio of her photography work.",
     images: [
       {
-        url: "https://d14lj85n4pdzvr.cloudfront.net/hero-1200.jpg",
-        width: 1200,
-        height: 630,
+        url: OG_IMAGE_URL,
+        width: OG_IMAGE_WIDTH,
+        height: OG_IMAGE_HEIGHT,
         alt: "Kristina Bekher",
       },
     ],
@@ -64,7 +96,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Kristina Bekher",
     description: "Kristina Bekher is a Ukrainian photographer and software developer based in Germany. The website is a portfolio of her photography work.",
-    images: ["https://d14lj85n4pdzvr.cloudfront.net/hero-256.jpg"],
+    // Same rendition as OpenGraph, deliberately: `summary_large_image` wants
+    // roughly 1200px across, and this used to hand it a 256x386 thumbnail.
+    images: [OG_IMAGE_URL],
   },
 };
 
