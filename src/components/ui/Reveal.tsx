@@ -1,9 +1,15 @@
 "use client";
 
-import { useLayoutEffect, useRef, type ElementType, type ReactNode } from "react";
-import gsap from "gsap";
-import { prefersReducedMotion } from "@/utils/useReducedMotion";
-import { ARRIVE_MS, GSAP_EASE, RISE_PX } from "@/components/intro/introTimings";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type AnimationEvent,
+  type CSSProperties,
+  type ElementType,
+  type ReactNode,
+} from "react";
+import { ARRIVE_MS, EASE, RISE_PX } from "@/components/intro/introTimings";
 
 export interface RevealProps {
   /** Rendered element. Defaults to `div`. */
@@ -33,15 +39,42 @@ export interface RevealProps {
  * framer-motion serialised its `initial` variant into the SSR HTML as inline
  * `opacity: 0`, which meant a no-JS visitor got a permanently invisible page.
  * Here the resting-hidden state is the `.reveal` class in globals.css
- * instead, which buys two escape hatches that an inline style cannot have:
- * a `prefers-reduced-motion` rule that forces it open, and a `<noscript>`
+ * instead, which buys two escape hatches an inline style cannot have: a
+ * `prefers-reduced-motion` rule that forces it open, and a `<noscript>`
  * override in layout.tsx for when JS never runs at all. `opacity: 0` must
  * never be a terminal state — the same rule GridReveal.module.css follows.
  *
- * The class is also what makes this flash-free: it is present in the
- * server-rendered HTML, so the element is already hidden on the very first
- * paint, and `useLayoutEffect` hands it to GSAP before the next one.
+ * ## Why the animation is CSS and no longer GSAP
+ * The entrance used to be a `gsap.fromTo` in a `useLayoutEffect`, which meant
+ * every first screen on this site stayed invisible until ~220KB of JavaScript
+ * had downloaded, parsed, hydrated and run — markup complete and paintable,
+ * held at `opacity: 0` for no reason but where the animation lived. First
+ * Contentful Paint was pinned to hydration.
+ *
+ * The entrance is now the `.reveal-run` CSS animation, which starts from the
+ * server-rendered markup at first paint with no JavaScript involved. The beat
+ * is identical and still comes from `introTimings.ts`, handed over as custom
+ * properties. GSAP remains for choreography that genuinely needs sequencing —
+ * the intro, the deal-out, the lightbox morph — but fading one element up is
+ * not that.
+ *
+ * ## The three states, and why the last one exists
+ * `hidden -> running -> done`. `running` is rendered on the SERVER whenever
+ * `startWhen` is already true (every reveal on the site but one), so no
+ * commit sits between the markup arriving and the entrance starting.
+ *
+ * `done` clears the animation once it has landed, and it is not cosmetic:
+ * `animation-fill-mode: both` holds the final `translateY(0)`, and a non-none
+ * transform — even an identity one — makes an element the containing block
+ * for any `position: fixed` descendant. The lightbox morph pins the hero with
+ * `position: fixed` and measures viewport rects; a stray transformed ancestor
+ * would silently reinterpret those coordinates. The old GSAP path cleared its
+ * inline transform on landing for exactly this reason, and dropping that
+ * invariant while moving to CSS would have left a trap for whoever next put a
+ * fixed-position element inside a `Reveal`.
  */
+type Phase = "hidden" | "running" | "done";
+
 export default function Reveal({
   as: Tag = "div",
   delay = 0,
@@ -51,54 +84,40 @@ export default function Reveal({
   className = "",
   children,
 }: RevealProps) {
-  const ref = useRef<HTMLElement>(null);
+  const [phase, setPhase] = useState<Phase>(startWhen ? "running" : "hidden");
+  // Latched: once an entrance has started it must never be taken away. A
+  // parent re-render that flips `startWhen` back would otherwise re-hide
+  // content that has already been read.
+  const started = useRef(startWhen);
 
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el || !startWhen) return;
+  useEffect(() => {
+    if (!startWhen || started.current) return;
+    started.current = true;
+    setPhase("running");
+  }, [startWhen]);
 
-    // Read the preference synchronously rather than via `useReducedMotion()`.
-    // That hook resolves one commit AFTER mount, and this is a mount-only
-    // layout effect that starts animating immediately — so with the hook, a
-    // reduced-motion visitor would get `gsap.fromTo` writing an inline
-    // `opacity: 0` (which outranks globals.css's
-    // `@media (prefers-reduced-motion) .reveal { opacity: 1 }` escape hatch)
-    // and a real tween starting, only corrected on the next commit. On a
-    // route whose mount schedules no synchronous work, that correction can
-    // land after paint: a frame of hidden content, for the one visitor who
-    // asked not to see motion.
-    //
-    // Reduced motion still has to REMOVE the hidden state — it just does it
-    // without a tween. Returning early would leave `.reveal`'s `opacity: 0`
-    // in place, which is the "invisible page" failure this component exists
-    // to avoid.
-    if (prefersReducedMotion()) {
-      gsap.set(el, { opacity: 1, y: 0, clearProps: "transform" });
-      return;
-    }
+  const style = {
+    "--rv-delay": `${delay}s`,
+    "--rv-dur": `${duration}s`,
+    "--rv-y": `${y}px`,
+    "--rv-ease": EASE,
+  } as CSSProperties;
 
-    const tween = gsap.fromTo(
-      el,
-      { opacity: 0, y },
-      {
-        opacity: 1,
-        y: 0,
-        duration,
-        delay,
-        ease: GSAP_EASE,
-        // The inline transform is cleared on landing so it can never
-        // interfere with anything measured off this subtree later.
-        onComplete: () => gsap.set(el, { clearProps: "transform" }),
-      }
-    );
-
-    return () => {
-      tween.kill();
-    };
-  }, [delay, duration, y, startWhen]);
+  const phaseClass = phase === "running" ? " reveal-run" : phase === "done" ? " reveal-done" : "";
 
   return (
-    <Tag ref={ref} className={`reveal ${className}`.trim()}>
+    <Tag
+      style={style}
+      className={`reveal${phaseClass}${className ? ` ${className}` : ""}`}
+      // Animation events BUBBLE. Without the target check, any animated
+      // descendant finishing — a shimmer placeholder, a nested reveal —
+      // would end this element's entrance early, snapping it to full opacity
+      // mid-fade.
+      onAnimationEnd={(event: AnimationEvent) => {
+        if (event.target !== event.currentTarget) return;
+        setPhase((current) => (current === "running" ? "done" : current));
+      }}
+    >
       {children}
     </Tag>
   );
