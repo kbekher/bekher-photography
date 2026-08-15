@@ -1,6 +1,32 @@
 export const DOMAIN = '';
 
 /**
+ * The canonical origin, with no trailing slash.
+ *
+ * Lives here rather than in `layout.tsx` because it is no longer only the
+ * layout's business: `sitemap.ts` builds every `<loc>` from it and `robots.ts`
+ * points at the sitemap with it, and a sitemap that disagrees with the site's
+ * own canonicals about the hostname is worse than no sitemap — it invites the
+ * crawler to treat www and apex as two sites.
+ *
+ * `www` is deliberate and must match `metadataBase`: pick one host and never
+ * emit the other.
+ */
+export const SITE_URL = 'https://www.kristinabekher.com';
+
+/**
+ * Site-wide publication date.
+ *
+ * A LITERAL, deliberately — never `new Date()`. A date computed at build time
+ * would move on every deploy, telling crawlers the site had been republished
+ * each time a typo was fixed, which is both untrue and the kind of signal that
+ * gets discounted once noticed. This is the `<lastmod>` every sitemap entry
+ * carries and the `datePublished` in the site's JSON-LD. Edit it when the site
+ * is genuinely republished, and not otherwise.
+ */
+export const SITE_PUBLISHED = '2026-08-15';
+
+/**
  * Where the photo resizer is reached.
  *
  * ## Why this is configuration and not a constant

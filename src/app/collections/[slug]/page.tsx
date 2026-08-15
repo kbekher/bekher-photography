@@ -45,13 +45,15 @@ export async function generateMetadata({
 
   return {
     title,
-    description: gallery.description,
+    // `metaDescription`, NOT the on-page `description` — see the note on
+    // `CollectionData` in src/data.ts for why the two are different strings.
+    description: gallery.metaDescription,
     // Declared per collection — the root layout's canonical is inherited
     // otherwise, and every collection would claim to be the home page.
     alternates: { canonical: canonicalPath },
     openGraph: {
       title,
-      description: gallery.description,
+      description: gallery.metaDescription,
       url: canonicalPath,
       images: [{ url: ogImageUrl, alt: gallery.name }],
     },

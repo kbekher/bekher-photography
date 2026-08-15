@@ -7,7 +7,7 @@ import {
   INTRO_CONTENT_FAILSAFE_MS,
   MONOGRAM_FADE_MS,
 } from "@/components/intro/introTimings";
-import { LAMBDA_IMG_BASE } from "@/constants/constants";
+import { LAMBDA_IMG_BASE, SITE_PUBLISHED, SITE_URL } from "@/constants/constants";
 
 /**
  * The social preview card (Facebook, LinkedIn, WhatsApp, Slack, iMessage, X).
@@ -40,18 +40,18 @@ const OG_IMAGE_URL = `${LAMBDA_IMG_BASE}/hero.jpg?w=1200&q=75&f=jpeg`;
 const OG_IMAGE_WIDTH = 1200;
 const OG_IMAGE_HEIGHT = 1810;
 
-const SITE_URL = "https://www.kristinabekher.com";
-
 /**
- * Site-wide publication date.
+ * The home page's description, written once and used for `<meta
+ * name="description">`, `og:description` and `twitter:description` — three
+ * tags that must never drift apart, and previously did not so much drift as
+ * sit there as three separate copies of the same sentence.
  *
- * A LITERAL, deliberately — never `new Date()`. A date computed at build time
- * would move on every deploy, telling crawlers the site had been republished
- * each time a typo was fixed, which is both untrue and the kind of signal
- * that gets discounted once noticed. Edit it when the site is genuinely
- * republished, and not otherwise.
+ * Kept to ~155 characters because Google truncates the desktop snippet around
+ * there (and shorter on mobile), so everything load-bearing is in the first
+ * half: what the work is, who made it, where she is.
  */
-const SITE_PUBLISHED = "2026-08-15";
+const SITE_DESCRIPTION =
+  "Film photography by Kristina Bekher, a Ukrainian photographer based in Germany — analogue frames from Ukraine, Switzerland, Italy, the UK and across Europe.";
 
 /**
  * The publish date, and the only reason it is JSON-LD rather than a `<meta>`
@@ -99,7 +99,7 @@ const INTRO_CSS_VARS = {
 export const metadata: Metadata = {
   // Resolves every relative url in this file and in each route's own metadata
   // (canonicals, og:url) to an absolute one, which is what crawlers require.
-  metadataBase: new URL("https://www.kristinabekher.com"),
+  metadataBase: new URL(SITE_URL),
   // Root canonical, correct for `/` itself. App Router metadata is inherited
   // by child segments, so EVERY other route must declare its own — a page
   // that doesn't will claim to be the home page, which is worse than having
@@ -109,11 +109,17 @@ export const metadata: Metadata = {
   // wrote and published all of it. `authors` emits <meta name="author">
   // plus <link rel="author">; `creator`/`publisher` are what the OG and
   // schema-consuming crawlers read.
-  authors: [{ name: "Kristina Bekher", url: "https://www.kristinabekher.com" }],
+  authors: [{ name: "Kristina Bekher", url: SITE_URL }],
   creator: "Kristina Bekher",
   publisher: "Kristina Bekher",
   title: "Kristina Bekher",
-  description: "Kristina Bekher is a Ukrainian photographer and software developer based in Germany. The website is a portfolio of her photography work.",
+  // Describes what a searcher GETS, not what the site is. The previous copy
+  // spent its second sentence on "The website is a portfolio of her
+  // photography work" — a description of the container rather than the
+  // contents, which is invisible to anyone searching for film photography,
+  // for a place, or for a film stock. Named places are what the long tail
+  // actually matches on.
+  description: SITE_DESCRIPTION,
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -125,7 +131,7 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
   openGraph: {
     title: "Kristina Bekher",
-    description: "Kristina Bekher is a Ukrainian photographer and software developer based in Germany. The website is a portfolio of her photography work.",
+    description: SITE_DESCRIPTION,
     images: [
       {
         url: OG_IMAGE_URL,
@@ -138,7 +144,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Kristina Bekher",
-    description: "Kristina Bekher is a Ukrainian photographer and software developer based in Germany. The website is a portfolio of her photography work.",
+    description: SITE_DESCRIPTION,
     // Same rendition as OpenGraph, deliberately: `summary_large_image` wants
     // roughly 1200px across, and this used to hand it a 256x386 thumbnail.
     images: [OG_IMAGE_URL],

@@ -193,7 +193,24 @@ export type CollectionSlug = (typeof keptCollectionSlugs)[number];
  */
 interface CollectionData {
   name: string;
+  /**
+   * The blurb printed under the collection's name. Written for someone already
+   * looking at the photographs — it can be a quote, a fragment, an ellipsis.
+   */
   description: string;
+  /**
+   * The `<meta name="description">` / `og:description` for this collection's
+   * page. Deliberately NOT `description`: a search result is read by someone
+   * who has not seen the page and is deciding whether to click, so it has to
+   * say plainly what the photographs are of, where, when and on what stock.
+   * The on-page blurb is the wrong tool for that — "Anyone who keeps the
+   * ability to see beauty never grows old" is a fine thing to read above the
+   * grid and a useless thing to find in Google.
+   *
+   * Keep these ~150 characters: Google truncates the snippet near 155 on
+   * desktop and shorter on mobile, so the first half must carry the meaning.
+   */
+  metaDescription: string;
   photos: string[];
 }
 
@@ -201,6 +218,7 @@ const collectionsData: Record<CollectionSlug, CollectionData> = {
   "noir-et-blanc": {
     name: "Noir et Blanc",
     description: "Fragments of everyday life and small adventures.",
+    metaDescription: "Black and white film photography by Kristina Bekher — misty winter roads, a vintage tea set and quiet street portraits shot in Germany, 2023–2025.",
     photos: [
       "noir-et-blanc/road-in-mist-bw.jpg",
       "noir-et-blanc/mohnesee-in-winter-bw.jpg",
@@ -213,6 +231,7 @@ const collectionsData: Record<CollectionSlug, CollectionData> = {
   "alpine-escape": {
     name: "Alpine Escape",
     description: "26 kilometers, 2,970 meters, and memories to last a lifetime. This collection documents a trip through the Lauterbrunnen Valley, centered around the hike up Mount Schilthorn.",
+    metaDescription: "Film photographs from Switzerland’s Lauterbrunnen Valley and the hike up Mount Schilthorn — Mürren, Lake Thun and 2,970 metres of Alps, shot in 2024.",
     photos: [
       "alpine-escape/wooden-houses-in-alps.jpg",
       "alpine-escape/duck-on-fallen-tree-thun-lake.jpg",
@@ -229,6 +248,7 @@ const collectionsData: Record<CollectionSlug, CollectionData> = {
   "harman-phoenix": {
     name: "Harman Phoenix",
     description: "Exploring the high-contrast world of Harman Phoenix: burning reds and dreamy blue tones...",
+    metaDescription: "Harman Phoenix film photos by Kristina Bekher — the stock’s burning reds and blue casts, shot across the UK, Germany and the Netherlands in 2025–2026.",
     photos: [
       "harman-phoenix/cows-on-the-hill.jpg",
       "harman-phoenix/portland-bill.jpg",
@@ -250,6 +270,7 @@ const collectionsData: Record<CollectionSlug, CollectionData> = {
   "european-feel": {
     name: "European Feel",
     description: "“Anyone who keeps the ability to see beauty never grows old.“ — Franz Kafka",
+    metaDescription: "Film photography from Paris, Lyon, Venice, Bruges, Barcelona, Malaga and Amsterdam — European streets, canals and rooftops by Kristina Bekher, 2023–2025.",
     photos: [
       "european-feel/galeries-lafayette-paris.jpg",
       "european-feel/montmartre-rain-street-paris.jpg",
@@ -276,6 +297,7 @@ const collectionsData: Record<CollectionSlug, CollectionData> = {
   "jazzy-blues": {
     name: "Jazzy Blues",
     description: "Years of experimenting with expired ISO 25 film, in a few frames...",
+    metaDescription: "Expired ISO 25 film photography by Kristina Bekher — years of experiments with blue-shifted, low-ISO stock, shot in Germany and Amsterdam, 2023–2024.",
     photos: [
       "jazzy-blues/design-books-jazzy-blues.jpg",
       "jazzy-blues/jazzy-blues-chamomile.jpg",
@@ -293,7 +315,10 @@ const collectionsData: Record<CollectionSlug, CollectionData> = {
 export interface Gallery {
   id: string;
   name: string;
+  /** Printed under the name on the page. */
   description: string;
+  /** `<meta name="description">` / `og:description` — see `CollectionData`. */
+  metaDescription: string;
   photos: Photo[];
 }
 
@@ -306,13 +331,14 @@ const photosBySrc = new Map(photos.map((photo) => [photo.src, photo]));
  */
 export const galleriesData: Record<CollectionSlug, Gallery> = Object.fromEntries(
   keptCollectionSlugs.map((slug) => {
-    const { name, description, photos: srcs } = collectionsData[slug];
+    const { name, description, metaDescription, photos: srcs } = collectionsData[slug];
     return [
       slug,
       {
         id: slug,
         name,
         description,
+        metaDescription,
         photos: srcs.map((src) => {
           const photo = photosBySrc.get(src);
           if (!photo) {
