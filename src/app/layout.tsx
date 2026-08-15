@@ -69,6 +69,14 @@ const INTRO_CSS_VARS = {
 } as CSSProperties;
 
 export const metadata: Metadata = {
+  // Resolves every relative url in this file and in each route's own metadata
+  // (canonicals, og:url) to an absolute one, which is what crawlers require.
+  metadataBase: new URL("https://www.kristinabekher.com"),
+  // Root canonical, correct for `/` itself. App Router metadata is inherited
+  // by child segments, so EVERY other route must declare its own — a page
+  // that doesn't will claim to be the home page, which is worse than having
+  // no canonical at all. All current routes do; new ones must too.
+  alternates: { canonical: "/" },
   title: "Kristina Bekher",
   description: "Kristina Bekher is a Ukrainian photographer and software developer based in Germany. The website is a portfolio of her photography work.",
   icons: {

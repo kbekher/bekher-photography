@@ -29,20 +29,30 @@ export async function generateMetadata({
   const cover = gallery.photos[0];
   const title = `${gallery.name} — Kristina Bekher`;
 
-  // Route the OG image through the same lambda every other image on the site
+  // Route the OG image through the same resizer every other image on the site
   // uses (see src/utils/image-loader.ts) rather than adding a second image
-  // pipeline. Width/height are deliberately omitted: the lambda is asked for
+  // pipeline. Width/height are deliberately omitted: the resizer is asked for
   // a 1200px-wide render, but the source photo is 2:3 or 3:2 (never the
   // 1200x630 OG convention), so publishing a fixed height would misdescribe
   // the actual image. Crawlers fall back to the image's real dimensions.
-  const ogImageUrl = `${LAMBDA_IMG_BASE}/${slug}/${cover.path}?w=1200&q=90&f=webp`;
+  //
+  // `f=jpeg`, unlike the webp served to browsers: scrapers are not browsers,
+  // and Facebook and LinkedIn in particular still treat webp as unsupported
+  // for `og:image` and will show no preview at all. This is one image fetched
+  // by a crawler, so its bytes do not matter; unfurling at all does.
+  const ogImageUrl = `${LAMBDA_IMG_BASE}/${slug}/${cover.path}?w=1200&q=90&f=jpeg`;
+  const canonicalPath = `/collections/${slug}`;
 
   return {
     title,
     description: gallery.description,
+    // Declared per collection — the root layout's canonical is inherited
+    // otherwise, and every collection would claim to be the home page.
+    alternates: { canonical: canonicalPath },
     openGraph: {
       title,
       description: gallery.description,
+      url: canonicalPath,
       images: [{ url: ogImageUrl, alt: gallery.name }],
     },
   };
