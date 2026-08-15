@@ -214,9 +214,63 @@ html[data-intro="play"][data-fonts="ready"] .intro-content {
   opacity: 0;
 }
 
+/*
+ * The entrance itself, in CSS rather than in GSAP — and this is a performance
+ * fix, not a stylistic one.
+ *
+ * `.reveal` is `opacity: 0` in the SERVER-RENDERED html. When the tween that
+ * opens it lived in a `useLayoutEffect`, that meant the text on /about, the
+ * collection list, every page's first screen, stayed invisible until ~220KB
+ * of JavaScript had downloaded, parsed, hydrated and run — on a page whose
+ * markup was complete and paintable long before. First Contentful Paint was
+ * pinned to hydration for no reason other than where the animation lived.
+ *
+ * A CSS animation runs off the parsed markup, at first paint, with no
+ * JavaScript at all. `Reveal` therefore ships `reveal-run` in its SSR class
+ * list and passes its beat in as custom properties, so the entrance is
+ * already underway before React exists. GSAP is still there for choreography
+ * that genuinely needs sequencing (the intro, the deal-out, the lightbox
+ * morph); it is not needed to fade one element up.
+ *
+ * `both` matters: it holds the from-state through `--rv-delay` (so a
+ * staggered element doesn't flash in before its turn) and the to-state
+ * afterwards (so it doesn't snap back to `.reveal`'s `opacity: 0`).
+ */
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--rv-y, 0px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal-run {
+  animation: reveal-in var(--rv-dur, 0.42s) var(--rv-ease, cubic-bezier(0.25, 0.1, 0.25, 1))
+    var(--rv-delay, 0s) both;
+}
+
+/* Landed. Drops the animation so its held `translateY(0)` stops making this
+ * element a containing block for `position: fixed` descendants — see the note
+ * in Reveal.tsx. Applied on `animationend`, i.e. when the element is already
+ * fully opaque, so it can never flash. */
+.reveal-done {
+  opacity: 1;
+  animation: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1;
+  }
+
+  /* The global reduced-motion rule below already collapses every animation to
+   * 0.001ms, but that leaves `both` holding the from-state's `opacity: 0` for
+   * an instant. Dropping the animation outright is unambiguous. */
+  .reveal-run {
+    animation: none;
   }
 }
 

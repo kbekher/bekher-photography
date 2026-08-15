@@ -8,8 +8,24 @@ import { useDealOut } from "./intro/useDealOut";
 import { homeFeed } from "@/data";
 
 const PAGE_SIZE = 20;
-// "priority only for the first row" — 4 columns at the desktop breakpoint.
-const PRIORITY_COUNT = 4;
+/**
+ * How many tiles load eagerly, at high priority.
+ *
+ * This was 4 — "the first row", counting the desktop breakpoint's four
+ * columns. That undercounted the first SCREEN badly: rows are 240px plus a
+ * 64px gutter, so a 900px-tall window shows most of three rows, and Next's
+ * own LCP detection kept flagging tiles at feed index 11 and 13 as the
+ * Largest Contentful Paint while they were still `loading="lazy"`. The
+ * largest element on the page was being told it could wait.
+ *
+ * Eight is two full desktop rows and four phone rows (the grid is 2 columns
+ * below `lg`), which covers the first screen on both without eagerly pulling
+ * a third of the feed. It is deliberately not twelve: every eager tile is a
+ * request that competes for the resizer's ten concurrent slots, and tiles
+ * below the fold load almost immediately anyway — lazy loading defers the
+ * PRIORITY, not the fetch, for anything near the viewport.
+ */
+const PRIORITY_COUNT = 8;
 
 /**
  * Client wrapper around PhotoGrid: paginates the unified home feed 20 at a
@@ -33,9 +49,18 @@ export default function OverviewFeed() {
   // across the re-render. Only move focus explicitly for the last click,
   // when the button itself unmounts (its focus would otherwise fall back to
   // <body>).
+  //
+  // `preventScroll` is load-bearing, not a precaution. The target is
+  // `.sr-only`, which is `position: absolute` with no `top`/`left`, so it
+  // resolves to its static position — and for an absolutely-positioned child
+  // of a FLEX container (the wrapper below is `flex flex-col`), that is the
+  // container's content-box start corner, i.e. the TOP of the grid, not the
+  // end of it where this div actually sits in source order. Focusing scrolls
+  // the target into view, so without this the last click threw the reader
+  // back to scroll 0, away from the photos it had just loaded.
   useEffect(() => {
     if (!hasMore) {
-      endRef.current?.focus();
+      endRef.current?.focus({ preventScroll: true });
     }
   }, [hasMore]);
 

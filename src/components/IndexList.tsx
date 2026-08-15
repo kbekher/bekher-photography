@@ -16,7 +16,7 @@ import {
   RISE_PX,
   STAGGER_TEXT_MS,
 } from "@/components/intro/introTimings";
-import { galleriesData, keptCollectionSlugs, vertical, type PhotoMetadata } from "@/data";
+import { galleriesData, keptCollectionSlugs, vertical, type Photo } from "@/data";
 
 // Index_Small_Vertical / Index_Small_Horizontal, per spec §3.
 const REST_VERTICAL = { w: 22, h: 32 };
@@ -48,7 +48,7 @@ const collections = keptCollectionSlugs.map((slug) => {
   return {
     slug,
     name: gallery.name,
-    cover: gallery.photos[0] as PhotoMetadata,
+    cover: gallery.photos[0] as Photo,
   };
 });
 
@@ -247,7 +247,7 @@ export default function IndexList() {
                   >
                     <Image
                       loader={imageLoader}
-                      src={`/${c.slug}/${c.cover.path}`}
+                      src={`/${c.cover.src}`}
                       alt=""
                       fill
                       sizes="36px"

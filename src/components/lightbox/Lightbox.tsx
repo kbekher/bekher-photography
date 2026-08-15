@@ -72,6 +72,24 @@ const SWITCH_LOAD_TIMEOUT_MS = 10000;
 // does — it hands off to the same crossfade — so there is deliberately no
 // motion tied to the finger: the photo never moves, it changes.
 
+/**
+ * How many thumbnails either side of the active one actually render an
+ * `<Image>`.
+ *
+ * The strip is the whole feed — 183 photos on the home page — and every entry
+ * used to mount a next/image with a ~21-candidate srcset. That is ~3,800
+ * candidate URLs for the browser to parse, built SYNCHRONOUSLY in the commit
+ * that opens the lightbox: main-thread work landing precisely on the frame
+ * the open morph is trying to keep smooth.
+ *
+ * The buttons themselves still all render — they cost almost nothing, and
+ * keeping them is what preserves the strip's true scroll extent, the
+ * `scrollIntoView` targets and the a11y tree. Only the image inside a distant
+ * thumbnail is withheld, and thumbnails were lazy anyway, so nothing that
+ * used to be fetched stops being fetched.
+ */
+const THUMB_RENDER_WINDOW = 20;
+
 /** Fraction of the frame's width a swipe must cover to count — but never
  *  fewer than MIN_COMMIT_PX, so a narrow frame stays swipeable. */
 const SWIPE_RATIO = 0.22;
@@ -869,7 +887,37 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
     };
     const prevDialogPadding = dialog?.style.paddingRight ?? "";
 
-    const widthBefore = document.documentElement.clientWidth;
+    const html = document.documentElement;
+    const prevHtmlOverflowY = html.style.overflowY;
+
+    const widthBefore = html.clientWidth;
+
+    // Hold the viewport's scrollbar gutter open for the whole lock.
+    //
+    // `scrollbar-gutter: stable` reserves space only where a classic scrollbar
+    // COULD appear — that is, `overflow: auto` or `scroll`. The lock below sets
+    // `overflow: hidden` on <body>, and because <html>'s overflow is `visible`
+    // that value propagates to the viewport, which stops being a place a
+    // scrollbar can appear at all. The gutter is released with it, the page
+    // gets a scrollbar's width wider, and everything centred — the whole grid,
+    // via PageShell's `mx-auto max-w-[1280px]` — slides right by half of it,
+    // then back on close. That is the visible jump.
+    //
+    // Forcing `overflow-y: scroll` on <html> keeps the viewport a scrollbar-
+    // bearing box for the duration, so the gutter is reserved by definition
+    // rather than by measurement, and clientWidth cannot change. It also means
+    // the scrollbar TRACK stays put instead of vanishing, which is the other
+    // half of what the jump looked like. Nothing can actually scroll: <body>
+    // is taken out of flow immediately below, so the viewport has no
+    // scrollable overflow left.
+    //
+    // Deliberately not left to the delta measurement further down: browsers
+    // update scrollbar state during layout, so reading clientWidth in the same
+    // effect that wrote the lock can return the pre-release value and
+    // compensate by zero, with the release — and the jump — landing a frame
+    // later.
+    html.style.overflowY = "scroll";
+
     body.style.overflow = "hidden";
     body.style.position = "fixed";
     body.style.top = `-${scrollY}px`;
@@ -890,12 +938,16 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
     //
     // Reading the delta is correct in both worlds, including browsers with no
     // `scrollbar-gutter` support, where it still yields the scrollbar width.
-    const shift = document.documentElement.clientWidth - widthBefore;
+    //
+    // With the `overflow-y: scroll` pin above this should now always be 0; it
+    // stays as the safety net for any engine where the pin doesn't hold.
+    const shift = html.clientWidth - widthBefore;
     if (shift > 0) {
       body.style.paddingRight = `${shift}px`;
       if (dialog) dialog.style.paddingRight = `${shift}px`;
     }
     return () => {
+      html.style.overflowY = prevHtmlOverflowY;
       body.style.overflow = prev.overflow;
       body.style.position = prev.position;
       body.style.top = prev.top;
@@ -1128,6 +1180,9 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
               {photos.map((photo, i) => {
                 const active = i === activeIndex;
                 const thumbHorizontal = photo.aspectRatio === horizontal;
+                // See THUMB_RENDER_WINDOW. The button, its box and its label
+                // always render; only the image is windowed.
+                const near = Math.abs(i - activeIndex) <= THUMB_RENDER_WINDOW;
                 return (
                   <button
                     key={`${photo.src}-${i}`}
@@ -1138,17 +1193,21 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
                     onClick={() => goThumb(i)}
                     className={`relative block h-[40px] shrink-0 cursor-pointer overflow-hidden outline-none transition-opacity duration-200 ${
                       thumbHorizontal ? "aspect-[36/24]" : "aspect-[22/32]"
-                    } ${active ? "opacity-100" : "opacity-40 hover:opacity-70"}`}
+                    } ${active ? "opacity-100" : "opacity-40 hover:opacity-70"} ${
+                      near ? "" : "bg-fg/10"
+                    }`}
                   >
-                    <Image
-                      loader={imageLoader}
-                      src={`/${photo.src}`}
-                      alt=""
-                      fill
-                      sizes="40px"
-                      className="object-cover"
-                      draggable={false}
-                    />
+                    {near ? (
+                      <Image
+                        loader={imageLoader}
+                        src={`/${photo.src}`}
+                        alt=""
+                        fill
+                        sizes="40px"
+                        className="object-cover"
+                        draggable={false}
+                      />
+                    ) : null}
                   </button>
                 );
               })}

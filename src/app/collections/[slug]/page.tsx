@@ -40,18 +40,20 @@ export async function generateMetadata({
   // and Facebook and LinkedIn in particular still treat webp as unsupported
   // for `og:image` and will show no preview at all. This is one image fetched
   // by a crawler, so its bytes do not matter; unfurling at all does.
-  const ogImageUrl = `${LAMBDA_IMG_BASE}/${slug}/${cover.path}?w=1200&q=90&f=jpeg`;
+  const ogImageUrl = `${LAMBDA_IMG_BASE}/${cover.src}?w=1200&q=90&f=jpeg`;
   const canonicalPath = `/collections/${slug}`;
 
   return {
     title,
-    description: gallery.description,
+    // `metaDescription`, NOT the on-page `description` — see the note on
+    // `CollectionData` in src/data.ts for why the two are different strings.
+    description: gallery.metaDescription,
     // Declared per collection — the root layout's canonical is inherited
     // otherwise, and every collection would claim to be the home page.
     alternates: { canonical: canonicalPath },
     openGraph: {
       title,
-      description: gallery.description,
+      description: gallery.metaDescription,
       url: canonicalPath,
       images: [{ url: ogImageUrl, alt: gallery.name }],
     },
@@ -93,7 +95,6 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
     >
       <CollectionContent
         gallery={gallery}
-        slug={slug}
         backHref="/collections"
         prevHref={`/collections/${prevSlug}`}
         nextHref={`/collections/${nextSlug}`}

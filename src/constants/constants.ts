@@ -1,6 +1,32 @@
 export const DOMAIN = '';
 
 /**
+ * The canonical origin, with no trailing slash.
+ *
+ * Lives here rather than in `layout.tsx` because it is no longer only the
+ * layout's business: `sitemap.ts` builds every `<loc>` from it and `robots.ts`
+ * points at the sitemap with it, and a sitemap that disagrees with the site's
+ * own canonicals about the hostname is worse than no sitemap — it invites the
+ * crawler to treat www and apex as two sites.
+ *
+ * `www` is deliberate and must match `metadataBase`: pick one host and never
+ * emit the other.
+ */
+export const SITE_URL = 'https://www.kristinabekher.com';
+
+/**
+ * Site-wide publication date.
+ *
+ * A LITERAL, deliberately — never `new Date()`. A date computed at build time
+ * would move on every deploy, telling crawlers the site had been republished
+ * each time a typo was fixed, which is both untrue and the kind of signal that
+ * gets discounted once noticed. This is the `<lastmod>` every sitemap entry
+ * carries and the `datePublished` in the site's JSON-LD. Edit it when the site
+ * is genuinely republished, and not otherwise.
+ */
+export const SITE_PUBLISHED = '2026-08-15';
+
+/**
  * Where the photo resizer is reached.
  *
  * ## Why this is configuration and not a constant
@@ -31,8 +57,19 @@ export const DOMAIN = '';
  * loader appends (`w`, `q`, `f`) MUST be part of the cache key, or every
  * width collapses onto whichever one warmed the cache first.
  */
-const IMG_ORIGIN_FALLBACK =
-  'https://tojp4f5baeta7girwrpqvogul40oddhk.lambda-url.eu-central-1.on.aws';
+/**
+ * The CDN, not the Function URL behind it.
+ *
+ * It used to be the Lambda's own URL, on the reasoning that the origin of
+ * record is the safest thing to fall back to. That stopped being true the
+ * moment the Function URL was switched to `AWS_IAM` and put behind an origin
+ * access control: it now answers 403 to anything that isn't a signed request
+ * from one of the two CloudFront distributions. A fallback nothing can reach
+ * is not a fallback — it just moved the failure from "env var missing" to
+ * "every image on the page is broken", which is exactly what it did to local
+ * development.
+ */
+const IMG_ORIGIN_FALLBACK = 'https://d14lj85n4pdzvr.cloudfront.net';
 
 const IMG_ORIGIN = (process.env.NEXT_PUBLIC_IMG_ORIGIN || IMG_ORIGIN_FALLBACK)
   // A trailing slash here would produce `//img/...`, which S3-backed origins
