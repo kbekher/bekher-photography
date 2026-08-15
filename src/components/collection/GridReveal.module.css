@@ -1,0 +1,44 @@
+/*
+ * Visibility gate for the collection page's deal-out grid wrapper (see
+ * useCollectionDealOut.ts). That hook's `gather` step snaps the first photo
+ * to a centred, enlarged pose and every other tile to hidden/scaled-down —
+ * but it does that on the REAL grid DOM, and unlike the home page there is
+ * no opaque IntroOverlay sitting on top to hide the snap. This class is
+ * what hides it instead: the wrapper starts at `opacity: 0` in the
+ * server-rendered HTML (a static class, not conditional on any client-only
+ * check, so there is no hydration mismatch), and useCollectionDealOut flips
+ * `data-visible="true"` on it — via a plain DOM attribute, not React state,
+ * same "don't re-render the grid for this" reasoning as the rest of that
+ * hook — only once `gather` has already been applied. By the time the
+ * wrapper fades in, the only thing that becomes visible is the already-
+ * repositioned, centred first photo.
+ *
+ * `opacity: 0` must never be a TERMINAL state — a grid that simply never
+ * appears is far worse than one that skips its intro animation. Two escape
+ * hatches guarantee that:
+ *  - `@media (prefers-reduced-motion: reduce)`: forces the gate open
+ *    unconditionally. Belt-and-suspenders alongside useCollectionDealOut's
+ *    own `enabled` check (which independently skips ever touching the
+ *    tiles' transforms for reduced motion) — even if that JS path were
+ *    somehow bypassed, this CSS rule alone still reveals the grid.
+ *  - `<noscript>`: if JS never runs at all, `data-visible` is never set by
+ *    anything. CollectionContent.tsx's `<noscript>` block injects a
+ *    stylesheet forcing this class visible — `<noscript>` content only ever
+ *    reaches the DOM when scripting is disabled, so it can never fight the
+ *    JS-driven path when JS *is* available.
+ */
+
+.gate {
+  opacity: 0;
+}
+
+.gate[data-visible="true"] {
+  opacity: 1;
+  transition: opacity 233ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gate {
+    opacity: 1;
+  }
+}

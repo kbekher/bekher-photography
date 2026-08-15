@@ -1,81 +1,69 @@
 @import "tailwindcss";
-/* @tailwind base;
-@tailwind components;
-@tailwind utilities; */
 
-:root {
-  --background: #0a0a0a;
-  --foreground: #ffffff;
-  --branding: #444251;
-  --secondary: #cbcbcf;
-  --accent: #8d89a3;
-}
+@theme {
+  --color-bg: #ffffff;
+  --color-fg: #000000;
+  --color-surface: #efefef;
+  --color-surface-hover: rgb(239 239 239 / 0.5);
 
+  --font-sans: var(--font-switzer), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
 
-/* @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ffffff;
-  }
-} */
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-16: 16px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+  --spacing-48: 48px;
+  --spacing-64: 64px;
+  --spacing-80: 80px;
+  --spacing-96: 96px;
+  --spacing-120: 120px;
 
-/* Style the scrollbar */
-::-webkit-scrollbar {
-  width: 1px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--background);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--secondary);
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--secondary);
+  --radius-pill: 17px;
 }
 
 html {
-  background-color: var(--background);
+  background-color: var(--color-bg);
+  /* Reserve the scrollbar's space permanently, so it appearing or vanishing
+   * never shifts the page sideways. Two places depend on this rather than
+   * merely benefitting from it:
+   *  - the intro. The grid's images are still loading while the preloader is
+   *    up, so the document grows past the viewport mid-animation; without a
+   *    reserved gutter, the scrollbar arriving nudges the whole centred
+   *    wordmark left by half its width.
+   *  - the lightbox morph, which measures a grid tile's rect on open and
+   *    again on close. Its body scroll-lock takes the document out of flow
+   *    between those two reads, so an unreserved gutter would make the two
+   *    measurements disagree by the scrollbar's width.
+   * No-op on platforms with overlay scrollbars (they occupy no space). */
+  scrollbar-gutter: stable;
 }
 
 body {
-  background-color: var(--background);
-  overflow-x: hidden;
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  min-height: 100vh;
   min-height: -webkit-fill-available;
   padding-top: env(safe-area-inset-top);
-  min-height: 100vh;
-  user-select: none;
+  overflow-x: hidden;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 18.99px;
+  letter-spacing: 0.316px;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-section {
-  min-height: 100vh;
-  height: 100%;
-  margin: 0 20px;
-  padding-bottom: 100px;
+img {
+  -webkit-user-drag: none;
+  user-drag: none;
 }
 
-
-.custom-text {
-  font-size: 8.1vw;
-  letter-spacing: -3px;
-  width: 100%;
-  text-align: justify;
-  text-justify: inter-character;
-  word-spacing: 0;
-  white-space: nowrap;
-}
-
-.custom-transition {
-  transition: all 300ms ease-in-out;
-}
-
-
-/* Image loading skeleton/placeholder */
+/* Image loading skeleton/placeholder — tuned for a white background */
 .image-placeholder {
-  background-color: #1a1a1a;
+  background-color: #f5f5f5;
   position: relative;
   overflow: hidden;
 }
@@ -85,10 +73,12 @@ section {
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg,
-      transparent,
-      rgba(255, 255, 255, 0.05),
-      transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 0, 0, 0.04),
+    transparent
+  );
   animation: shimmer 2s infinite;
 }
 
@@ -98,13 +88,187 @@ section {
   }
 }
 
-.blur-1xl {
-  filter: blur(40px);
+:focus-visible {
+  outline: 2px solid var(--color-fg);
+  outline-offset: 2px;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
-@media screen and (min-width: 1024px) {
-  section {
-    padding-bottom: 140px;
+/* First-load intro preloader anti-FOUC gate. See the inline script in
+ * src/app/layout.tsx's <head>: it runs before first paint and decides,
+ * using the same rules IntroContext uses, whether the intro should play —
+ * if so it sets `data-intro="play"` on <html>. Visibility of the overlay
+ * (src/components/intro/IntroOverlay.tsx) is driven purely by that
+ * attribute, never by React state, so it can be opaque from the very first
+ * painted frame instead of appearing after hydration.
+ *
+ * Default is HIDDEN — if the attribute is absent (script disabled, threw,
+ * or simply decided to skip), the real page renders normally and is never
+ * blocked. Higher specificity than `.intro-overlay` alone (via the
+ * `html[...]` prefix) means it always wins regardless of source order,
+ * without needing `!important`.
+ */
+.intro-overlay {
+  display: none;
+}
+
+html[data-intro="play"] .intro-overlay {
+  display: block;
+}
+
+/* Font gate for the overlay's CONTENT (the K+B monogram and the nav echo) —
+ * distinct from the sheet-visibility gate above, and deliberately so.
+ *
+ * The white sheet must be up from the very first painted frame (that's the
+ * rule above). The wordmark inside it must not: Switzer is loaded with
+ * `font-display: swap`, so anything painted before the woff2 arrives is drawn
+ * in the metric-adjusted Arial fallback and then re-drawn in Switzer the
+ * moment it lands. On a page full of body copy that swap is invisible; on a
+ * blank sheet holding a single 3.7s animation of ONE wordmark, it reads as
+ * the K+B glitching to a different size and shape mid-intro.
+ *
+ * So the content starts invisible and fades in — over the monogram's own
+ * MONOGRAM_FADE_MS beat, which is what that beat was always for — once
+ * IntroProvider has confirmed the real face is available and flipped
+ * `data-fonts="ready"` (see fontsReady.ts). The phase machine waits on the
+ * same promise, so the fade and the start of the choreography are one beat,
+ * not two. Every duration/easing here is a custom property set from
+ * introTimings.ts in layout.tsx — the numbers live in one place, in TS.
+ *
+ * Scoped under `html[data-intro="play"]` so it is inert on every load that
+ * isn't playing an intro, and so the head script's 8s dead-man's switch
+ * (which drops that attribute) releases this gate too.
+ */
+html[data-intro="play"] .intro-content {
+  opacity: 0;
+  /* CSS-only backstop — see INTRO_CONTENT_FAILSAFE_MS. If React never runs,
+   * nothing ever sets `data-fonts`, and `opacity: 0` would be terminal. This
+   * runs the same fade off a delay instead, so the wordmark always arrives. */
+  animation: intro-content-in var(--intro-content-fade) var(--intro-ease)
+    var(--intro-content-failsafe) forwards;
+}
+
+html[data-intro="play"][data-fonts="ready"] .intro-content {
+  /* The real path: React got there first, so drop the backstop and fade. */
+  animation: none;
+  opacity: 1;
+  transition: opacity var(--intro-content-fade) var(--intro-ease);
+}
+
+@keyframes intro-content-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* NOTE: there is deliberately no `.intro-grid-gate` rule here any more. The
+ * home grid used to be held at `opacity: 0` by a rule scoped to
+ * `html[data-intro="play"]`, but that made the grid's visibility depend on an
+ * attribute owned by a different layer — and when a React StrictMode unmount
+ * removed that attribute mid-intro, the gate silently stopped applying (see
+ * IntroContext). It was also redundant: IntroOverlay is an opaque,
+ * full-viewport sheet covering the grid for every phase up to and including
+ * `photo`, so there is nothing for a gate to hide. useDealOut now owns that
+ * wrapper's opacity outright. Collection pages, which have no such sheet, do
+ * still need a gate — theirs lives in GridReveal.module.css.
+ */
+
+/* Hidden resting state for the `Reveal` primitive
+ * (src/components/ui/Reveal.tsx), which fades + rises its element into place
+ * with GSAP on mount. The hidden state lives here, as a static class in the
+ * server-rendered HTML, rather than as an inline style: it is present on the
+ * very first painted frame (so the reveal can't flash its content before
+ * `useLayoutEffect` hands the element to GSAP), and — unlike an inline style
+ * — it can be overridden by other stylesheets.
+ *
+ * That override-ability is the whole point. `opacity: 0` must never be a
+ * TERMINAL state — content that simply never appears is far worse than
+ * content that skips its entrance — which is the same rule
+ * src/components/collection/GridReveal.module.css follows for the grid gate,
+ * and for the same reason: everything that un-hides this class is JS, and JS
+ * is not guaranteed to run. Two escape hatches guarantee it opens anyway:
+ *  - `@media (prefers-reduced-motion: reduce)` below: forces it visible
+ *    unconditionally. Belt-and-suspenders alongside Reveal's own
+ *    reduced-motion branch (which independently sets `opacity: 1` without a
+ *    tween) — even if that JS path were bypassed, this rule alone reveals
+ *    the content.
+ *  - `<noscript>`: if JS never runs, nothing ever tweens this open.
+ *    src/app/layout.tsx injects a stylesheet forcing it visible; `<noscript>`
+ *    content only reaches the DOM when scripting is disabled, so it can never
+ *    fight the GSAP-driven path when JS *is* available.
+ */
+.reveal {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+  }
+}
+
+/* Lightbox hero frame (src/components/lightbox/Lightbox.tsx) — sizes the
+ * hero box to its exact design ratio (374:540 vertical, 580:388 horizontal)
+ * regardless of viewport shape, the CSS equivalent of `object-fit: contain`
+ * applied to the frame itself rather than to the photo inside it.
+ *
+ * This used to be `w-full h-full` plus `max-w-*`/`max-h-*` plus an
+ * `aspect-[...]` utility, which doesn't work: `aspect-ratio` only affects a
+ * dimension that is `auto`, and both were already definite. On any viewport
+ * shorter than it is wide (a laptop with browser chrome, a landscape phone),
+ * the box's height silently stopped matching its width's ratio, and
+ * `object-cover` cropped harder than the design frame intends — vertical
+ * photos read as cut off top and bottom.
+ *
+ * The fix needs width and height to come from the SAME calculation, since
+ * two independently-clamped `min()`s can each "win" and leave a box that
+ * isn't on-ratio at all. Container query units do that: `--w` picks
+ * whichever of the container's width/height is more restrictive, and height
+ * is derived FROM that value, so the box is always on-ratio, just scaled to
+ * fit. `--rw`/`--rh` (the ratio's two numbers, e.g. 374/540) are set inline
+ * per photo orientation. Below 1024px a fixed design-width cap still applies;
+ * at desktop the cap is dropped so the frame scales to the full viewport height.
+ */
+.lightbox-hero-viewport {
+  container-type: size;
+  --lb-arrow-inset: 48px;
+  --lb-h-arrow-inset: calc(2 * var(--lb-arrow-inset));
+}
+
+.lightbox-hero-frame {
+  --w: min(calc(var(--rw) * 1px), 100cqw, calc(100cqh * var(--rw) / var(--rh)));
+  width: var(--w);
+  height: calc(var(--w) * var(--rh) / var(--rw));
+}
+
+@media (min-width: 1024px) {
+  .lightbox-hero-frame {
+    --h: min(100cqh, calc(100cqw * var(--rh) / var(--rw)));
+    height: var(--h);
+    width: calc(var(--h) * var(--rw) / var(--rh));
+  }
+
+  /* Horizontal photos are wide — cap width so the frame stays between the
+     nav arrows instead of scaling to full height and spilling over them. */
+  .lightbox-hero-frame--horizontal {
+    --w: min(
+      calc(100cqw - 2 * var(--lb-h-arrow-inset)),
+      calc(100cqh * var(--rw) / var(--rh))
+    );
+    width: var(--w);
+    height: calc(var(--w) * var(--rh) / var(--rw));
   }
 }
