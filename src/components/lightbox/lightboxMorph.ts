@@ -156,6 +156,18 @@ export interface MorphResult {
  * not-yet-rendered tile (the home feed paginates, so a `?photo=40` can
  * legitimately have no tile) — so the caller can fall back to a plain fade
  * instead of animating from a garbage rect.
+ *
+ * ## The destination is measured ONCE, and that is a contract
+ * `to` below is read on the frame the morph starts and is then tweened to for
+ * the whole of OPEN_S. There is no retarget: if the hero's layout box moves
+ * while the tween is running, the hero lands on the old rect and then snaps to
+ * the new one the instant `unpin` hands it back to CSS — a visible jump at the
+ * end of an otherwise smooth open. That is not a bug this function can fix; it
+ * is a constraint on the CALLER, and Lightbox.tsx meets it by sizing the
+ * dialog in `svh` (a unit browser chrome cannot change) and by not measuring
+ * until the scroll lock has already reflowed the document. It used to be
+ * `dvh`, and a mobile URL bar re-expanding mid-morph is exactly the failure
+ * described above.
  */
 export function morphOpen(hero: HTMLElement, index: number): MorphResult | null {
   const source = getTile(index);

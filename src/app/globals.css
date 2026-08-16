@@ -296,6 +296,15 @@ html[data-intro="play"][data-fonts="ready"] .intro-content {
  * per photo orientation. Below 1024px a fixed design-width cap still applies;
  * at desktop the cap is dropped so the frame scales to the full viewport height.
  */
+/* `container-type: size` makes this element the query container the frame
+ * above is measured against — which also means the hero's size AND its centred
+ * position are a direct function of this box's height, and this box is
+ * `flex-1` inside the lightbox dialog. The open morph measures the frame's
+ * destination rect exactly once and tweens to it for 520ms, so that height has
+ * to hold still for the duration; that is why the dialog is sized in `svh`
+ * rather than `dvh` (a mobile URL bar re-expanding under the scroll lock used
+ * to shrink it mid-morph, and the hero snapped upward on landing). Anything
+ * here that starts depending on a dynamic viewport unit reintroduces that. */
 .lightbox-hero-viewport {
   container-type: size;
   --lb-arrow-inset: 48px;

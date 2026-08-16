@@ -14,6 +14,7 @@ import gsap from "gsap";
 import PillButton from "@/components/ui/PillButton";
 import SiteHeader from "@/components/ui/SiteHeader";
 import imageLoader from "@/utils/image-loader";
+import { useImageRetry } from "@/utils/useImageRetry";
 import { prefersReducedMotion, useReducedMotion } from "@/utils/useReducedMotion";
 import {
   FADE_MS,
@@ -73,22 +74,62 @@ const SWITCH_LOAD_TIMEOUT_MS = 10000;
 // motion tied to the finger: the photo never moves, it changes.
 
 /**
- * How many thumbnails either side of the active one actually render an
- * `<Image>`.
+ * The SEED window: how many thumbnails either side of the active one render
+ * an `<Image>` before the IntersectionObserver below has said anything.
  *
- * The strip is the whole feed — 183 photos on the home page — and every entry
- * used to mount a next/image with a ~21-candidate srcset. That is ~3,800
- * candidate URLs for the browser to parse, built SYNCHRONOUSLY in the commit
- * that opens the lightbox: main-thread work landing precisely on the frame
- * the open morph is trying to keep smooth.
+ * Whether a thumbnail renders its image is a question about VISIBILITY, and
+ * this constant is not that — it is only the answer for the very first commit,
+ * when there has been no observation yet. It exists so that commit is not
+ * empty and so the `scrollIntoView` effect has a real, painted thumbnail to
+ * centre on. Everything after that frame comes from the observer.
  *
- * The buttons themselves still all render — they cost almost nothing, and
- * keeping them is what preserves the strip's true scroll extent, the
- * `scrollIntoView` targets and the a11y tree. Only the image inside a distant
- * thumbnail is withheld, and thumbnails were lazy anyway, so nothing that
- * used to be fetched stops being fetched.
+ * ## Why it is not the whole answer any more, and why it is still small
+ * It used to be 20, and it used to be the ONLY rule — a thumbnail further than
+ * 20 positions from the active photo rendered no image at all, just the
+ * `bg-fg/10` box. The strip is the whole feed (134 photos on the home page)
+ * and is horizontally scrollable, so scrolling it past the twentieth thumbnail
+ * showed nothing but grey boxes, for ever: an index window cannot know where
+ * the strip is scrolled to. Tapping one made it active, the window re-centred
+ * on it, and only then did it load. That was the reported "thumbnails stay
+ * grey until I tap them".
+ *
+ * Going the other way and simply rendering all 134 is the reason the window
+ * was there in the first place: each entry mounts a next/image with a
+ * 14-candidate srcset (next.config's `deviceSizes` plus `imageSizes`, all of
+ * them emitted because `sizes` is given in px), i.e. ~1,900 candidate URLs for
+ * the browser to parse, built SYNCHRONOUSLY in the commit that opens the lightbox
+ * — main-thread work landing precisely on the frame the open morph is trying
+ * to keep smooth. And every rendered thumbnail is a request the 10-concurrent
+ * resizer has to answer (see `useImageRetry`).
+ *
+ * So: visibility decides, and this only seeds it. 2 rather than 20 because
+ * five thumbnails is all the first frame needs — the observer's first delivery
+ * lands within a frame or two of it and covers the rest of the strip's
+ * viewport.
+ *
+ * The buttons themselves all render regardless, at every index. They cost
+ * almost nothing, and keeping them is what preserves the strip's true scroll
+ * extent, the `scrollIntoView` targets and the a11y tree.
  */
-const THUMB_RENDER_WINDOW = 20;
+const THUMB_RENDER_WINDOW = 2;
+
+/**
+ * How far outside the strip's own box a thumbnail starts loading, as an
+ * `IntersectionObserver` rootMargin on the horizontal axis only.
+ *
+ * The strip's pitch is 36px per vertical thumbnail and 68px per horizontal one
+ * (the thumb plus this row's 8px gap), so 200px buys between three and five
+ * thumbnails of lead in each direction: a swipe or a flick of the strip
+ * arrives at photos that have already been asked for rather than at grey boxes
+ * — which is the other half of what "small images should load on swipe" was
+ * asking for.
+ *
+ * Deliberately modest. Every px of margin here is more thumbnails committed
+ * and fetched in one go, and the origin throttles bursts; the retry in
+ * `useImageRetry` now catches what does get throttled, but not needing to be
+ * caught is better than being caught.
+ */
+const THUMB_PRELOAD_PX = 200;
 
 /** Fraction of the frame's width a swipe must cover to count — but never
  *  fewer than MIN_COMMIT_PX, so a narrow frame stays swipeable. */
@@ -211,6 +252,87 @@ function ArrowIcon({ direction }: { direction: "left" | "right" }) {
         strokeLinejoin="round"
       />
     </svg>
+  );
+}
+
+interface ThumbProps {
+  photo: LightboxPhoto;
+  index: number;
+  active: boolean;
+  /** Whether this thumbnail's `<Image>` is mounted at all — see
+   *  `THUMB_RENDER_WINDOW` and the observer in `LightboxOverlay`. */
+  render: boolean;
+  onSelect: (index: number) => void;
+  /** Hands this thumbnail's button to the strip's IntersectionObserver and
+   *  returns the matching un-observe. Stable for the life of the overlay. */
+  observe: (node: HTMLElement) => () => void;
+}
+
+/**
+ * One thumbnail.
+ *
+ * A component rather than JSX inline in the `.map()` for one reason: retry
+ * state is PER IMAGE. The strip commits a row of thumbnails at once, all of
+ * them asking the resizer for a 96px rendition nothing else on the page has
+ * ever requested, and the resizer 429s past ten concurrent invocations. The
+ * strip used to have no `onError` at all, so a throttled thumbnail painted
+ * the browser's broken-image glyph and kept it for the life of the overlay —
+ * intermittently, depending on what was already warm at the CDN edge, which
+ * is exactly how it was reported.
+ *
+ * When the retries are spent the image is dropped rather than left to render
+ * its glyph: a thumbnail that will not load should be indistinguishable from
+ * the deliberate `bg-fg/10` placeholder the strip already uses for one that
+ * hasn't been scrolled to. (`PhotoTile` makes the opposite call for a full
+ * grid tile, and says why there.)
+ */
+function LightboxThumb({ photo, index, active, render, onSelect, observe }: ThumbProps) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const { attempt, exhausted, onError } = useImageRetry();
+
+  // Passive, not layout: the observer is created in the overlay's LAYOUT
+  // effect, and React runs every layout effect in a commit before any passive
+  // one — so by the time this runs there is always an observer to register
+  // with, on the first commit as much as on any later one.
+  useEffect(() => {
+    const node = buttonRef.current;
+    if (!node) return;
+    return observe(node);
+  }, [observe]);
+
+  const showImage = render && !exhausted;
+  const thumbHorizontal = photo.aspectRatio === horizontal;
+
+  return (
+    <button
+      ref={buttonRef}
+      type="button"
+      data-thumb-index={index}
+      aria-current={active || undefined}
+      aria-label={active ? `${buildAlt(photo)} (current photo)` : buildAlt(photo)}
+      onClick={() => onSelect(index)}
+      className={`relative block h-[40px] shrink-0 cursor-pointer overflow-hidden outline-none transition-opacity duration-200 ${
+        thumbHorizontal ? "aspect-[36/24]" : "aspect-[22/32]"
+      } ${active ? "opacity-100" : "opacity-40 hover:opacity-70"} ${
+        showImage ? "" : "bg-fg/10"
+      }`}
+    >
+      {showImage ? (
+        <Image
+          // Remounts on retry, which is what re-issues the request. 429s are
+          // not cached by CloudFront, so the retry reaches the origin.
+          key={attempt}
+          loader={imageLoader}
+          src={`/${photo.src}`}
+          alt=""
+          fill
+          sizes="40px"
+          className="object-cover"
+          draggable={false}
+          onError={onError}
+        />
+      ) : null}
+    </button>
   );
 }
 
@@ -651,6 +773,120 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
     hiddenTileRef.current = activeIndex;
   }, [isOpen, activeIndex]);
 
+  // --- Which thumbnails have an image ---------------------------------------
+  //
+  // Visibility inside the STRIP decides, not distance from the active photo.
+  // See `THUMB_RENDER_WINDOW` for what the old index window got wrong (the
+  // whole strip past ±20 was permanently grey) and why an unwindowed strip is
+  // not the answer either.
+  //
+  // The set only ever GROWS. A thumbnail scrolled back out is left mounted on
+  // purpose: unmounting it would re-issue its request the next time it came
+  // back, so scrubbing the strip back and forth would manufacture exactly the
+  // burst the origin's 10-concurrent cap punishes. A mounted 40px webp costs
+  // nothing worth reclaiming.
+  const [renderedThumbs, setRenderedThumbs] = useState<ReadonlySet<number>>(
+    () => new Set()
+  );
+  const thumbObserverRef = useRef<IntersectionObserver | null>(null);
+  /** Buttons that have registered but may have done so before the observer
+   *  existed. Belt and braces for the effect-ordering below. */
+  const thumbNodesRef = useRef<Set<HTMLElement>>(new Set());
+
+  const observeThumb = useCallback((node: HTMLElement) => {
+    thumbNodesRef.current.add(node);
+    thumbObserverRef.current?.observe(node);
+    return () => {
+      thumbNodesRef.current.delete(node);
+      thumbObserverRef.current?.unobserve(node);
+    };
+  }, []);
+
+  // A LAYOUT effect, and mount-only.
+  //
+  // Layout so the observer exists before any thumbnail's own (passive) effect
+  // asks to be observed — React runs every layout effect in a commit before
+  // any passive one, which is the whole reason registration can be a plain
+  // `useEffect` down in `LightboxThumb` and still never miss.
+  //
+  // The strip is centred on the active thumbnail HERE, instantly, before the
+  // observer is created. The `scrollIntoView` effect below does the same thing
+  // smoothly and would otherwise be the first thing to move the strip — and a
+  // smooth scroll from scrollLeft 0 to the middle of a 6,000px strip drags
+  // every thumbnail on the way through the observer's root, one frame at a
+  // time, rendering and requesting all of them. Landing the strip on its
+  // resting position first means the observer's first delivery describes where
+  // the strip actually IS. (The effect below is not made redundant: it still
+  // re-centres on every subsequent photo change, and now always over a short
+  // distance, so it stays smooth.)
+  useLayoutEffect(() => {
+    const strip = thumbStripRef.current;
+    if (!strip) return;
+
+    strip
+      .querySelector<HTMLElement>(`[data-thumb-index="${activeIndexRef.current}"]`)
+      ?.scrollIntoView({ behavior: "auto", block: "nearest", inline: "center" });
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const arrived: number[] = [];
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const i = Number((entry.target as HTMLElement).dataset.thumbIndex);
+          if (!Number.isInteger(i)) continue;
+          arrived.push(i);
+          // Rendering is one-way, so there is nothing left to learn about
+          // this node. Dropping it keeps the observer's per-frame work
+          // proportional to what is still grey rather than to the feed.
+          observer.unobserve(entry.target);
+        }
+        if (arrived.length === 0) return;
+        setRenderedThumbs((prev) => {
+          const next = new Set(prev);
+          for (const i of arrived) next.add(i);
+          return next.size === prev.size ? prev : next;
+        });
+      },
+      {
+        // The strip, not the viewport: these thumbnails are clipped by its
+        // `overflow-x`, so the document viewport cannot tell a visible one
+        // from one 5,000px along the row.
+        root: strip,
+        // Horizontal only. The strip is a single row — vertical margin would
+        // just be an invitation for a thumbnail to count as visible while the
+        // dialog is scrolled somewhere else.
+        rootMargin: `0px ${THUMB_PRELOAD_PX}px`,
+        threshold: 0,
+      }
+    );
+    thumbObserverRef.current = observer;
+    // Anything that registered before this ran (it should not, given the
+    // ordering above, but a future refactor that moves registration into a
+    // layout effect would silently lose them).
+    thumbNodesRef.current.forEach((node) => observer.observe(node));
+
+    return () => {
+      observer.disconnect();
+      thumbObserverRef.current = null;
+    };
+  }, []);
+
+  // Latch the seed window as the active photo moves, so a thumbnail never
+  // loses its image by the active photo walking away from it. In practice the
+  // observer has already claimed these — the active thumbnail is centred in
+  // the strip, so its neighbours are visible by construction — but that is
+  // only true once the observer has delivered, and this costs one Set union
+  // per photo change.
+  useEffect(() => {
+    setRenderedThumbs((prev) => {
+      const next = new Set(prev);
+      for (let i = activeIndex - THUMB_RENDER_WINDOW; i <= activeIndex + THUMB_RENDER_WINDOW; i++) {
+        if (i >= 0 && i < photos.length) next.add(i);
+      }
+      return next.size === prev.size ? prev : next;
+    });
+  }, [activeIndex, photos.length]);
+
   // Keep the active thumbnail visible in the single-row strip.
   useEffect(() => {
     const strip = thumbStripRef.current;
@@ -693,6 +929,21 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
     // One frame, so the dialog's flex layout has settled before the hero's
     // destination rect is measured. Measuring in the layout effect itself
     // would read a box that has not been sized yet.
+    //
+    // One frame is enough, and deliberately still is. The rect `morphOpen`
+    // reads here is the only measurement of the destination there will ever
+    // be, so it has to be final — but everything that could still move it has
+    // already happened by now. The scroll lock is a LAYOUT effect declared
+    // below this one, so it has run (and reflowed the document) before this
+    // callback; `setPreviewSrc` above re-rendered before paint; and the
+    // dialog's height is `h-svh`, which no longer moves when the browser
+    // expands its toolbar in response to that lock. Nothing here waits on
+    // fonts: a morph only happens on a tile CLICK, by which point the page has
+    // been rendered and Switzer has long since swapped in — a deep link, which
+    // is the only open that can race font loading, has no tile and fades
+    // instead. And nothing re-measures on resize on purpose: a retarget is a
+    // moving part that has to be right in every interrupted-morph case, which
+    // is a worse trade than the bug it would cover.
     const raf = requestAnimationFrame(() => {
       gsap.to(backdrop, { opacity: 1, duration: BACKDROP_IN_S, ease: GSAP_EASE });
       gsap.to(chrome, {
@@ -836,12 +1087,25 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
         const active = document.activeElement;
+        // The dialog ITSELF is a legitimate resting place for focus — it is
+        // where the mount effect below now puts it (see there for why), and it
+        // is also where focus sits if a control is clicked and then removed.
+        // It needed calling out explicitly because it slips through both of
+        // the tests below: `container.contains(container)` is true, so the
+        // "focus has escaped" branch never fires, and it is neither `first`
+        // nor `last`. Forward that was harmless by accident — a container
+        // precedes its own children in tab order, so the browser's native Tab
+        // lands on `first` regardless — but BACKWARDS it was the one hole in
+        // the trap: Shift+Tab from the container walked out of the dialog
+        // entirely, onto whatever grid tile precedes it in the document,
+        // behind an opaque backdrop, with no visible focus anywhere.
+        const atContainer = active === container;
         if (event.shiftKey) {
-          if (active === first || !container.contains(active)) {
+          if (atContainer || active === first || !container.contains(active)) {
             event.preventDefault();
             last.focus();
           }
-        } else if (active === last || !container.contains(active)) {
+        } else if (atContainer || active === last || !container.contains(active)) {
           event.preventDefault();
           first.focus();
         }
@@ -851,11 +1115,28 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isClosing, close, goNext, goPrev]);
 
+  // Initial focus goes to the DIALOG, never to the first focusable inside it.
+  //
+  // This used to be `(focusable[0] ?? container).focus()`, and `focusable[0]`
+  // is the "Kristina Bekher" logotype link in `<SiteHeader chrome hideNav />`
+  // — the first `a[href]` in the dialog. globals.css draws a 2px outline on
+  // `:focus-visible`, and several engines treat a programmatic `.focus()` on a
+  // link or button as focus-visible (the heuristic keys off the element being
+  // keyboard-interactive, not off how focus arrived), so EVERY open — mouse,
+  // touch, keyboard alike — parked a focus ring around the wordmark at the top
+  // of the overlay. It was also the worst possible default target on its
+  // merits: the one control in the dialog that navigates away from the page.
+  //
+  // The container is what a modal should focus anyway. It carries
+  // `role="dialog" aria-modal="true"` and an `aria-label`, so assistive tech
+  // announces the viewer and its label instead of starting the visitor
+  // mid-chrome, and `tabIndex={-1}` + `outline-none` let it hold focus without
+  // painting anything. The Tab trap above knows about this resting position
+  // explicitly — see `atContainer` there, without which Shift+Tab from here
+  // would leave the dialog. Focus is handed back to the originating grid tile
+  // on close by `LightboxProvider`, which is unaffected by any of this.
   useEffect(() => {
-    const container = dialogRef.current;
-    if (!container) return;
-    const focusable = getFocusable(container);
-    (focusable[0] ?? container).focus();
+    dialogRef.current?.focus();
   }, []);
 
   // Scroll lock. The width compensation is load-bearing for the morph, not
@@ -874,6 +1155,15 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
   // after the reflow — the same open looked different run to run. Locking
   // before the first paint removes both: nothing paints unlocked, and every
   // measurement happens after the document has settled.
+  //
+  // ## What it still cannot control, and why that no longer matters
+  // `position: fixed` on <body> also makes the page unscrollable, and mobile
+  // browsers read that as licence to expand the URL bar they had collapsed —
+  // asynchronously, animated, landing squarely inside the open morph. Nothing
+  // here can prevent that or wait it out. The dialog is therefore sized in
+  // `svh` (see the comment above its className) so its layout simply does not
+  // depend on where the toolbar is, and the hero's destination rect survives
+  // the transition untouched.
   useLayoutEffect(() => {
     const scrollY = window.scrollY;
     const body = document.body;
@@ -992,6 +1282,42 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
           )
       : [];
 
+  // `h-svh`, and it is the fix for the hero jumping upward on mobile.
+  //
+  // The hero's destination is a pure function of this element's height: the
+  // hero viewport below is `flex-1` in this column, `.lightbox-hero-frame`
+  // sizes itself from `100cqh` of that viewport, and the frame is centred in
+  // it. `morphOpen` measures that destination rect ONCE, in a rAF right after
+  // mount, and then tweens a `position: fixed` clone to it for 520ms. So any
+  // change to this height mid-morph means the hero lands on a stale rect and
+  // snaps to the real one when `unpin` puts it back in its CSS box.
+  //
+  // This was `100dvh`, which changes exactly then. The scroll lock below sets
+  // `body { position: fixed }`, the page stops being scrollable, and iOS
+  // Safari / Chrome Android respond by expanding the URL bar they had
+  // collapsed — over a few hundred ms, i.e. inside the morph. `dvh` tracks
+  // that, the column loses the toolbar's height, the centred hero's midpoint
+  // rises by half of it, and everything below it rises by all of it. On a
+  // phone the frame's width is `100cqw`-bound rather than `100cqh`-bound, so
+  // the SIZE was right and only the position was wrong — which is precisely
+  // the reported "grows big and then jumps up". It only happened "sometimes"
+  // because it needs the toolbar to have been collapsed at click time, i.e.
+  // the visitor to have scrolled the feed first.
+  //
+  // `svh` is the small viewport — the toolbar-EXPANDED height, which is the
+  // steady state the lock forces us into anyway — and it is defined never to
+  // change as browser chrome shows or hides. So the destination rect measured
+  // in that first rAF is the rect the hero lands in, whatever the toolbar does
+  // during the 520ms. Desktop is unaffected: with no dynamic chrome, `svh`,
+  // `dvh` and `vh` are the same number.
+  //
+  // `pt-[env(safe-area-inset-top,0px)]` stays and does NOT double-count against
+  // globals.css's `body { padding-top: env(safe-area-inset-top) }`: this
+  // element is `position: fixed`, so it is laid out against the viewport and
+  // the body's padding never moves it. It needs its own inset or its header
+  // would sit under the notch. (Both are 0 today — there is no
+  // `viewport-fit=cover` in the viewport meta — so this is insurance, not
+  // current geometry.)
   return (
     <div
       ref={dialogRef}
@@ -999,14 +1325,31 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
       aria-modal="true"
       aria-label="Photo viewer"
       tabIndex={-1}
-      className={`fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden pt-[env(safe-area-inset-top,0px)] outline-none ${
+      className={`fixed inset-0 z-50 flex h-svh flex-col overflow-hidden pt-[env(safe-area-inset-top,0px)] outline-none ${
         isClosing ? "pointer-events-none" : ""
       }`}
     >
       {/* The backdrop is its own element rather than a `bg-bg` class on the
           dialog so it can be faded independently of the hero, which has to
-          stay fully opaque while it morphs across it. */}
-      <div ref={backdropRef} aria-hidden="true" className="absolute inset-0 bg-bg" />
+          stay fully opaque while it morphs across it.
+
+          `fixed`, not `absolute`, and that is the other half of the `h-svh`
+          change above. While the toolbar is still collapsed — the first few
+          hundred ms of an open — the visible viewport is TALLER than `svh`, so
+          a backdrop bounded by the dialog would leave a strip of the live page
+          showing along the bottom until the toolbar finished expanding. A
+          fixed box resolves against the viewport instead of against the
+          dialog, so it covers regardless of what the chrome is doing.
+
+          It is not clipped by the dialog's `overflow-hidden`: overflow clips
+          descendants whose containing block is inside the clipper, and a fixed
+          element's containing block is the viewport (nothing here sets a
+          transform/filter/will-change that would change that). Nothing else
+          moves either — it is still a plain positioned element with `z-index:
+          auto` inside the dialog's `z-50` stacking context, so the morphing
+          hero's `HERO_Z = 60` still paints over it, and the close tween on
+          `backdropRef` only ever touched opacity. */}
+      <div ref={backdropRef} aria-hidden="true" className="fixed inset-0 bg-bg" />
 
       <div className="relative mx-auto flex h-full w-full max-w-[1280px] flex-col items-center px-[40px]">
         <SiteHeader chrome className="shrink-0" hideNav />
@@ -1177,40 +1520,23 @@ function LightboxOverlay({ isOpen, session, onClosed }: OverlayProps) {
             className="mt-[20px] w-full shrink-0 overflow-x-auto overflow-y-hidden pb-6 [scrollbar-width:thin]"
           >
             <div className="mx-auto flex w-max flex-nowrap items-center justify-center gap-8 px-2">
-              {photos.map((photo, i) => {
-                const active = i === activeIndex;
-                const thumbHorizontal = photo.aspectRatio === horizontal;
-                // See THUMB_RENDER_WINDOW. The button, its box and its label
-                // always render; only the image is windowed.
-                const near = Math.abs(i - activeIndex) <= THUMB_RENDER_WINDOW;
-                return (
-                  <button
-                    key={`${photo.src}-${i}`}
-                    type="button"
-                    data-thumb-index={i}
-                    aria-current={active || undefined}
-                    aria-label={active ? `${buildAlt(photo)} (current photo)` : buildAlt(photo)}
-                    onClick={() => goThumb(i)}
-                    className={`relative block h-[40px] shrink-0 cursor-pointer overflow-hidden outline-none transition-opacity duration-200 ${
-                      thumbHorizontal ? "aspect-[36/24]" : "aspect-[22/32]"
-                    } ${active ? "opacity-100" : "opacity-40 hover:opacity-70"} ${
-                      near ? "" : "bg-fg/10"
-                    }`}
-                  >
-                    {near ? (
-                      <Image
-                        loader={imageLoader}
-                        src={`/${photo.src}`}
-                        alt=""
-                        fill
-                        sizes="40px"
-                        className="object-cover"
-                        draggable={false}
-                      />
-                    ) : null}
-                  </button>
-                );
-              })}
+              {photos.map((photo, i) => (
+                // The button, its box and its label always render, at every
+                // index — only the image is conditional. `render` is the
+                // observer's answer, OR the seed window for the frames before
+                // the observer has one (see THUMB_RENDER_WINDOW).
+                <LightboxThumb
+                  key={`${photo.src}-${i}`}
+                  photo={photo}
+                  index={i}
+                  active={i === activeIndex}
+                  render={
+                    renderedThumbs.has(i) || Math.abs(i - activeIndex) <= THUMB_RENDER_WINDOW
+                  }
+                  onSelect={goThumb}
+                  observe={observeThumb}
+                />
+              ))}
             </div>
           </div>
 
