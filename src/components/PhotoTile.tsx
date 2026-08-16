@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useState, type MouseEvent } from "react";
 import Image from "next/image";
 import imageLoader from "@/utils/image-loader";
+import { useImageRetry } from "@/utils/useImageRetry";
 import { horizontal } from "@/data";
 import { useLightbox } from "./lightbox/LightboxProvider";
 
@@ -60,24 +61,6 @@ const SIZES = {
 } as const;
 
 /**
- * How many times a tile re-requests an image that failed.
- *
- * The resizer is capped at 10 concurrent invocations and returns 429 past
- * that. A resize across the `lg` breakpoint changes `sizes` for every tile at
- * once, so twenty tiles pick a new srcset candidate simultaneously and
- * everything past the tenth is throttled. Without a retry those tiles keep
- * their `opacity: 0` forever — `onLoad` never fires — which is the "broken
- * images after resizing" symptom exactly: not a broken image, a permanently
- * hidden one.
- *
- * Two attempts on a staggered backoff is enough to ride out a burst, because
- * the burst is self-clearing: the requests that did succeed have freed their
- * concurrency slots by the time the first retry lands.
- */
-const MAX_RETRIES = 2;
-const RETRY_BASE_MS = 400;
-
-/**
  * Renders a single photo. Sizing/placement is entirely the caller's job
  * (PhotoGrid's grid engine, or later the lightbox) via `className` — this
  * component just fills whatever box it is given with a cover-fit image,
@@ -106,30 +89,18 @@ export default function PhotoTile({
   // could not appear until hydration had run and attached the handler. That
   // put LCP behind ~220KB of JavaScript for a purely decorative fade.
   const [loaded, setLoaded] = useState(priority);
-  const [attempt, setAttempt] = useState(0);
-  const retryTimer = useRef<number | null>(null);
+  // The resizer's 10-concurrent cap, handled in the one place that knows
+  // about it (`useImageRetry`) rather than here — the lightbox's thumbnail
+  // strip hits the same wall and used to have no answer to it at all.
+  const { attempt, exhausted, onError } = useImageRetry();
   const lightbox = useLightbox();
   const orientation = aspectRatio === horizontal ? "horizontal" : "vertical";
 
-  useEffect(() => {
-    return () => {
-      if (retryTimer.current !== null) window.clearTimeout(retryTimer.current);
-    };
-  }, []);
-
-  const handleError = () => {
-    if (attempt >= MAX_RETRIES) {
-      // Out of retries: reveal the element rather than leaving an invisible
-      // hole in the grid. A browser's broken-image glyph is honest; a tile
-      // that never arrives looks like a layout bug.
-      setLoaded(true);
-      return;
-    }
-    // Staggered so twenty simultaneously-throttled tiles don't retry in
-    // lockstep and reproduce the burst that throttled them.
-    const backoff = RETRY_BASE_MS * (attempt + 1) + Math.random() * RETRY_BASE_MS;
-    retryTimer.current = window.setTimeout(() => setAttempt((n) => n + 1), backoff);
-  };
+  // Out of retries: reveal the element rather than leaving an invisible hole
+  // in the grid. A browser's broken-image glyph is honest; a tile that never
+  // arrives looks like a layout bug. (The thumbnail strip makes the opposite
+  // call for the same state — see `useImageRetry`'s `exhausted`.)
+  const revealed = loaded || exhausted;
 
   const image = (
     <Image
@@ -151,13 +122,13 @@ export default function PhotoTile({
       fetchPriority={priority ? "high" : undefined}
       sizes={SIZES[orientation]}
       onLoad={() => setLoaded(true)}
-      onError={handleError}
-      className={`object-cover ${loaded ? "opacity-100" : "opacity-0"}`}
+      onError={onError}
+      className={`object-cover ${revealed ? "opacity-100" : "opacity-0"}`}
     />
   );
 
   const boxClassName = `relative block overflow-hidden ${
-    loaded ? "" : "image-placeholder"
+    revealed ? "" : "image-placeholder"
   } ${className}`.trim();
 
   const handleClick = (e: MouseEvent<HTMLButtonElement>) => {

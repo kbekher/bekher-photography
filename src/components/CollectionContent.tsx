@@ -185,7 +185,10 @@ export default function CollectionContent({
       </LightboxProvider>
 
       <Reveal
-        className="mt-64 flex flex-wrap items-center justify-center gap-8 lg:gap-[40px]"
+        // Full-width with the buttons pushed to the edges on phone — three
+        // pills centred with a gap leaves them clustered in the middle of a
+        // narrow screen. From `lg` there is room, so it goes back to centred.
+        className="mt-64 flex w-full flex-wrap items-center justify-between gap-8 lg:justify-center lg:gap-[40px]"
         startWhen={dealDone}
         duration={BUTTONS_DURATION}
         y={BUTTONS_Y}
