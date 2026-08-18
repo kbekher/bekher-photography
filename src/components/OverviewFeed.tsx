@@ -89,7 +89,7 @@ export default function OverviewFeed() {
         `opacity: 0` whose escape hatch lives in a DIFFERENT file than the code
         that clears it is a blank-page waiting to happen.
       */}
-      <div ref={gridRef} className="flex w-full flex-col items-center">
+      <div ref={gridRef} className="flex w-full flex-col items-center flex-1">
         <PhotoGrid photos={visible} priorityCount={PRIORITY_COUNT} />
 
         {/* Polite announcement so screen reader users hear the feed grow. */}
@@ -98,7 +98,7 @@ export default function OverviewFeed() {
         </div>
 
         {hasMore ? (
-          <div className="mt-[64px]">
+          <div className="mt-auto pt-24 mb-24">
             <PillButton as="button" onClick={handleViewPrevious}>
               View previous
             </PillButton>

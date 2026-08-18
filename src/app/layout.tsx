@@ -51,7 +51,7 @@ const OG_IMAGE_HEIGHT = 1810;
  * half: what the work is, who made it, where she is.
  */
 const SITE_DESCRIPTION =
-  "Film photography by Kristina Bekher, a Ukrainian photographer based in Germany — analogue frames from Ukraine, Switzerland, Italy, the UK and across Europe.";
+  "Analogue photography by Kristina Bekher — a visual archive of places, people, and moments, captured on film.";
 
 /**
  * The publish date, and the only reason it is JSON-LD rather than a `<meta>`

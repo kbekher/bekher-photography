@@ -149,7 +149,7 @@ export default function CollectionContent({
   const { setGridRef, dealDone } = useCollectionDealOut({ enabled: dealEnabled });
 
   return (
-    <div className="flex w-full flex-col items-center">
+    <div className="flex w-full flex-col items-center flex-1">
       <div className="mt-24 flex flex-col items-center gap-8 text-center">
         <Reveal as="h1" className="font-normal" duration={NAME_DURATION} y={NAME_Y}>
           {gallery.name}
@@ -177,7 +177,7 @@ export default function CollectionContent({
       </noscript>
 
       <LightboxProvider photos={photos}>
-        <div ref={setGridRef} className={`mt-48 w-full ${styles.gate}`}>
+        <div ref={setGridRef} className={`mt-48 w-full flex-1 ${styles.gate}`}>
           {/* Two desktop rows / four phone rows — the first screen. See
               OverviewFeed's note on why this is 8 and not 4. */}
           <PhotoGrid photos={photos} priorityCount={8} />
@@ -188,7 +188,7 @@ export default function CollectionContent({
         // Full-width with the buttons pushed to the edges on phone — three
         // pills centred with a gap leaves them clustered in the middle of a
         // narrow screen. From `lg` there is room, so it goes back to centred.
-        className="mt-64 flex w-full flex-wrap items-center justify-between gap-8 lg:justify-center lg:gap-[40px]"
+        className="mt-auto pt-24 mb-24 flex w-full flex-wrap items-center justify-between gap-8 lg:justify-center lg:gap-[40px]"
         startWhen={dealDone}
         duration={BUTTONS_DURATION}
         y={BUTTONS_Y}

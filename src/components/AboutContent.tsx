@@ -22,7 +22,7 @@ const BIO =
   "I grew up in a small town in the Donetsk region of Ukraine, which has been occupied since 2014. I had to leave my hometown when I was 14, and for a few years I felt somewhat lost. " +
   "In 2019, while volunteering in Lithuania, I found analogue photography. It became a way of escaping for a while, but also looking more closely at what was around me and trying to make sense of what I was experiencing. " +
   "Moving to Europe after the full-scale invasion in 2022 brought another shift. A new place meant new subjects and new possibilities, and my photography changed with it. " + 
-  "Today, I’m a software developer. And while AI does most of my coding, I still use my brain when I’m behind my analogue cameras.";
+  "By day, I’m a software developer. And while AI does most of my coding, it's still me behind my analogue cameras.";
 
 const DOWNLOAD_LINKS = [
   { label: "Unsplash", href: "https://unsplash.com/@ninjagexly" },
