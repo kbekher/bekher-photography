@@ -58,7 +58,7 @@ body {
 
 @media (min-width: 1024px) and (max-width: 1490px) {
   body {
-    font-size: 13px !important;
+    font-size: 13px;
   }
 }
 
